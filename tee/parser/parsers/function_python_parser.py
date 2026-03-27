@@ -96,7 +96,9 @@ class FunctionPythonParser(BaseParser):
             # Cache the result
             self._set_cache(file_path_str, functions)
             if functions:
-                logger.debug(f"Successfully registered {len(functions)} function(s) from {file_path}")
+                logger.debug(
+                    f"Successfully registered {len(functions)} function(s) from {file_path}"
+                )
             return functions
 
         except Exception as e:
@@ -163,8 +165,12 @@ class FunctionPythonParser(BaseParser):
 
                 processing_module = sys.modules["tee.parser.processing"]
                 processing_module.function_builder = types.ModuleType("function_builder")
-                sys.modules["tee.parser.processing.function_builder"] = processing_module.function_builder
-            sys.modules["tee.parser.processing.function_builder"].SQLFunctionMetadata = SQLFunctionMetadata
+                sys.modules["tee.parser.processing.function_builder"] = (
+                    processing_module.function_builder
+                )
+            sys.modules[
+                "tee.parser.processing.function_builder"
+            ].SQLFunctionMetadata = SQLFunctionMetadata
 
             # Set __file__ to absolute path so functions can find companion files and match file_path
             file_path_abs = str(file_path.absolute())
@@ -183,7 +189,9 @@ class FunctionPythonParser(BaseParser):
         except Exception as e:
             if isinstance(e, FunctionPythonParsingError):
                 raise
-            raise FunctionPythonParsingError(f"Failed to execute Python function file {file_path}: {e}") from e
+            raise FunctionPythonParsingError(
+                f"Failed to execute Python function file {file_path}: {e}"
+            ) from e
         finally:
             # Clean up
             if module_name in sys.modules:

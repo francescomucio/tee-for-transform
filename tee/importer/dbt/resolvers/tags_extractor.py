@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def extract_model_tags(
     model_files: dict[str, Path],
     schema_metadata: dict[str, Any],
-    dbt_project: dict[str, Any],
+    dbt_project: dict[str, Any],  # noqa: ARG001
     schema_resolver: SchemaResolver | None = None,
     verbose: bool = False,
 ) -> dict[str, list[str]]:

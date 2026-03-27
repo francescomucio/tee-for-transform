@@ -59,6 +59,8 @@ SQL_VARIABLE_PATTERNS = {
 OUTPUT_FILES = {
     "parsed_models": "parsed_models.json",
     "dependency_graph": "dependency_graph.json",
+    "dimensional_graph": "dimensional_graph.json",
+    "dimension_registry": "dimension_registry.json",
     "mermaid_diagram": "dependency_graph.mmd",
     "markdown_report": "dependency_report.md",
 }

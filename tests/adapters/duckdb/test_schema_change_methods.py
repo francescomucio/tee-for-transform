@@ -206,4 +206,3 @@ class TestDuckDBSchemaChangeMethods:
         table_info = adapter.get_table_info("test_table")
         column_names = [col["column"] for col in table_info["schema"]]
         assert "email" not in column_names
-

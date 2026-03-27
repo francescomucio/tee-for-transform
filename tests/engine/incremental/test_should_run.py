@@ -4,8 +4,8 @@ Test cases for should_run_incremental method.
 
 from datetime import datetime
 
-from tests.engine.incremental.test_executor_base import TestIncrementalExecutor
 from tee.engine.model_state import ModelState
+from tests.engine.incremental.test_executor_base import TestIncrementalExecutor
 
 
 class TestShouldRunIncremental(TestIncrementalExecutor):
@@ -163,4 +163,3 @@ class TestShouldRunIncremental(TestIncrementalExecutor):
         result = executor.should_run_incremental("test_model", "SELECT * FROM test", config)
 
         assert result is False
-

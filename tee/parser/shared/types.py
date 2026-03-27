@@ -14,6 +14,7 @@ from tee.typing.model import Model
 ParsedModel = Model
 ParsedFunction = Function
 DependencyGraph = dict[str, Any]
+DimensionalGraph = dict[str, Any]
 TableReference = str
 FunctionReference = str
 

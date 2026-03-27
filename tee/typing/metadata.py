@@ -19,6 +19,47 @@ DataType = Literal[
     "object",
 ]
 
+# Table semantic roles used by the Data Model view and default-test injection.
+TableType = Literal["fact", "dim", "lookup", "dimension"]
+
+
+# FK declaration used to express which dimension PK a fact column joins to.
+class FKReference(TypedDict):
+    table: str  # fully-qualified table name, e.g. "dwh.dim_date"
+    column: str  # PK column in the referenced dimension, e.g. "date_id"
+
+
+class HierarchyLevel(TypedDict):
+    level_number: int
+    name: str
+    # Column carrying this level label/name in the dimension table.
+    column: str
+    # PK (surrogate key or join key) for this hierarchy level (optional but required by rules).
+    primary_key: NotRequired[str]
+    description: NotRequired[str]
+    # Additional columns belonging to this level (attributes).
+    columns: NotRequired[list[str]]
+
+
+class HierarchyDefinition(TypedDict):
+    # e.g. "Fixed-Depth Hierarchy"
+    type: NotRequired[str]
+    levels: list[HierarchyLevel]
+
+
+class ConformedDimensionRef(TypedDict):
+    """
+    Declares that this physical dimension model implements a grain of a conformed dimension.
+
+    Registers ``{logical}.{level}`` → this table in the auto-built dimension registry,
+    overriding keys inferred only from hierarchy level names on another table
+    (e.g. ``dim_month`` for ``date.month`` while ``dim_date`` owns the date hierarchy).
+    """
+
+    logical: str
+    level: str
+
+
 # Materialization types
 MaterializationType = Literal["table", "view", "incremental", "scd2"]
 
@@ -27,13 +68,13 @@ IncrementalStrategy = Literal["append", "merge", "delete_insert"]
 
 # on_schema_change options (OTS 0.2.1)
 OnSchemaChange = Literal[
-    "fail",                    # Default - fail on schema changes
-    "ignore",                  # Ignore schema differences, proceed anyway
-    "append_new_columns",      # Add new columns only
-    "sync_all_columns",         # Add new, remove missing columns
-    "full_refresh",            # Drop and recreate with full query
-    "full_incremental_refresh", # Drop, recreate, then run incremental in chunks
-    "recreate_empty"           # Drop and recreate as empty table
+    "fail",  # Default - fail on schema changes
+    "ignore",  # Ignore schema differences, proceed anyway
+    "append_new_columns",  # Add new columns only
+    "sync_all_columns",  # Add new, remove missing columns
+    "full_refresh",  # Drop and recreate with full query
+    "full_incremental_refresh",  # Drop, recreate, then run incremental in chunks
+    "recreate_empty",  # Drop and recreate as empty table
 ]
 
 # Function types
@@ -41,11 +82,24 @@ FunctionType = Literal["scalar", "aggregate", "table"]
 
 # Test names for columns
 ColumnTestName = Literal[
-    "not_null", "unique", "accepted_values", "relationships", "expression", "custom"
+    "not_null",
+    "unique",
+    "primary_key",
+    "accepted_values",
+    "relationships",
+    "expression",
+    "custom",
 ]
 
 # Test names for models
-ModelTestName = Literal["row_count_gt_0", "unique", "freshness", "custom"]
+ModelTestName = Literal[
+    "row_count_gt_0",
+    "unique",
+    "freshness",
+    "hierarchy_no_split",
+    "level_uniqueness",
+    "custom",
+]
 
 
 # Test definition can be a simple string name or a dict with name/params/severity
@@ -63,6 +117,14 @@ class ColumnDefinition(TypedDict):
     description: NotRequired[str | None]
     # Tests can be simple strings or dicts with parameters and severity
     tests: NotRequired[list[ColumnTestName | dict[str, Any]]]
+    # Declared FK-style relationship metadata used by Data Model view.
+    # Intended for fact columns joining to dimension PK columns.
+    fk_to: NotRequired[FKReference | None]
+
+    # Simplified FK metadata: logical dimension name, optionally with hierarchy grain.
+    # Registry is auto-built from models with table_type dim/dimension or dim_* names.
+    # Examples: "date" -> dim_date; "date.month" -> same dim if Month is a hierarchy level.
+    dimension: NotRequired[str | None]
     # If True, system will automatically calculate IDs using MAX(id) + ROW_NUMBER()
     auto_incremental: NotRequired[bool]
 
@@ -72,7 +134,9 @@ class IncrementalAppendConfig(TypedDict):
 
     filter_column: str
     start_value: NotRequired[str | None]  # "auto" for max(filter_column) pattern, or specific value
-    destination_filter_column: NotRequired[str | None]  # Column name in target table (if different from filter_column)
+    destination_filter_column: NotRequired[
+        str | None
+    ]  # Column name in target table (if different from filter_column)
     lookback: NotRequired[str | None]  # e.g., "7 days", "1 week"
 
 
@@ -82,7 +146,9 @@ class IncrementalMergeConfig(TypedDict):
     unique_key: list[str]
     filter_column: str
     start_value: NotRequired[str | None]  # "auto" for max(filter_column) pattern, or specific value
-    destination_filter_column: NotRequired[str | None]  # Column name in target table (if different from filter_column)
+    destination_filter_column: NotRequired[
+        str | None
+    ]  # Column name in target table (if different from filter_column)
     lookback: NotRequired[str | None]  # e.g., "7 days", "1 week"
 
 
@@ -92,7 +158,9 @@ class IncrementalDeleteInsertConfig(TypedDict):
     where_condition: str  # SQL WHERE clause to identify records to delete
     filter_column: str
     start_value: NotRequired[str | None]  # "auto" for max(filter_column) pattern, or specific value
-    destination_filter_column: NotRequired[str | None]  # Column name in target table (if different from filter_column)
+    destination_filter_column: NotRequired[
+        str | None
+    ]  # Column name in target table (if different from filter_column)
     lookback: NotRequired[str | None]  # e.g., "7 days", "1 week"
 
 
@@ -132,12 +200,26 @@ class ModelMetadata(TypedDict):
     schema: NotRequired[list[ColumnDefinition] | None]
     partitions: NotRequired[list[str] | None]
     materialization: NotRequired[MaterializationType | None]
+    # Semantic table role (used by the Data Model view; optional if inferable from prefix).
+    table_type: NotRequired[TableType]
+    # If true, force inclusion in the Data Model view even if not dim/fact/lookup.
+    data_model: NotRequired[bool]
+    # Optional dimension hierarchy definition.
+    hierarchy: NotRequired[HierarchyDefinition]
+    # Map this table to a conformed logical dimension + grain (see ConformedDimensionRef).
+    conformed_dimension: NotRequired[ConformedDimensionRef]
+    # Disable auto-injected default tests.
+    # - True disables all default tests
+    # - list[str] disables only the listed default test names
+    disable_default_tests: NotRequired[list[str] | bool]
     # Tests can be simple strings or dicts with parameters and severity
     tests: NotRequired[list[ModelTestName | dict[str, Any]] | None]
     incremental: NotRequired[IncrementalConfig | None]
     scd2_details: NotRequired[dict[str, Any] | None]  # For SCD2 materialization
     indexes: NotRequired[list[dict[str, Any]] | None]  # Explicit index definitions
-    full_incremental_refresh: NotRequired[FullIncrementalRefreshConfig | None]  # For full_incremental_refresh on_schema_change (OTS 0.2.1)
+    full_incremental_refresh: NotRequired[
+        FullIncrementalRefreshConfig | None
+    ]  # For full_incremental_refresh on_schema_change (OTS 0.2.1)
 
 
 # Function-specific types

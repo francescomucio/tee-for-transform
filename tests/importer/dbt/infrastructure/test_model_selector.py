@@ -4,7 +4,6 @@ Unit tests for DbtModelSelector.
 
 from pathlib import Path
 
-import pytest
 
 from tee.importer.dbt.infrastructure import DbtModelSelector
 
@@ -145,4 +144,3 @@ class TestDbtModelSelector:
         selector = DbtModelSelector(select_patterns=["tag:Nightly"])
         assert selector.is_selected("customers", ["nightly"])
         assert selector.is_selected("customers", ["Nightly"])
-

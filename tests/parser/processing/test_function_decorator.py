@@ -3,7 +3,8 @@ Unit tests for function decorators.
 """
 
 import pytest
-from tee.parser.processing.function_decorator import functions, FunctionDecoratorError
+
+from tee.parser.processing.function_decorator import FunctionDecoratorError, functions
 
 
 class TestFunctionDecorators:
@@ -11,10 +12,8 @@ class TestFunctionDecorators:
 
     def test_sql_decorator_basic(self):
         """Test basic @functions.sql() decorator."""
-        @functions.sql(
-            function_name="test_func",
-            return_type="FLOAT"
-        )
+
+        @functions.sql(function_name="test_func", return_type="FLOAT")
         def generate_sql(adapter_type: str) -> str:
             return "CREATE FUNCTION ..."
 
@@ -28,20 +27,21 @@ class TestFunctionDecorators:
 
     def test_sql_decorator_with_all_params(self):
         """Test @functions.sql() with all parameters."""
+
         @functions.sql(
             function_name="complex_func",
             description="A complex function",
             function_type="table",
             parameters=[
                 {"name": "x", "type": "FLOAT"},
-                {"name": "y", "type": "INTEGER", "default": "0"}
+                {"name": "y", "type": "INTEGER", "default": "0"},
             ],
             return_table_schema=[{"name": "result", "type": "FLOAT"}],
             schema="my_schema",
             deterministic=True,
             database_name="postgresql",
             tags=["analytics", "production"],
-            object_tags={"category": "math", "sensitivity": "public"}
+            object_tags={"category": "math", "sensitivity": "public"},
         )
         def generate_complex_sql(adapter_type: str) -> str:
             return "CREATE FUNCTION ..."
@@ -59,6 +59,7 @@ class TestFunctionDecorators:
 
     def test_sql_decorator_defaults(self):
         """Test @functions.sql() with defaults (uses function name)."""
+
         @functions.sql(return_type="INTEGER")
         def my_function(adapter_type: str) -> str:
             return "CREATE FUNCTION ..."
@@ -71,10 +72,8 @@ class TestFunctionDecorators:
 
     def test_python_decorator_basic(self):
         """Test basic @functions.python() decorator."""
-        @functions.python(
-            function_name="python_func",
-            return_type="FLOAT"
-        )
+
+        @functions.python(function_name="python_func", return_type="FLOAT")
         def python_func(x: float) -> float:
             return x * 2.0
 
@@ -88,6 +87,7 @@ class TestFunctionDecorators:
 
     def test_python_decorator_with_all_params(self):
         """Test @functions.python() with all parameters."""
+
         @functions.python(
             function_name="python_calc",
             description="Python calculator",
@@ -97,7 +97,7 @@ class TestFunctionDecorators:
             schema="my_schema",
             deterministic=True,
             tags=["math"],
-            object_tags={"category": "calculation"}
+            object_tags={"category": "calculation"},
         )
         def python_calc(x: float) -> float:
             return x * 2.5
@@ -111,6 +111,7 @@ class TestFunctionDecorators:
     def test_invalid_function_name(self):
         """Test decorator with invalid function name."""
         with pytest.raises(FunctionDecoratorError):
+
             @functions.sql(function_name="invalid-name!")
             def invalid_func(adapter_type: str) -> str:
                 return "CREATE FUNCTION ..."
@@ -118,6 +119,7 @@ class TestFunctionDecorators:
     def test_invalid_custom_function_name(self):
         """Test decorator with invalid custom function name."""
         with pytest.raises(FunctionDecoratorError):
+
             @functions.sql(function_name="invalid.name!")
             def valid_func(adapter_type: str) -> str:
                 return "CREATE FUNCTION ..."
@@ -128,4 +130,3 @@ class TestFunctionDecorators:
         assert hasattr(functions, "python")
         assert callable(functions.sql)
         assert callable(functions.python)
-

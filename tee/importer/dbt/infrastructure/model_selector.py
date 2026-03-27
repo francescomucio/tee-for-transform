@@ -7,7 +7,6 @@ Filters dbt models based on name patterns and tags, similar to dbt's selection s
 import logging
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

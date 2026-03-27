@@ -15,7 +15,7 @@ class FunctionTransformer(BaseTransformer):
     """Transforms parsed functions to OTS functions."""
 
     def transform(
-        self, function_id: str, function_data: ParsedFunction, schema: str
+        self, function_id: str, function_data: ParsedFunction, _schema: str
     ) -> OTSFunction:
         """
         Transform a single parsed function to OTS function format.
@@ -23,7 +23,7 @@ class FunctionTransformer(BaseTransformer):
         Args:
             function_id: Function identifier (e.g., "my_schema.function_name")
             function_data: Parsed function data
-            schema: Schema name
+            _schema: Schema name (reserved)
 
         Returns:
             Transformed function as OTSFunction

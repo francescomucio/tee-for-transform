@@ -60,7 +60,7 @@ class TestQueryGenerator:
             # Check all columns (entire row uniqueness)
             # Use SELECT * to group by all columns
             return f"""
-                SELECT COUNT(*) 
+                SELECT COUNT(*)
                 FROM (
                     SELECT *, COUNT(*) as duplicate_count
                     FROM {table_name}
@@ -71,7 +71,7 @@ class TestQueryGenerator:
         else:
             column_list = ", ".join(columns)
             return f"""
-                SELECT COUNT(*) 
+                SELECT COUNT(*)
                 FROM (
                     SELECT {column_list}, COUNT(*) as duplicate_count
                     FROM {table_name}
@@ -187,7 +187,7 @@ class TestQueryGenerator:
 
         # Build JOIN conditions for all columns
         join_conditions = []
-        for source_col, target_col in zip(source_columns, target_columns):
+        for source_col, target_col in zip(source_columns, target_columns, strict=True):
             join_conditions.append(f"source.{source_col} = target.{target_col}")
 
         join_clause = " AND ".join(join_conditions)
@@ -199,9 +199,88 @@ class TestQueryGenerator:
 
         # LEFT JOIN to find orphaned rows (rows in source that don't exist in target)
         return f"""
-            SELECT COUNT(*) 
+            SELECT COUNT(*)
             FROM {source_table} AS source
-            LEFT JOIN {target_table} AS target 
+            LEFT JOIN {target_table} AS target
                 ON {join_clause}
             WHERE {where_clause}
+        """
+
+    def generate_primary_key_test_query(self, table_name: str, column_name: str) -> str:
+        """
+        Generate SQL query for a combined primary_key test.
+
+        The test fails if there are:
+        - NULL values in the PK column
+        - duplicate values in the PK column (ignoring NULL handling; NULLs are already covered)
+        """
+        return f"""
+            SELECT
+                (
+                    SELECT COUNT(*)
+                    FROM {table_name}
+                    WHERE {column_name} IS NULL
+                )
+                +
+                (
+                    SELECT COUNT(*)
+                    FROM (
+                        SELECT {column_name}
+                        FROM {table_name}
+                        GROUP BY {column_name}
+                        HAVING COUNT(*) > 1
+                    ) AS dup_groups
+                ) AS violation_count
+        """
+
+    def generate_hierarchy_no_split_test_query(
+        self,
+        table_name: str,
+        child_col: str,
+        parent_col: str,
+    ) -> str:
+        """
+        Generate SQL query to ensure each child PK maps to exactly one parent value.
+
+        Fails if any child_col value is associated with more than one distinct parent_col value.
+        """
+        return f"""
+            SELECT COUNT(*)
+            FROM (
+                SELECT {child_col}
+                FROM {table_name}
+                GROUP BY {child_col}
+                HAVING COUNT(DISTINCT {parent_col}) > 1
+            ) AS violations
+        """
+
+    def generate_level_uniqueness_test_query(
+        self,
+        table_name: str,
+        pk_col: str,
+        attribute_cols: list[str],
+    ) -> str:
+        """
+        Generate SQL query to ensure attribute values for each PK are consistent.
+
+        Fails if the same pk_col is associated with more than one distinct attribute tuple.
+        """
+        if not attribute_cols:
+            # Trivially unique: no attributes to vary.
+            return "SELECT 0"
+
+        attrs = ", ".join(attribute_cols)
+
+        return f"""
+            SELECT COUNT(*)
+            FROM (
+                SELECT {pk_col}
+                FROM (
+                    SELECT {pk_col}, {attrs}
+                    FROM {table_name}
+                    GROUP BY {pk_col}, {attrs}
+                ) AS tuples
+                GROUP BY {pk_col}
+                HAVING COUNT(*) > 1
+            ) AS violations
         """

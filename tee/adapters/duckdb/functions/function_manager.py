@@ -1,6 +1,7 @@
 """Function management for DuckDB."""
 
 import logging
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -57,10 +58,8 @@ class FunctionManager:
 
             # Reset to main schema if we changed context
             if schema_name:
-                try:
+                with suppress(Exception):
                     self.adapter.connection.execute("USE main")
-                except Exception:
-                    pass  # Ignore errors when resetting context
 
             # Attach tags if provided and supported (DuckDB doesn't support tags, but we log)
             if metadata:
@@ -115,10 +114,10 @@ class FunctionManager:
                 # Try to match exact signature
                 sig_types = [t.strip().upper() for t in signature.split(",")]
                 query = """
-                    SELECT COUNT(*) 
+                    SELECT COUNT(*)
                     FROM information_schema.routines r
-                    WHERE r.routine_schema = ? 
-                      AND r.routine_name = ? 
+                    WHERE r.routine_schema = ?
+                      AND r.routine_name = ?
                       AND r.routine_type = 'FUNCTION'
                       AND (
                           SELECT COUNT(*)
@@ -141,8 +140,8 @@ class FunctionManager:
 
             # Name-only check
             query = """
-                SELECT COUNT(*) 
-                FROM information_schema.routines 
+                SELECT COUNT(*)
+                FROM information_schema.routines
                 WHERE routine_schema = ? AND routine_name = ? AND routine_type = 'FUNCTION'
             """
             result = self.adapter.connection.execute(query, [schema_name, func_name]).fetchone()
@@ -184,10 +183,8 @@ class FunctionManager:
         finally:
             # Reset schema context
             if schema_changed:
-                try:
+                with suppress(Exception):
                     self.adapter.connection.execute("USE main")
-                except Exception:
-                    pass
 
     def drop(self, function_name: str) -> None:
         """Drop a function from the database."""

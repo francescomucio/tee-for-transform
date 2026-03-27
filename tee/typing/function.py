@@ -60,4 +60,3 @@ class Function(TypedDict):
 
 # Backward compatibility alias (deprecated, use Function instead)
 ParsedFunction = Function
-

@@ -4,11 +4,13 @@ Real project integration tests using example projects.
 Tests parsing and compiling real projects with functions.
 """
 
-import pytest
 from pathlib import Path
-from tee.parser.core.orchestrator import ParserOrchestrator
-from tee.compiler import compile_project
+
+import pytest
+
 from tee.cli.utils import load_project_config
+from tee.compiler import compile_project
+from tee.parser.core.orchestrator import ParserOrchestrator
 
 
 class TestRealProjectsWithFunctions:
@@ -194,5 +196,7 @@ class TestRealProjectsWithFunctions:
                 # Verify SQL contains function definition
                 if sql_code.get("original_sql"):
                     assert "calculate_percentage" in sql_code["original_sql"].lower()
-                    assert "CREATE" in sql_code["original_sql"].upper() or "FUNCTION" in sql_code["original_sql"].upper()
-
+                    assert (
+                        "CREATE" in sql_code["original_sql"].upper()
+                        or "FUNCTION" in sql_code["original_sql"].upper()
+                    )

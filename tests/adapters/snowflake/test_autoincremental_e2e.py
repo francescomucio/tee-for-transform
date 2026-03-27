@@ -43,7 +43,15 @@ def _load_snowflake_config() -> dict[str, Any] | None:
             pass
 
     # Fallback to environment variables
-    if all(os.getenv(var) for var in ["SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_ACCOUNT", "SNOWFLAKE_DATABASE"]):
+    if all(
+        os.getenv(var)
+        for var in [
+            "SNOWFLAKE_USER",
+            "SNOWFLAKE_PASSWORD",
+            "SNOWFLAKE_ACCOUNT",
+            "SNOWFLAKE_DATABASE",
+        ]
+    ):
         return {
             "type": "snowflake",
             "user": os.getenv("SNOWFLAKE_USER"),
@@ -75,7 +83,9 @@ class TestAutoIncrementalSnowflakeE2E:
         """Get Snowflake config from file or environment."""
         config = _load_snowflake_config()
         if not config:
-            pytest.skip("Missing Snowflake credentials (check tests/.snowflake_config.json or environment variables)")
+            pytest.skip(
+                "Missing Snowflake credentials (check tests/.snowflake_config.json or environment variables)"
+            )
         return config
 
     @pytest.fixture
@@ -124,13 +134,13 @@ class TestAutoIncrementalSnowflakeE2E:
 
         # Create source table with test data
         # Generate brands alphabetically to ensure predictable IDs
-        brands = [f"Brand{chr(65+i)}" for i in range(20)]  # BrandA through BrandT
+        brands = [f"Brand{chr(65 + i)}" for i in range(20)]  # BrandA through BrandT
         # Make BrandLA (13th alphabetically) to simulate SportCap scenario
         brands[12] = "BrandLA"  # This will be 13th alphabetically
 
         create_sql = f"""
         CREATE TABLE {table_name} AS
-        SELECT 
+        SELECT
             1::INTEGER as id,
             'BrandA'::VARCHAR(50) as brand,
             'Category1'::VARCHAR(50) as category,
@@ -144,7 +154,7 @@ class TestAutoIncrementalSnowflakeE2E:
             adapter.execute_query(
                 f"""
                 INSERT INTO {table_name} VALUES
-                ({i+1}::INTEGER, '{brand}'::VARCHAR(50), 'Category{(i % 5) + 1}'::VARCHAR(50), '2024-01-{(i % 28) + 1:02d}'::DATE)
+                ({i + 1}::INTEGER, '{brand}'::VARCHAR(50), 'Category{(i % 5) + 1}'::VARCHAR(50), '2024-01-{(i % 28) + 1:02d}'::DATE)
                 """
             )
 
@@ -189,8 +199,8 @@ class TestAutoIncrementalSnowflakeE2E:
             pass
 
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {source_table}
         WHERE brand IS NOT NULL
@@ -207,7 +217,7 @@ class TestAutoIncrementalSnowflakeE2E:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -221,10 +231,10 @@ class TestAutoIncrementalSnowflakeE2E:
                     "name": "brand_name",
                     "datatype": "string",
                     "description": "Name of the brand",
-                    "tests": ["not_null", "unique"]
-                }
+                    "tests": ["not_null", "unique"],
+                },
             ],
-            "tests": ["row_count_gt_0"]
+            "tests": ["row_count_gt_0"],
         }
 
         # First run
@@ -239,7 +249,9 @@ class TestAutoIncrementalSnowflakeE2E:
         assert count == 20, f"Expected 20 rows, got {count}"
 
         # Verify BrandLA has ID 13 (13th alphabetically)
-        result = adapter.execute_query(f"SELECT brand_id FROM {table_name} WHERE brand_name = 'BrandLA'")
+        result = adapter.execute_query(
+            f"SELECT brand_id FROM {table_name} WHERE brand_name = 'BrandLA'"
+        )
         brand_id = result.fetchone()[0] if hasattr(result, "fetchone") else result[0][0]
         assert brand_id == 13, f"Expected BrandLA to have ID 13, got {brand_id}"
 
@@ -263,8 +275,8 @@ class TestAutoIncrementalSnowflakeE2E:
             pass
 
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {source_table}
         WHERE brand IS NOT NULL
@@ -281,7 +293,7 @@ class TestAutoIncrementalSnowflakeE2E:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -295,10 +307,10 @@ class TestAutoIncrementalSnowflakeE2E:
                     "name": "brand_name",
                     "datatype": "string",
                     "description": "Name of the brand",
-                    "tests": ["not_null", "unique"]
-                }
+                    "tests": ["not_null", "unique"],
+                },
             ],
-            "tests": ["row_count_gt_0"]
+            "tests": ["row_count_gt_0"],
         }
 
         # First run
@@ -322,7 +334,9 @@ class TestAutoIncrementalSnowflakeE2E:
         materialization_handler.materialize(table_name, sql, "incremental", metadata)
 
         # Verify BrandLA was re-inserted with ID 21
-        result = adapter.execute_query(f"SELECT brand_id FROM {table_name} WHERE brand_name = 'BrandLA'")
+        result = adapter.execute_query(
+            f"SELECT brand_id FROM {table_name} WHERE brand_name = 'BrandLA'"
+        )
         brand_id = result.fetchone()[0] if hasattr(result, "fetchone") else result[0][0]
         assert brand_id == 21, f"Expected BrandLA to have ID 21 after re-insertion, got {brand_id}"
 
@@ -352,8 +366,8 @@ class TestAutoIncrementalSnowflakeE2E:
 
         # Use explicit mode (include ID column) to avoid SQL generation issues
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {source_table}
         WHERE brand IS NOT NULL
@@ -370,7 +384,7 @@ class TestAutoIncrementalSnowflakeE2E:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -381,7 +395,7 @@ class TestAutoIncrementalSnowflakeE2E:
                 {
                     "name": "brand_name",
                     "datatype": "string",
-                }
+                },
             ],
         }
 
@@ -449,8 +463,8 @@ class TestAutoIncrementalSnowflakeE2E:
 
         # Use explicit mode for delete_insert strategy
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {source_table}
         WHERE brand IS NOT NULL
@@ -470,7 +484,9 @@ class TestAutoIncrementalSnowflakeE2E:
         assert count == 20
 
         # Get IDs from first run
-        result = adapter.execute_query(f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id")
+        result = adapter.execute_query(
+            f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
+        )
         first_run_ids = {row[1]: row[0] for row in result}
 
         # Second run - should maintain IDs for existing records
@@ -482,7 +498,9 @@ class TestAutoIncrementalSnowflakeE2E:
         assert count == 20
 
         # Verify IDs remain stable
-        result = adapter.execute_query(f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id")
+        result = adapter.execute_query(
+            f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
+        )
         second_run_ids = {row[1]: row[0] for row in result}
         assert first_run_ids == second_run_ids
 
@@ -520,8 +538,8 @@ class TestAutoIncrementalSnowflakeE2E:
 
         # Use explicit mode for empty source test
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {empty_source_table}
         WHERE brand IS NOT NULL
@@ -538,7 +556,7 @@ class TestAutoIncrementalSnowflakeE2E:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -549,7 +567,7 @@ class TestAutoIncrementalSnowflakeE2E:
                 {
                     "name": "brand_name",
                     "datatype": "string",
-                }
+                },
             ],
         }
 
@@ -585,8 +603,8 @@ class TestAutoIncrementalSnowflakeE2E:
 
         # Use explicit mode for delete_insert strategy
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {source_table}
         WHERE brand IS NOT NULL
@@ -603,7 +621,7 @@ class TestAutoIncrementalSnowflakeE2E:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -614,7 +632,7 @@ class TestAutoIncrementalSnowflakeE2E:
                 {
                     "name": "brand_name",
                     "datatype": "string",
-                }
+                },
             ],
         }
 
@@ -623,7 +641,9 @@ class TestAutoIncrementalSnowflakeE2E:
         self._save_model_state(state_manager, table_name, sql, metadata)
 
         # Get IDs from first run
-        result = adapter.execute_query(f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id")
+        result = adapter.execute_query(
+            f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
+        )
         first_run_ids = {row[1]: row[0] for row in result}
 
         # Second run
@@ -631,7 +651,9 @@ class TestAutoIncrementalSnowflakeE2E:
         self._save_model_state(state_manager, table_name, sql, metadata)
 
         # Get IDs from second run
-        result = adapter.execute_query(f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id")
+        result = adapter.execute_query(
+            f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
+        )
         second_run_ids = {row[1]: row[0] for row in result}
 
         # Verify IDs remain stable
@@ -641,7 +663,9 @@ class TestAutoIncrementalSnowflakeE2E:
         materialization_handler.materialize(table_name, sql, "incremental", metadata)
 
         # Get IDs from third run
-        result = adapter.execute_query(f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id")
+        result = adapter.execute_query(
+            f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
+        )
         third_run_ids = {row[1]: row[0] for row in result}
 
         # Verify IDs remain stable across all runs
@@ -746,8 +770,8 @@ class TestAutoIncrementalSnowflakeE2E:
 
         # Explicit mode: query includes the ID column
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {source_table}
         WHERE brand IS NOT NULL
@@ -764,7 +788,7 @@ class TestAutoIncrementalSnowflakeE2E:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -775,7 +799,7 @@ class TestAutoIncrementalSnowflakeE2E:
                 {
                     "name": "brand_name",
                     "datatype": "string",
-                }
+                },
             ],
         }
 
@@ -819,8 +843,8 @@ class TestAutoIncrementalSnowflakeE2E:
             pass
 
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {source_table}
         WHERE brand IS NOT NULL
@@ -837,7 +861,7 @@ class TestAutoIncrementalSnowflakeE2E:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -848,7 +872,7 @@ class TestAutoIncrementalSnowflakeE2E:
                 {
                     "name": "brand_name",
                     "datatype": "string",
-                }
+                },
             ],
         }
 
@@ -868,7 +892,9 @@ class TestAutoIncrementalSnowflakeE2E:
         materialization_handler.materialize(table_name, sql, "incremental", metadata)
 
         # Verify BrandLA was re-inserted with ID 21
-        result = adapter.execute_query(f"SELECT brand_id FROM {table_name} WHERE brand_name = 'BrandLA'")
+        result = adapter.execute_query(
+            f"SELECT brand_id FROM {table_name} WHERE brand_name = 'BrandLA'"
+        )
         brand_id = result.fetchone()[0] if hasattr(result, "fetchone") else result[0][0]
         assert brand_id == 21
 
@@ -893,8 +919,8 @@ class TestAutoIncrementalSnowflakeE2E:
 
         # Use explicit mode for delete_insert strategy
         sql = f"""
-        SELECT 
-            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id, 
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name
         FROM {source_table}
         WHERE brand IS NOT NULL
@@ -911,7 +937,7 @@ class TestAutoIncrementalSnowflakeE2E:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -922,7 +948,7 @@ class TestAutoIncrementalSnowflakeE2E:
                 {
                     "name": "brand_name",
                     "datatype": "string",
-                }
+                },
             ],
         }
 
@@ -936,7 +962,9 @@ class TestAutoIncrementalSnowflakeE2E:
         assert count == 20
 
         # Get IDs from first run
-        result = adapter.execute_query(f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id")
+        result = adapter.execute_query(
+            f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
+        )
         first_run_ids = {row[1]: row[0] for row in result}
 
         # Second run - all records already exist, should not add duplicates
@@ -948,7 +976,9 @@ class TestAutoIncrementalSnowflakeE2E:
         assert count == 20
 
         # Verify IDs remain stable
-        result = adapter.execute_query(f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id")
+        result = adapter.execute_query(
+            f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
+        )
         second_run_ids = {row[1]: row[0] for row in result}
         assert first_run_ids == second_run_ids
 

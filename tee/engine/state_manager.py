@@ -140,7 +140,7 @@ class StateManager:
         if existing_state:
             # Update existing state
             update_sql = """
-                UPDATE tee_model_state 
+                UPDATE tee_model_state
                 SET materialization = ?, last_execution_timestamp = ?, sql_hash = ?,
                     config_hash = ?, updated_at = ?, last_processed_value = ?, strategy = ?
                 WHERE model_name = ?

@@ -137,9 +137,9 @@ class ModelExecutor:
             # Filter out functions from execution order before executing models
             # Functions are already executed above, so we only need models here
             model_execution_order = [
-                name for name in execution_order
-                if name not in (parsed_functions or {})
-                and not name.startswith("test:")
+                name
+                for name in execution_order
+                if name not in (parsed_functions or {}) and not name.startswith("test:")
             ]
 
             self.logger.info(f"Executing {len(model_execution_order)} models in dependency order")
@@ -177,7 +177,9 @@ class ModelExecutor:
             self.logger.info(f"Successfully executed: {len(results['executed_tables'])} tables")
             self.logger.info(f"Failed: {len(results['failed_tables'])} tables")
             if results.get("executed_functions"):
-                self.logger.info(f"Successfully executed: {len(results['executed_functions'])} functions")
+                self.logger.info(
+                    f"Successfully executed: {len(results['executed_functions'])} functions"
+                )
             if results.get("failed_functions"):
                 self.logger.info(f"Failed: {len(results['failed_functions'])} functions")
             if results.get("warnings"):

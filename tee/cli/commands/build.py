@@ -9,6 +9,7 @@ import typer
 from tee.cli.context import CommandContext
 from tee.engine.connection_manager import ConnectionManager
 from tee.executor import build_models
+from tee.parser.output.lookup_generator import generate_lookups
 
 
 def _pluralize(count: int, singular: str, plural: str | None = None) -> str:
@@ -34,6 +35,7 @@ def cmd_build(
     verbose: bool = False,
     select: list[str] | None = None,
     exclude: list[str] | None = None,
+    auto_resolve_level_conflicts: bool = True,
 ) -> None:
     """Execute the build command."""
     ctx = CommandContext(
@@ -49,6 +51,13 @@ def cmd_build(
         typer.echo(f"Building project: {project_folder}")
         ctx.print_variables_info()
         ctx.print_selection_info()
+
+        typer.echo("Refreshing generated lookup models...")
+        generate_lookups(
+            project_path=ctx.project_path,
+            vars_dict=ctx.vars,
+            auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+        )
 
         # Create unified connection manager
         connection_manager = ConnectionManager(
@@ -69,7 +78,7 @@ def cmd_build(
         )
 
         # Calculate statistics
-        total_tables = len(results["executed_tables"]) + len(results["failed_tables"])
+        len(results["executed_tables"]) + len(results["failed_tables"])
         successful_count = len(results["executed_tables"])
         failed_count = len(results["failed_tables"])
         executed_functions = results.get("executed_functions", [])
@@ -84,15 +93,15 @@ def cmd_build(
         if successful_count > 0:
             parts.append(f"{successful_count} {_pluralize(successful_count, 'table')}")
         if executed_functions:
-            parts.append(f"{len(executed_functions)} {_pluralize(len(executed_functions), 'function')}")
-        
-        if parts:
-            typer.echo(
-                f"\nCompleted! Successfully executed: {', '.join(parts)}"
+            parts.append(
+                f"{len(executed_functions)} {_pluralize(len(executed_functions), 'function')}"
             )
+
+        if parts:
+            typer.echo(f"\nCompleted! Successfully executed: {', '.join(parts)}")
         else:
             typer.echo("\nCompleted!")
-        
+
         if total_functions > 0:
             typer.echo(
                 f"  ✅ Successful: {successful_count} {_pluralize(successful_count, 'table')}, {len(executed_functions)} {_pluralize(len(executed_functions), 'function')}"
@@ -101,12 +110,14 @@ def cmd_build(
             typer.echo(
                 f"  ✅ Successful: {successful_count} {_pluralize(successful_count, 'table')}"
             )
-        
+
         if failed_count > 0:
             typer.echo(f"  ❌ Failed: {failed_count} {_pluralize(failed_count, 'table')}")
         if failed_functions:
-            typer.echo(f"  ❌ Failed: {len(failed_functions)} {_pluralize(len(failed_functions), 'function')}")
-        
+            typer.echo(
+                f"  ❌ Failed: {len(failed_functions)} {_pluralize(len(failed_functions), 'function')}"
+            )
+
         typer.echo(
             f"Tests: {passed_tests} passed, {failed_tests} failed out of {total_tests} total"
         )
@@ -118,9 +129,13 @@ def cmd_build(
                 typer.echo(f"  ❌ Failed tests: {failed_tests}")
             raise typer.Exit(1)
         else:
-            typer.echo(f"  ✅ All {successful_count} {_pluralize(successful_count, 'table')} executed successfully!")
+            typer.echo(
+                f"  ✅ All {successful_count} {_pluralize(successful_count, 'table')} executed successfully!"
+            )
             if executed_functions:
-                typer.echo(f"  ✅ All {len(executed_functions)} {_pluralize(len(executed_functions), 'function')} deployed successfully!")
+                typer.echo(
+                    f"  ✅ All {len(executed_functions)} {_pluralize(len(executed_functions), 'function')} deployed successfully!"
+                )
             typer.echo(f"  ✅ All {total_tests} tests passed!")
 
         if ctx.verbose:

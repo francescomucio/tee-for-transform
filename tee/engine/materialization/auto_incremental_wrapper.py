@@ -191,9 +191,7 @@ class AutoIncrementalWrapper:
                         )
                         return modified_query
         except Exception as e:
-            logger.debug(
-                f"Could not use sqlglot to modify expression: {e}, falling back to regex"
-            )
+            logger.debug(f"Could not use sqlglot to modify expression: {e}, falling back to regex")
 
         # Fallback to regex: find the expression that produces the auto_incremental column
         # Pattern: anything AS column_name (case-insensitive)

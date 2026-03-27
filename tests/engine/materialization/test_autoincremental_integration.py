@@ -6,14 +6,12 @@ with all three incremental strategies in a real database environment.
 """
 
 import pytest
-from datetime import datetime, UTC
 
 from tee.engine.materialization.incremental_executor import IncrementalExecutor
-from tee.engine.model_state import ModelStateManager
 from tee.typing.metadata import (
     IncrementalAppendConfig,
-    IncrementalMergeConfig,
     IncrementalDeleteInsertConfig,
+    IncrementalMergeConfig,
 )
 
 
@@ -73,7 +71,7 @@ class TestAutoIncrementalIntegration:
                     "unique_key": ["brand_name"],
                     "filter_column": "created_date",
                     "start_value": "auto",
-                }
+                },
             },
             "schema": [
                 {
@@ -85,7 +83,7 @@ class TestAutoIncrementalIntegration:
                     "name": "brand_name",
                     "datatype": "string",
                 },
-            ]
+            ],
         }
 
     def test_merge_strategy_with_auto_incremental_first_run(
@@ -94,7 +92,7 @@ class TestAutoIncrementalIntegration:
         """Test merge strategy with auto_incremental on first run (empty table)."""
         table_name = "test_schema.dim_brand"
         sql_query = """
-            SELECT DISTINCT 
+            SELECT DISTINCT
                 brand AS brand_name
             FROM test_schema.source_articles
             WHERE brand IS NOT NULL
@@ -130,7 +128,12 @@ class TestAutoIncrementalIntegration:
         assert result[2][0] == 3
 
     def test_merge_strategy_with_auto_incremental_incremental_run(
-        self, executor, duckdb_adapter, source_table_sql, metadata_with_auto_incremental, state_manager
+        self,
+        executor,
+        duckdb_adapter,
+        source_table_sql,
+        metadata_with_auto_incremental,
+        state_manager,
     ):
         """Test merge strategy with auto_incremental on incremental run (new records)."""
         table_name = "test_schema.dim_brand"
@@ -158,9 +161,7 @@ class TestAutoIncrementalIntegration:
         )
 
         # Get max ID after first run
-        result = duckdb_adapter.execute_query(
-            f"SELECT MAX(brand_id) FROM {table_name}"
-)
+        result = duckdb_adapter.execute_query(f"SELECT MAX(brand_id) FROM {table_name}")
         max_id_after_first = result[0][0] if result and result[0][0] else 0
 
         # Add new data to source
@@ -173,9 +174,7 @@ class TestAutoIncrementalIntegration:
         )
 
         # Update state to simulate incremental run
-        state_manager.update_processed_value(
-            "dim_brand", "2024-01-04", strategy="merge"
-        )
+        state_manager.update_processed_value("dim_brand", "2024-01-04", strategy="merge")
 
         # Execute incremental run
         executor.execute_merge_strategy(
@@ -197,9 +196,7 @@ class TestAutoIncrementalIntegration:
         assert result[1][0] == max_id_after_first + 2
 
         # Verify existing records weren't duplicated
-        all_results = duckdb_adapter.execute_query(
-            f"SELECT COUNT(*) FROM {table_name}"
-)
+        all_results = duckdb_adapter.execute_query(f"SELECT COUNT(*) FROM {table_name}")
         assert all_results[0][0] == 5  # 3 original + 2 new
 
     def test_append_strategy_with_auto_incremental_first_run(
@@ -242,7 +239,12 @@ class TestAutoIncrementalIntegration:
         assert result[2][0] == 3
 
     def test_append_strategy_with_auto_incremental_incremental_run(
-        self, executor, duckdb_adapter, source_table_sql, metadata_with_auto_incremental, state_manager
+        self,
+        executor,
+        duckdb_adapter,
+        source_table_sql,
+        metadata_with_auto_incremental,
+        state_manager,
     ):
         """Test append strategy with auto_incremental on incremental run."""
         table_name = "test_schema.dim_brand_append2"
@@ -269,9 +271,7 @@ class TestAutoIncrementalIntegration:
         )
 
         # Get max ID after first run
-        result = duckdb_adapter.execute_query(
-            f"SELECT MAX(brand_id) FROM {table_name}"
-)
+        result = duckdb_adapter.execute_query(f"SELECT MAX(brand_id) FROM {table_name}")
         max_id_after_first = result[0][0] if result and result[0][0] else 0
 
         # Add new data
@@ -283,9 +283,7 @@ class TestAutoIncrementalIntegration:
         )
 
         # Update state
-        state_manager.update_processed_value(
-            "dim_brand_append2", "2024-01-04", strategy="append"
-        )
+        state_manager.update_processed_value("dim_brand_append2", "2024-01-04", strategy="append")
 
         # Execute incremental run
         executor.execute_append_strategy(
@@ -313,15 +311,18 @@ class TestAutoIncrementalIntegration:
         assert result[0][0] > max_id_after_first
 
         # Verify total count - append may add duplicates if time filter is skipped
-        all_results = duckdb_adapter.execute_query(
-            f"SELECT COUNT(*) FROM {table_name}"
-        )
+        all_results = duckdb_adapter.execute_query(f"SELECT COUNT(*) FROM {table_name}")
         # Since filter_column doesn't exist in target, time filter is skipped
         # So all records are appended again (3 original + 4 from source = 7 total, or more if duplicates)
         assert all_results[0][0] >= 4  # At least 3 original + 1 new
 
     def test_delete_insert_strategy_with_auto_incremental(
-        self, executor, duckdb_adapter, source_table_sql, metadata_with_auto_incremental, state_manager
+        self,
+        executor,
+        duckdb_adapter,
+        source_table_sql,
+        metadata_with_auto_incremental,
+        state_manager,
     ):
         """Test delete+insert strategy with auto_incremental."""
         table_name = "test_schema.dim_brand_delete_insert"
@@ -352,9 +353,7 @@ class TestAutoIncrementalIntegration:
         assert duckdb_adapter.table_exists(table_name)
 
         # Get max ID
-        result = duckdb_adapter.execute_query(
-            f"SELECT MAX(brand_id) FROM {table_name}"
-)
+        result = duckdb_adapter.execute_query(f"SELECT MAX(brand_id) FROM {table_name}")
         max_id_after_first = result[0][0] if result and result[0][0] else 0
 
         # Add new data
@@ -384,14 +383,19 @@ class TestAutoIncrementalIntegration:
         # Verify new record was added
         result = duckdb_adapter.execute_query(
             f"SELECT brand_id, brand_name FROM {table_name} WHERE brand_name = 'Brand D'"
-)
+        )
 
         assert result is not None
         # ID should continue from max
         assert result[0][0] >= max_id_after_first + 1
 
     def test_auto_incremental_stable_ids_across_runs(
-        self, executor, duckdb_adapter, source_table_sql, metadata_with_auto_incremental, state_manager
+        self,
+        executor,
+        duckdb_adapter,
+        source_table_sql,
+        metadata_with_auto_incremental,
+        state_manager,
     ):
         """Test that IDs remain stable across multiple incremental runs."""
         table_name = "test_schema.dim_brand_stable"
@@ -423,12 +427,11 @@ class TestAutoIncrementalIntegration:
             row[1]: row[0]
             for row in duckdb_adapter.execute_query(
                 f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
-            )        }
+            )
+        }
 
         # Update state
-        state_manager.update_processed_value(
-            "dim_brand_stable", "2024-01-04", strategy="merge"
-        )
+        state_manager.update_processed_value("dim_brand_stable", "2024-01-04", strategy="merge")
 
         # Second run (no new data, should not change IDs)
         executor.execute_merge_strategy(
@@ -445,8 +448,8 @@ class TestAutoIncrementalIntegration:
             row[1]: row[0]
             for row in duckdb_adapter.execute_query(
                 f"SELECT brand_id, brand_name FROM {table_name} ORDER BY brand_id"
-            )        }
+            )
+        }
 
         # IDs should remain the same
         assert first_run_ids == second_run_ids
-

@@ -11,12 +11,14 @@ __all__ = [
     # Types
     "ParsedModel",
     "DependencyGraph",
+    "DimensionalGraph",
     "TableReference",
     # Exceptions
     "ParserError",
     "SQLParsingError",
     "PythonParsingError",
     "DependencyError",
+    "DimensionalGraphError",
     "VariableSubstitutionError",
     # Constants
     "DEFAULT_MODELS_FOLDER",

@@ -3,52 +3,208 @@
 {% block title %}{{ model_name }} - t4t Documentation{% endblock %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: 0 auto; padding: 32px; background: #f8f9fa; min-height: 100vh;">
+<style>
+  /* Model detail pages are long documents; allow full vertical scrolling. */
+  body { overflow-y: auto !important; overflow-x: hidden !important; }
+  #model-doc-container {
+    position: relative;
+    z-index: 10;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px;
+    background: #f8f9fa;
+    min-height: 100vh;
+  }
+  .section {
+    margin-top: 24px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .section > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    border-bottom: 1px solid #e5e7eb;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section > summary::-webkit-details-marker { display: none; }
+  .section > summary::after {
+    content: "+";
+    font-size: 20px;
+    line-height: 1;
+    color: #6b7280;
+    font-weight: 700;
+    margin-left: 12px;
+  }
+  .section[open] > summary::after { content: "-"; }
+  .section-content { padding: 16px; }
+</style>
+<div id="model-doc-container">
     <div style="margin-bottom: 24px;">
         <a href="index.html" style="color: #2563eb; text-decoration: none; font-size: 14px;">← Back to Documentation</a>
     </div>
 
     <h1 style="font-size: 32px; font-weight: 600; color: #1f2937; margin-bottom: 24px;">{{ model_name }}</h1>
 
-    <div style="margin-bottom: 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-        <span style="display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; background: #3b82f6; color: white;">{{ materialization }}</span>
-        <span style="color: #6b7280; font-size: 14px; font-family: 'JetBrains Mono', monospace;">{{ file_path }}</span>
+    <details class="section" open>
+    <summary>Overview</summary>
+    <div class="section-content">
+        <div style="margin-bottom: 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <span style="display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; background: #3b82f6; color: white;">{{ materialization }}</span>
+            <span style="color: #6b7280; font-size: 14px; font-family: 'JetBrains Mono', monospace;">{{ file_path }}</span>
+        </div>
+        <div style="background: #ffffff; padding: 16px; border-left: 4px solid #3b82f6; border-radius: 6px;">
+            <p style="color: #1f2937; margin: 0;">{{ description }}</p>
+        </div>
     </div>
+    </details>
 
-    <div style="background: #ffffff; padding: 16px; border-left: 4px solid #3b82f6; margin-bottom: 32px; border-radius: 6px;">
-        <p style="color: #1f2937; margin: 0;">{{ description }}</p>
+    {% if hierarchy and hierarchy.levels %}
+    {% set levels = hierarchy.levels %}
+    {% set ns = namespace(source_dim=none, parent_lookup=none, child_lookup=none) %}
+    {% if table_type == "lookup" %}
+        {% for col in schema %}
+            {% if col.fk_to and col.fk_to.table and ".dim_" in col.fk_to.table %}
+                {% set ns.source_dim = col.fk_to.table.split(".")[-1] %}
+            {% endif %}
+        {% endfor %}
+        {% for dep in dependencies %}
+            {% if dep.is_model and ".lkp_" in dep.name %}
+                {% set ns.parent_lookup = dep.name.split(".")[-1] %}
+            {% endif %}
+        {% endfor %}
+        {% for dep in dependents %}
+            {% if dep.is_model and ".lkp_" in dep.name %}
+                {% set ns.child_lookup = dep.name.split(".")[-1] %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% set raw_dim_name = ns.source_dim if ns.source_dim else model_name.split(".")[-1] %}
+    {% if raw_dim_name[:4] == "dim_" %}
+        {% set raw_dim_name = raw_dim_name[4:] %}
+    {% elif raw_dim_name[:4] == "lkp_" %}
+        {% set raw_dim_name = raw_dim_name[4:] %}
+    {% endif %}
+    {% set dim_display = raw_dim_name | replace("_", " ") | title %}
+    <details class="section" open>
+    <summary>Dimensional Modeling</summary>
+    <div class="section-content">
+        {% for level in levels %}
+        {% set i = loop.index0 %}
+        {% set parent = levels[i - 1] if i > 0 else none %}
+        {% set child = levels[i + 1] if i < (levels | length - 1) else none %}
+        <div id="level-{{ level.level_number }}" style="padding: 14px 16px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 12px; background: #f8fafc;">
+            <div style="color: #1f2937; margin-bottom: 6px;">
+                <strong>Dimension:</strong>
+                <span style="font-weight: 700; color: #0f172a;">{{ dim_display }}</span>
+            </div>
+            <div style="color: #1f2937; margin-bottom: 6px;">
+                <strong>Level Name:</strong>
+                <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;">{{ level.name }}</code>
+            </div>
+            <div style="color: #1f2937; margin-bottom: 6px;">
+                <strong>Level Order:</strong>
+                <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;">{{ level.level_number }}</code>
+            </div>
+            <div style="color: #1f2937; margin-bottom: 6px;">
+                <strong>Primary key:</strong>
+                {% if level.primary_key %}<code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;">{{ level.primary_key }}</code>{% else %}<em>None</em>{% endif %}
+            </div>
+            <div style="color: #1f2937; margin-bottom: 6px;">
+                <strong>Label column:</strong>
+                <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;">{{ level.column }}</code>
+            </div>
+            <div style="color: #1f2937; margin-bottom: 6px;">
+                <strong>Parent level:</strong>
+                {% if parent %}
+                <a href="#level-{{ parent.level_number }}" style="color: #2563eb; text-decoration: none; font-style: italic;">{{ parent.name }}</a>
+                {% elif table_type == "lookup" and levels|length == 1 and ns.parent_lookup %}
+                <a href="model_{{ model_name.split('.')[0] }}_{{ ns.parent_lookup }}.html" style="color: #2563eb; text-decoration: none; font-style: italic;">{{ ns.parent_lookup[4:] | replace("_", " ") | title }}</a>
+                {% else %}
+                <em>None</em>
+                {% endif %}
+            </div>
+            <div style="color: #1f2937; margin-bottom: 6px;">
+                <strong>Child level:</strong>
+                {% if child %}
+                <a href="#level-{{ child.level_number }}" style="color: #2563eb; text-decoration: none; font-style: italic;">{{ child.name }}</a>
+                {% elif table_type == "lookup" and levels|length == 1 and ns.child_lookup %}
+                <a href="model_{{ model_name.split('.')[0] }}_{{ ns.child_lookup }}.html" style="color: #2563eb; text-decoration: none; font-style: italic;">{{ ns.child_lookup[4:] | replace("_", " ") | title }}</a>
+                {% else %}
+                <em>None</em>
+                {% endif %}
+            </div>
+            {% if level.columns and level.columns | length > 0 %}
+            <div style="color: #1f2937;">
+                <strong>Extra attribute columns:</strong>
+                <span style="font-family: 'JetBrains Mono', monospace;">{{ level.columns | join(", ") }}</span>
+            </div>
+            {% else %}
+            <div style="color: #6b7280;"><em>No extra attribute columns.</em></div>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
+    </details>
+    {% endif %}
 
-    {% if original_sql or resolved_sql %}
-    <h3 style="font-size: 20px; font-weight: 600; color: #1f2937; margin-top: 32px; margin-bottom: 16px;">SQL Code</h3>
-    
-    {% if original_sql %}
-    <div style="margin-bottom: 24px;">
-        <h4 style="font-size: 18px; font-weight: 500; color: #1f2937; margin-bottom: 8px;">Original SQL</h4>
-        <pre style="background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; color: #0f172a;"><code>{{ original_sql }}</code></pre>
+    {% if inferred_table_type == "fact" %}
+    <details class="section" open>
+    <summary>Dimensional Modeling</summary>
+    <div class="section-content">
+        <div style="color: #1f2937; margin-bottom: 10px;">
+            <strong>Table granularity:</strong>
+            {% if fact_granularity and fact_granularity|length > 0 %}
+                <span style="color: #1f2937;">one row per combination of</span>
+                <span style="font-family: 'JetBrains Mono', monospace;">
+                    {% for g in fact_granularity %}{{ g.dimension_level }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </span>
+            {% else %}
+                <em>Not inferable from dimension links.</em>
+            {% endif %}
+        </div>
+        {% if fact_granularity and fact_granularity|length > 0 %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="padding: 10px 14px; text-align: left; font-weight: 600; color: #1f2937; border-bottom: 1px solid #e5e7eb;">Fact Column</th>
+                    <th style="padding: 10px 14px; text-align: left; font-weight: 600; color: #1f2937; border-bottom: 1px solid #e5e7eb;">Dimension.Level</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in fact_granularity %}
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 10px 14px; color: #1f2937;"><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;">{{ g.column }}</code></td>
+                    <td style="padding: 10px 14px; color: #1f2937;"><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;">{{ g.dimension_level }}</code></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
     </div>
-    {% endif %}
-    
-    {% if resolved_sql and resolved_sql != original_sql %}
-    <div style="margin-bottom: 24px;">
-        <h4 style="font-size: 18px; font-weight: 500; color: #1f2937; margin-bottom: 8px;">Compiled SQL</h4>
-        <pre style="background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; color: #0f172a;"><code>{{ resolved_sql }}</code></pre>
-    </div>
-    {% elif resolved_sql %}
-    <div style="margin-bottom: 24px;">
-        <h4 style="font-size: 18px; font-weight: 500; color: #1f2937; margin-bottom: 8px;">SQL</h4>
-        <pre style="background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; color: #0f172a;"><code>{{ resolved_sql }}</code></pre>
-    </div>
-    {% endif %}
+    </details>
     {% endif %}
 
     {% if schema %}
-    <h3 style="font-size: 20px; font-weight: 600; color: #1f2937; margin-top: 32px; margin-bottom: 16px;">Schema</h3>
-    <table style="width: 100%; border-collapse: collapse; margin-top: 16px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
+    <details class="section" open>
+    <summary>Schema</summary>
+    <div class="section-content">
+    <table style="width: 100%; border-collapse: collapse; margin-top: 0; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
         <thead>
             <tr style="background: #f8f9fa;">
                 <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #1f2937; border-bottom: 1px solid #e5e7eb;">Column</th>
                 <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #1f2937; border-bottom: 1px solid #e5e7eb;">Type</th>
+                {% if inferred_table_type == "fact" %}
+                <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #1f2937; border-bottom: 1px solid #e5e7eb;">Dimension.Level</th>
+                {% endif %}
                 <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #1f2937; border-bottom: 1px solid #e5e7eb;">Description</th>
                 <th style="padding: 12px 16px; text-align: left; font-weight: 600; color: #1f2937; border-bottom: 1px solid #e5e7eb;">Tests</th>
             </tr>
@@ -58,6 +214,9 @@
             <tr style="border-bottom: 1px solid #e5e7eb;">
                 <td style="padding: 12px 16px; color: #1f2937;"><strong>{{ col.name }}</strong></td>
                 <td style="padding: 12px 16px; color: #1f2937;"><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 14px;">{{ col.datatype }}</code></td>
+                {% if inferred_table_type == "fact" %}
+                <td style="padding: 12px 16px; color: #1f2937;">{% if col.dimension_level %}<code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 14px;">{{ col.dimension_level }}</code>{% else %}<em style="color: #9ca3af;">—</em>{% endif %}</td>
+                {% endif %}
                 <td style="padding: 12px 16px; color: #6b7280;">{% if col.description %}{{ col.description }}{% else %}<em>No description</em>{% endif %}</td>
                 <td style="padding: 12px 16px;">
                     {% for test in col.tests %}
@@ -68,45 +227,89 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
+    </details>
     {% endif %}
 
+    {% if original_sql or resolved_sql %}
+    <details class="section" open>
+    <summary>SQL Code</summary>
+    <div class="section-content">
+    {% if original_sql %}
+    <div style="margin-bottom: 24px;">
+        <h4 style="font-size: 18px; font-weight: 500; color: #1f2937; margin-bottom: 8px;">Original SQL</h4>
+        <pre style="background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; color: #0f172a; white-space: pre;"><code>{{ original_sql | replace('\\n', '\n') }}</code></pre>
+    </div>
+    {% endif %}
+
+    {% if resolved_sql and resolved_sql != original_sql %}
+    <div style="margin-bottom: 24px;">
+        <h4 style="font-size: 18px; font-weight: 500; color: #1f2937; margin-bottom: 8px;">Compiled SQL</h4>
+        <pre style="background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; color: #0f172a; white-space: pre;"><code>{{ resolved_sql | replace('\\n', '\n') }}</code></pre>
+    </div>
+    {% elif resolved_sql %}
+    <div style="margin-bottom: 24px;">
+        <h4 style="font-size: 18px; font-weight: 500; color: #1f2937; margin-bottom: 8px;">SQL</h4>
+        <pre style="background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; color: #0f172a; white-space: pre;"><code>{{ resolved_sql | replace('\\n', '\n') }}</code></pre>
+    </div>
+    {% endif %}
+    </div>
+    </details>
+    {% endif %}
+
+    {% if dependencies or dependents %}
+    <details class="section" open>
+    <summary>Dependencies</summary>
+    <div class="section-content">
+    <h4 style="font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 10px;">Ancestors</h4>
     {% if dependencies %}
-    <h3 style="font-size: 20px; font-weight: 600; color: #1f2937; margin-top: 32px; margin-bottom: 16px;">Dependencies (Ancestors)</h3>
     <ul style="list-style: none; padding-left: 0; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
         {% for dep in dependencies %}
         <li style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; {% if loop.last %}border-bottom: none;{% endif %}">
             {% if dep.is_model %}
             <a href="model_{{ dep.safe_name }}.html" style="color: #2563eb; text-decoration: none; font-weight: 500;">{{ dep.name }}</a>
+            {% elif dep.is_test %}
+            <a href="test_{{ dep.safe_name }}.html" style="color: #7c3aed; text-decoration: none; font-weight: 500;">{{ dep.name }}</a>
             {% else %}
             <span style="color: #1f2937;">{{ dep.name }}</span>
             {% endif %}
         </li>
         {% endfor %}
     </ul>
+    {% else %}
+    <p style="color: #6b7280; margin: 0 0 14px 0;"><em>No ancestors.</em></p>
     {% endif %}
 
+    <h4 style="font-size: 16px; font-weight: 600; color: #1f2937; margin: 14px 0 10px 0;">Descendants</h4>
     {% if dependents %}
-    <h3 style="font-size: 20px; font-weight: 600; color: #1f2937; margin-top: 32px; margin-bottom: 16px;">Dependents (Descendants)</h3>
     <ul style="list-style: none; padding-left: 0; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
         {% for dep in dependents %}
         <li style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; {% if loop.last %}border-bottom: none;{% endif %}">
             {% if dep.is_model %}
             <a href="model_{{ dep.safe_name }}.html" style="color: #2563eb; text-decoration: none; font-weight: 500;">{{ dep.name }}</a>
+            {% elif dep.is_test %}
+            <a href="test_{{ dep.safe_name }}.html" style="color: #7c3aed; text-decoration: none; font-weight: 500;">{{ dep.name }}</a>
             {% else %}
             <span style="color: #1f2937;">{{ dep.name }}</span>
             {% endif %}
         </li>
         {% endfor %}
     </ul>
+    {% else %}
+    <p style="color: #6b7280; margin: 0;"><em>No descendants.</em></p>
+    {% endif %}
+    </div>
+    </details>
     {% endif %}
 
     {% if tests %}
-    <h3 style="font-size: 20px; font-weight: 600; color: #1f2937; margin-top: 32px; margin-bottom: 16px;">Tests</h3>
+    <details class="section" open>
+    <summary>Tests</summary>
+    <div class="section-content">
     <ul style="list-style: none; padding-left: 0; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
         {% for test in tests %}
         <li style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; {% if loop.last %}border-bottom: none;{% endif %}">
-            {% set test_safe_name = test.name.replace(':', '_').replace('.', '_') %}
-            <a href="model_{{ test_safe_name }}.html" style="color: #2563eb; text-decoration: none;">
+            <a href="test_{{ test.safe_name }}.html" style="color: #2563eb; text-decoration: none;">
                 <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 14px;">{{ test.name }}</code>
             </a>
             {% if test.params %}<span style="color: #6b7280; font-size: 14px;">({{ test.params_json }})</span>{% endif %}
@@ -114,10 +317,14 @@
         </li>
         {% endfor %}
     </ul>
+    </div>
+    </details>
     {% endif %}
 
     {% if incremental %}
-    <h3 style="font-size: 20px; font-weight: 600; color: #1f2937; margin-top: 32px; margin-bottom: 16px;">Incremental Configuration</h3>
+    <details class="section" open>
+    <summary>Incremental Configuration</summary>
+    <div class="section-content">
     <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px;">
         <ul style="list-style: none; padding-left: 0; margin: 0;">
             <li style="padding: 8px 0; color: #1f2937;"><strong>Strategy:</strong> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;">{{ incremental.strategy }}</code></li>
@@ -129,7 +336,22 @@
             {% endif %}
         </ul>
     </div>
+    </div>
+    </details>
     {% endif %}
 </div>
+<script>
+  // Close model docs when clicking outside the documentation panel.
+  (function () {
+    const panel = document.getElementById("model-doc-container");
+    if (!panel) return;
+    document.addEventListener("click", function (event) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (panel.contains(target)) return;
+      window.location.href = "index.html";
+    });
+  })();
+</script>
 {% endblock %}
 

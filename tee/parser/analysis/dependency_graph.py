@@ -7,6 +7,7 @@ from graphlib import TopologicalSorter
 from pathlib import Path
 from typing import Any
 
+from tee.parser.shared.dimension_registry import resolve_dimension_target_table
 from tee.parser.shared.exceptions import DependencyError
 from tee.parser.shared.types import (
     DependencyGraph,
@@ -29,6 +30,7 @@ class DependencyGraphBuilder:
         table_resolver,
         project_folder: Path | None = None,
         parsed_functions: dict[str, ParsedFunction] | None = None,
+        dimension_registry: dict[str, str] | None = None,
     ) -> DependencyGraph:
         """
         Build a dependency graph from the parsed SQL models, functions, and tests.
@@ -110,6 +112,44 @@ class DependencyGraphBuilder:
 
                 dependencies[table_name] = list(table_deps)
 
+            # Keep a snapshot of SQL-derived dependencies before semantic FK enrichment.
+            sql_dependencies = {k: list(v) for k, v in dependencies.items()}
+
+            # Add semantic FK dependencies for visualization/testing.
+            # This ensures facts can run tests that validate FK consistency even when
+            # the SQL does not directly join to the dimension tables.
+            parsed_model_ids = set(parsed_models.keys())
+            reg = dimension_registry or {}
+            for table_name, model_info in parsed_models.items():
+                metadata = self._extract_metadata(model_info)
+                if not metadata or "schema" not in metadata:
+                    continue
+
+                for col_def in metadata.get("schema") or []:
+                    if not isinstance(col_def, dict):
+                        continue
+
+                    dim_table = None
+                    fk_to = col_def.get("fk_to")
+                    if isinstance(fk_to, dict):
+                        tt = fk_to.get("table")
+                        if isinstance(tt, str) and tt in parsed_model_ids:
+                            dim_table = tt
+
+                    if not dim_table:
+                        dim_ref = col_def.get("dimension")
+                        if isinstance(dim_ref, str) and dim_ref.strip():
+                            candidate = resolve_dimension_target_table(
+                                table_name, dim_ref, reg, parsed_model_ids
+                            )
+                            if candidate in parsed_model_ids:
+                                dim_table = candidate
+
+                    if dim_table:
+                        dependencies[table_name] = list(
+                            set(dependencies.get(table_name, [])) | {dim_table}
+                        )
+
             # Parse tests and add them to the graph
             if project_folder:
                 test_dependencies = self._parse_test_dependencies(
@@ -133,6 +173,12 @@ class DependencyGraphBuilder:
                 for dep in deps:
                     edges.append((dep, table))  # dep -> table (dependency direction)
 
+            # Build SQL-only edges for view-specific rendering rules.
+            sql_edges = []
+            for table, deps in sql_dependencies.items():
+                for dep in deps:
+                    sql_edges.append((dep, table))
+
             # Detect cycles and build execution order using graphlib
             cycles = self._detect_cycles_with_graphlib(dependencies)
             execution_order = (
@@ -144,6 +190,7 @@ class DependencyGraphBuilder:
             return {
                 "nodes": list(all_nodes),
                 "edges": edges,
+                "sql_edges": sql_edges,
                 "dependencies": dependencies,
                 "dependents": dependents,
                 "execution_order": execution_order,
@@ -288,8 +335,8 @@ class DependencyGraphBuilder:
         test_instance = discovered_tests[test_name]
         try:
             # Load test SQL (handle both SqlTest and PythonTest)
-            from ...testing.sql_test import SqlTest
             from ...testing.python_test import PythonTest
+            from ...testing.sql_test import SqlTest
 
             if isinstance(test_instance, SqlTest):
                 # SqlTest: load from file
@@ -430,7 +477,7 @@ class DependencyGraphBuilder:
     def _topological_sort_with_graphlib(
         self,
         dependencies: DependencyInfo,
-        parsed_functions: dict[str, ParsedFunction] | None = None,
+        _parsed_functions: dict[str, ParsedFunction] | None = None,
     ) -> ExecutionOrder:
         """
         Perform topological sort using graphlib.TopologicalSorter.
@@ -440,7 +487,7 @@ class DependencyGraphBuilder:
 
         Args:
             dependencies: Dict mapping node -> list of dependencies
-            parsed_functions: Optional parsed functions dict (for reference, not used in sorting)
+            _parsed_functions: Optional parsed functions dict (for reference, not used in sorting)
 
         Returns:
             List of nodes in dependency order (dependencies first)

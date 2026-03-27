@@ -1,0 +1,84 @@
+{% extends "interactive_base.html" %}
+
+{% block title %}{{ test_node }} - t4t Documentation{% endblock %}
+
+{% block content %}
+<style>
+  body { overflow-y: auto !important; overflow-x: hidden !important; }
+  #test-doc-container {
+    position: relative;
+    z-index: 10;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px;
+    background: #f8f9fa;
+    min-height: 100vh;
+  }
+  .section {
+    margin-top: 20px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .section > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    border-bottom: 1px solid #e5e7eb;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section > summary::-webkit-details-marker { display: none; }
+  .section > summary::after {
+    content: "+";
+    font-size: 18px;
+    line-height: 1;
+    color: #6b7280;
+    font-weight: 700;
+    margin-left: 10px;
+  }
+  .section[open] > summary::after { content: "-"; }
+  .section-content { padding: 16px; }
+</style>
+
+<div id="test-doc-container">
+  <div style="margin-bottom: 24px; display: flex; gap: 14px;">
+    <a href="index.html" style="color: #2563eb; text-decoration: none; font-size: 14px;">← Back to Documentation</a>
+    <a href="model_{{ model_safe_name }}.html" style="color: #2563eb; text-decoration: none; font-size: 14px;">← Back to Model</a>
+  </div>
+
+  <h1 style="font-size: 28px; font-weight: 600; color: #1f2937; margin-bottom: 12px;">{{ test_node }}</h1>
+
+  <div style="margin-bottom: 22px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+    <span style="display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background: #6d28d9; color: white;">TEST</span>
+    <span style="display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; background: #6b7280; color: white;">{{ severity }}</span>
+    <span style="color: #374151; font-size: 14px;"><strong>Model:</strong> {{ model_name }}</span>
+    {% if column_name %}
+    <span style="color: #374151; font-size: 14px;"><strong>Column:</strong> {{ column_name }}</span>
+    {% endif %}
+    <span style="color: #374151; font-size: 14px;"><strong>Type:</strong> {{ test_name }}</span>
+  </div>
+
+  {% if params_json %}
+  <details class="section" open>
+    <summary>Parameters</summary>
+    <div class="section-content">
+      <pre style="background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.45; color: #0f172a;"><code>{{ params_json }}</code></pre>
+    </div>
+  </details>
+  {% endif %}
+
+  <details class="section" open>
+    <summary>Generated SQL</summary>
+    <div class="section-content">
+      <pre style="background: #f1f5f9; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.45; color: #0f172a; white-space: pre;"><code>{{ generated_sql | replace('\\n', '\n') }}</code></pre>
+    </div>
+  </details>
+</div>
+{% endblock %}

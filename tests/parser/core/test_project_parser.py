@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from tee.parser import ProjectParser
 from tee.parser.analysis import TableResolver
 

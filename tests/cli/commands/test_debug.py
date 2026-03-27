@@ -2,11 +2,12 @@
 Tests for the debug CLI command.
 """
 
-import pytest
 import tempfile
-from pathlib import Path
-from unittest.mock import patch, MagicMock, Mock
 from io import StringIO
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from tee.cli.commands.debug import cmd_debug
 
@@ -78,7 +79,9 @@ class TestDebugCommand:
 
     @patch("tee.cli.commands.debug.ConnectionManager")
     @patch("tee.cli.commands.debug.CommandContext")
-    def test_cmd_debug_connection_failure(self, mock_context_class, mock_connection_manager_class, mock_args):
+    def test_cmd_debug_connection_failure(
+        self, mock_context_class, mock_connection_manager_class, mock_args
+    ):
         """Test debug command when connection fails."""
         # Setup mocks
         mock_ctx = Mock()
@@ -94,7 +97,10 @@ class TestDebugCommand:
         mock_connection_manager_class.return_value = mock_connection_manager
 
         # Capture both stdout and stderr (typer.echo with err=True writes to stderr)
-        with patch("sys.stdout", new=StringIO()) as fake_out, patch("sys.stderr", new=StringIO()) as fake_err:
+        with (
+            patch("sys.stdout", new=StringIO()) as fake_out,
+            patch("sys.stderr", new=StringIO()) as fake_err,
+        ):
             cmd_debug(mock_args)
 
         output = fake_out.getvalue() + fake_err.getvalue()
@@ -103,13 +109,17 @@ class TestDebugCommand:
 
     @patch("tee.cli.commands.debug.ConnectionManager")
     @patch("tee.cli.commands.debug.CommandContext")
-    def test_cmd_debug_with_database_info(self, mock_context_class, mock_connection_manager_class, mock_args):
+    def test_cmd_debug_with_database_info(
+        self, mock_context_class, mock_connection_manager_class, mock_args
+    ):
         """Test debug command with full database info."""
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = Path(mock_args.project_folder)
         mock_ctx.vars = {}
-        mock_ctx.config = {"connection": {"type": "snowflake", "host": "account.snowflakecomputing.com"}}
+        mock_ctx.config = {
+            "connection": {"type": "snowflake", "host": "account.snowflakecomputing.com"}
+        }
         mock_ctx.print_variables_info = Mock()
         mock_context_class.return_value = mock_ctx
 
@@ -124,7 +134,11 @@ class TestDebugCommand:
             "warehouse": "MY_WAREHOUSE",
             "role": "MY_ROLE",
         }
-        mock_connection_manager.get_supported_materializations.return_value = ["table", "view", "incremental"]
+        mock_connection_manager.get_supported_materializations.return_value = [
+            "table",
+            "view",
+            "incremental",
+        ]
         mock_connection_manager_class.return_value = mock_connection_manager
 
         # Capture stdout
@@ -139,7 +153,9 @@ class TestDebugCommand:
 
     @patch("tee.cli.commands.debug.ConnectionManager")
     @patch("tee.cli.commands.debug.CommandContext")
-    def test_cmd_debug_handles_exceptions(self, mock_context_class, mock_connection_manager_class, mock_args):
+    def test_cmd_debug_handles_exceptions(
+        self, mock_context_class, mock_connection_manager_class, mock_args
+    ):
         """Test debug command handles exceptions gracefully."""
         # Setup mocks
         mock_ctx = Mock()
@@ -164,7 +180,9 @@ class TestDebugCommand:
 
     @patch("tee.cli.commands.debug.ConnectionManager")
     @patch("tee.cli.commands.debug.CommandContext")
-    def test_cmd_debug_cleanup_connection_manager(self, mock_context_class, mock_connection_manager_class, mock_args):
+    def test_cmd_debug_cleanup_connection_manager(
+        self, mock_context_class, mock_connection_manager_class, mock_args
+    ):
         """Test that connection manager is cleaned up."""
         # Setup mocks
         mock_ctx = Mock()
@@ -190,7 +208,9 @@ class TestDebugCommand:
 
     @patch("tee.cli.commands.debug.ConnectionManager")
     @patch("tee.cli.commands.debug.CommandContext")
-    def test_cmd_debug_cleanup_on_exception(self, mock_context_class, mock_connection_manager_class, mock_args):
+    def test_cmd_debug_cleanup_on_exception(
+        self, mock_context_class, mock_connection_manager_class, mock_args
+    ):
         """Test that connection manager is cleaned up even on exception."""
         # Setup mocks
         mock_ctx = Mock()
@@ -215,7 +235,9 @@ class TestDebugCommand:
 
     @patch("tee.cli.commands.debug.ConnectionManager")
     @patch("tee.cli.commands.debug.CommandContext")
-    def test_cmd_debug_with_variables(self, mock_context_class, mock_connection_manager_class, mock_args):
+    def test_cmd_debug_with_variables(
+        self, mock_context_class, mock_connection_manager_class, mock_args
+    ):
         """Test debug command with variables."""
         # Setup mocks
         mock_ctx = Mock()
@@ -239,4 +261,3 @@ class TestDebugCommand:
         # Verify variables were passed to ConnectionManager
         call_args = mock_connection_manager_class.call_args
         assert call_args.kwargs["variables"] == {"env": "production"}
-

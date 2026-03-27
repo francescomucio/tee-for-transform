@@ -165,4 +165,3 @@ class MetadataModelHelpers:
     def create_invalid_schema_type_table():
         """Create a table with invalid schema type."""
         return "SELECT * FROM my_first_table"
-

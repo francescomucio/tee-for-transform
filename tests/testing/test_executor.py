@@ -2,13 +2,14 @@
 Unit tests for TestExecutor.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
+import pytest
+
+from tee.testing.base import TestRegistry, TestSeverity
 from tee.testing.executor import TestExecutor
-from tee.testing.base import TestSeverity, TestResult, TestRegistry
 from tee.testing.standard_tests import NotNullTest
 
 
@@ -230,7 +231,7 @@ class TestTestExecutor:
         sql_file.write_text("SELECT 1 FROM {{ table_name }} WHERE id IS NULL")
 
         # Create executor with project folder (should trigger discovery)
-        executor = TestExecutor(mock_adapter, project_folder=str(temp_dir))
+        TestExecutor(mock_adapter, project_folder=str(temp_dir))
 
         # Verify SQL test was discovered and registered
         from tee.testing.sql_test import SqlTest

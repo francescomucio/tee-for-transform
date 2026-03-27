@@ -1022,5 +1022,5 @@ Function tests support placeholders:
 - [Functions](functions.md) - User-Defined Functions (UDFs) and function testing
 - [Execution Engine](execution-engine.md) - Learn about model execution
 - [Database Adapters](database-adapters.md) - Database-specific features
-- [Examples](../user-guide/examples/) - Practical usage examples
+- [Examples](examples/README.md) - Practical usage examples
 

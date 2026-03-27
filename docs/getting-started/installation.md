@@ -1,84 +1,53 @@
 # Installation
 
-t4t is a Python package that can be installed using `uv`, pip, or other Python package managers.
+The **supported way to use t4t today** is to install from a clone of the GitHub repository (there is no published PyPI release aligned with these docs yet). The Python package name in the repo is `tee`; the CLI entry point is `t4t`.
 
 ## Prerequisites
 
-- Python 3.14+
-- uv (recommended) or pip
+- Python 3.14+ (see `requires-python` in the repository `pyproject.toml`)
+- [uv](https://github.com/astral-sh/uv) (recommended)
 
-## Installation Methods
-
-### Using uv (Recommended)
+## Install from GitHub (recommended)
 
 ```bash
-# Install t4t
-uv add tee
+git clone https://github.com/francescomucio/tee-as-transformation.git
+cd tee-as-transformation
 
-# Or add to an existing project
-uv add tee
-```
-
-### Using pip
-
-```bash
-# Install t4t
-pip install tee
-
-# Or add to requirements.txt
-echo "tee" >> requirements.txt
-pip install -r requirements.txt
-```
-
-### Development Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/tee.git
-cd tee
-
-# Install in development mode
+# Install project + dependencies into .venv (exposes `t4t` via uv run)
 uv sync
+
+# Optional: editable install so `t4t` is on PATH when the venv is active
 uv pip install -e .
 ```
 
-## Database Dependencies
+Run the CLI:
 
-t4t supports multiple databases. Install the appropriate driver for your database:
-
-### DuckDB (Default)
 ```bash
-uv add duckdb
+uv run t4t --help
 ```
 
-### Snowflake
-```bash
-uv add snowflake-connector-python
-```
+## PyPI / `pip install` (not available yet)
 
-### PostgreSQL
-```bash
-uv add psycopg2-binary
-```
+When a release is published to PyPI, installation may look like `pip install tee` or `uv add tee`. Until then, use the clone workflow above.
 
-### BigQuery
-```bash
-uv add google-cloud-bigquery
-```
+## Database drivers
 
-## Verify Installation
+Core dependencies (including DuckDB and the Snowflake connector) are already listed in the repository `pyproject.toml` and are installed with `uv sync`. If you add optional backends or trim dependencies for a custom setup:
+
+- **PostgreSQL**: add `psycopg2-binary` (or your preferred driver) to the environment
+- **BigQuery**: add `google-cloud-bigquery`
+
+## Verify installation
 
 ```python
-# Test the installation
 import tee
-print(f"t4t version: {tee.__version__}")
+from tee.adapters import list_available_adapters
 
-# Test database adapters
-from tee.adapters import get_adapter
-print("Installation successful!")
+print("t4t import OK")
+print("Adapters:", ", ".join(sorted(list_available_adapters())))
 ```
 
-## Next Steps
+## Next steps
 
-- [Quick Start](quick-start.md) - Get up and running quickly
-- [Configuration](configuration.md) - Configure your database connections
+- [Quick Start](quick-start.md) — create a project with `t4t init`
+- [Configuration](configuration.md) — `project.toml` and connection settings

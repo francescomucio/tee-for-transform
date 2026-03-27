@@ -241,6 +241,7 @@ t4t run <project_folder> [options]
 - `--vars <JSON>` - Variables to pass to models (JSON format)
 - `-s, --select <pattern>` - Select models by pattern (can be used multiple times)
 - `-e, --exclude <pattern>` - Exclude models by pattern (can be used multiple times)
+- `--auto-resolve-level-conflicts` - When generating lookups, resolve duplicate hierarchy level names as `<dimension>_<level>` (default: on)
 
 **Examples:**
 ```bash
@@ -302,6 +303,7 @@ t4t build <project_folder> [options]
 - `--vars <JSON>` - Variables to pass to models (JSON format)
 - `-s, --select <pattern>` - Select models by pattern (can be used multiple times)
 - `-e, --exclude <pattern>` - Exclude models by pattern (can be used multiple times)
+- `--auto-resolve-level-conflicts` - When generating lookups, resolve duplicate hierarchy level names as `<dimension>_<level>` (default: on)
 
 **Examples:**
 ```bash
@@ -473,6 +475,33 @@ t4t debug ./my_project -v
 
 ---
 
+### `generate-lookups` - Generate Lookup Models
+
+Generate lookup table models (`lkp_<level>.sql` / `.py`) from hierarchical dimension metadata. Existing lookup files are skipped.
+
+**Usage:**
+```bash
+t4t generate-lookups <project_folder> [options]
+```
+
+**Arguments:**
+- `project_folder` (required) - Path to the project folder containing `project.toml`
+
+**Options:**
+- `-v, --verbose` - Enable verbose output
+- `--vars <JSON>` - Variables to pass to models (JSON format)
+- `--auto-resolve-level-conflicts` - Resolve duplicate hierarchy level names as `<dimension>_<level>` (default: on)
+
+**Examples:**
+```bash
+t4t generate-lookups ./my_project
+t4t generate-lookups ./my_project --vars '{"env": "prod"}'
+```
+
+**Note:** `t4t run`, `t4t build`, and `t4t docs` refresh generated lookups by default (unless you use `--skip-lookups` on `docs`). Use `generate-lookups` when you only want to materialize lookup SQL/Python files on disk without a full run.
+
+---
+
 ### `compile` - Compile Project to OTS Modules
 
 Compile t4t project to Open Transformation Specification (OTS) modules and test libraries.
@@ -536,6 +565,9 @@ t4t docs <project_folder> [options]
 - `-v, --verbose` - Enable verbose output
 - `--vars <JSON>` - Variables to pass to models (JSON format)
 - `-o, --output-dir <path>` - Output directory for docs (default: `output/docs`)
+- `--auto-resolve-level-conflicts` - When generating lookups before docs, resolve duplicate hierarchy level names as `<dimension>_<level>` (default: on)
+- `--skip-lookups` - Skip lookup generation before building docs
+- `--infer-dim-from-column-names` - Infer dimensional links from fact column names that match dimension/lookup primary keys (default: off)
 
 **Examples:**
 ```bash
@@ -547,10 +579,16 @@ t4t docs ./my_project --output-dir ./documentation
 
 # Generate docs with variables
 t4t docs ./my_project --vars '{"env": "prod"}'
+
+# Generate docs without refreshing generated lookups
+t4t docs ./my_project --skip-lookups
+
+# Infer dimensional graph edges from fact column naming
+t4t docs ./my_project --infer-dim-from-column-names
 ```
 
 **What it does:**
-1. Parses all SQL/Python models in the `models/` directory
+1. Optionally refreshes generated lookups (unless `--skip-lookups` is used)
 2. Discovers and parses functions (UDFs)
 3. Builds dependency graph showing relationships between models, functions, and tests
 4. Generates static HTML documentation site with:
@@ -689,6 +727,7 @@ t4t --help
 t4t init --help
 t4t run --help
 t4t compile --help
+t4t generate-lookups --help
 t4t ots --help
 t4t ots run --help
 ```
@@ -705,6 +744,7 @@ t4t ots run --help
 | `test` | ✅ | ❌ | ✅ | ❌ | ✅ (ERROR only) |
 | `seed` | ❌ | ❌ | ❌ | ✅ | N/A |
 | `debug` | ❌ | ❌ | ❌ | ❌ | N/A |
+| `generate-lookups` | ❌ | ❌ | ❌ | ❌ | N/A |
 | `import` | ❌ | ❌ | ❌ | ❌ | N/A |
 | `ots run` | ❌ | ✅ | ❌ | ❌ | ❌ |
 | `ots validate` | ❌ | ❌ | ❌ | ❌ | N/A |
@@ -721,6 +761,6 @@ For more information:
 
 - Run `t4t --help` for general help
 - Run `t4t <command> --help` for command-specific help
-- See [Quick Start Guide](getting-started/quick-start.md) for examples
-- See [Examples](examples/) for practical usage patterns
+- See [Quick Start Guide](../getting-started/quick-start.md) for examples
+- See [Examples](examples/README.md) for practical usage patterns
 

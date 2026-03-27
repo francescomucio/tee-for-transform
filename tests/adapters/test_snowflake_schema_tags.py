@@ -2,9 +2,10 @@
 Test cases for Snowflake schema-level tag attachment functionality.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
-from typing import Any
+
 from tee.adapters.snowflake.adapter import SnowflakeAdapter
 
 
@@ -50,17 +51,21 @@ class TestSnowflakeSchemaTagAttachment:
 
         schema_metadata = {
             "tags": ["analytics", "production"],
-            "object_tags": {"sensitivity_tag": "pii"}
+            "object_tags": {"sensitivity_tag": "pii"},
         }
 
         adapter._create_schema_if_needed("my_schema.table", schema_metadata)
 
         # Should create schema
-        create_calls = [str(call) for call in cursor.execute.call_args_list if "CREATE SCHEMA" in str(call)]
+        create_calls = [
+            str(call) for call in cursor.execute.call_args_list if "CREATE SCHEMA" in str(call)
+        ]
         assert len(create_calls) > 0
 
         # Should attach tags
-        alter_calls = [str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)]
+        alter_calls = [
+            str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)
+        ]
         assert len(alter_calls) >= 3  # 2 for tags, 1 for object_tags
 
     def test_attach_tags_to_existing_schema_with_force_update(self, snowflake_adapter):
@@ -69,15 +74,14 @@ class TestSnowflakeSchemaTagAttachment:
         # Mock schema exists
         cursor.fetchone.return_value = (1,)
 
-        schema_metadata = {
-            "tags": ["analytics"],
-            "force_tag_update": True
-        }
+        schema_metadata = {"tags": ["analytics"], "force_tag_update": True}
 
         adapter._create_schema_if_needed("my_schema.table", schema_metadata)
 
         # Should attach tags even though schema exists
-        alter_calls = [str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)]
+        alter_calls = [
+            str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)
+        ]
         assert len(alter_calls) > 0
 
     def test_do_not_attach_tags_to_existing_schema_without_force(self, snowflake_adapter):
@@ -94,7 +98,9 @@ class TestSnowflakeSchemaTagAttachment:
         adapter._create_schema_if_needed("my_schema.table", schema_metadata)
 
         # Should not attach tags to existing schema
-        alter_calls = [str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)]
+        alter_calls = [
+            str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)
+        ]
         assert len(alter_calls) == 0
 
     def test_attach_schema_tags_dbt_style(self, snowflake_adapter):
@@ -102,14 +108,14 @@ class TestSnowflakeSchemaTagAttachment:
         adapter, cursor = snowflake_adapter
         cursor.fetchone.return_value = (0,)  # Schema doesn't exist
 
-        schema_metadata = {
-            "tags": ["analytics", "production"]
-        }
+        schema_metadata = {"tags": ["analytics", "production"]}
 
         adapter._create_schema_if_needed("my_schema.table", schema_metadata)
 
         # Should use ALTER SCHEMA syntax
-        alter_calls = [str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)]
+        alter_calls = [
+            str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)
+        ]
         assert len(alter_calls) == 2  # One for each tag
 
     def test_attach_schema_object_tags(self, snowflake_adapter):
@@ -117,17 +123,14 @@ class TestSnowflakeSchemaTagAttachment:
         adapter, cursor = snowflake_adapter
         cursor.fetchone.return_value = (0,)  # Schema doesn't exist
 
-        schema_metadata = {
-            "object_tags": {
-                "sensitivity_tag": "pii",
-                "classification": "public"
-            }
-        }
+        schema_metadata = {"object_tags": {"sensitivity_tag": "pii", "classification": "public"}}
 
         adapter._create_schema_if_needed("my_schema.table", schema_metadata)
 
         # Should attach object tags
-        alter_calls = [str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)]
+        alter_calls = [
+            str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)
+        ]
         assert len(alter_calls) == 2  # One for each object tag
 
     def test_attach_both_tags_and_object_tags_to_schema(self, snowflake_adapter):
@@ -139,14 +142,16 @@ class TestSnowflakeSchemaTagAttachment:
             "tags": ["analytics", "production"],  # dbt-style
             "object_tags": {  # database-style
                 "sensitivity_tag": "pii",
-                "classification": "public"
-            }
+                "classification": "public",
+            },
         }
 
         adapter._create_schema_if_needed("my_schema.table", schema_metadata)
 
         # Should attach both types
-        alter_calls = [str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)]
+        alter_calls = [
+            str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)
+        ]
         assert len(alter_calls) == 4  # 2 for tags, 2 for object_tags
 
     def test_schema_tag_attachment_handles_errors_gracefully(self, snowflake_adapter):
@@ -162,15 +167,15 @@ class TestSnowflakeSchemaTagAttachment:
 
         cursor.execute.side_effect = side_effect
 
-        schema_metadata = {
-            "tags": ["analytics"]
-        }
+        schema_metadata = {"tags": ["analytics"]}
 
         # Should not raise exception
         adapter._create_schema_if_needed("my_schema.table", schema_metadata)
 
         # Schema should still be created
-        create_calls = [str(call) for call in cursor.execute.call_args_list if "CREATE SCHEMA" in str(call)]
+        create_calls = [
+            str(call) for call in cursor.execute.call_args_list if "CREATE SCHEMA" in str(call)
+        ]
         assert len(create_calls) > 0
 
     def test_schema_tag_attachment_with_no_metadata(self, snowflake_adapter):
@@ -181,11 +186,15 @@ class TestSnowflakeSchemaTagAttachment:
         adapter._create_schema_if_needed("my_schema.table", None)
 
         # Should create schema
-        create_calls = [str(call) for call in cursor.execute.call_args_list if "CREATE SCHEMA" in str(call)]
+        create_calls = [
+            str(call) for call in cursor.execute.call_args_list if "CREATE SCHEMA" in str(call)
+        ]
         assert len(create_calls) > 0
 
         # Should not attach tags
-        alter_calls = [str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)]
+        alter_calls = [
+            str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)
+        ]
         assert len(alter_calls) == 0
 
     def test_schema_tag_attachment_uses_qualified_schema_name(self, snowflake_adapter):
@@ -193,13 +202,12 @@ class TestSnowflakeSchemaTagAttachment:
         adapter, cursor = snowflake_adapter
         cursor.fetchone.return_value = (0,)  # Schema doesn't exist
 
-        schema_metadata = {
-            "tags": ["analytics"]
-        }
+        schema_metadata = {"tags": ["analytics"]}
 
         adapter._create_schema_if_needed("my_schema.table", schema_metadata)
 
         # Check that qualified name (database.schema) is used
-        alter_calls = [str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)]
+        alter_calls = [
+            str(call) for call in cursor.execute.call_args_list if "ALTER SCHEMA" in str(call)
+        ]
         assert any("test_db.my_schema" in str(call) for call in alter_calls)
-

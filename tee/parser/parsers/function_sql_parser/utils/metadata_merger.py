@@ -13,9 +13,7 @@ class MetadataMerger:
     """Merges SQL-extracted metadata with Python metadata file."""
 
     @staticmethod
-    def merge(
-        sql_metadata: dict[str, Any], python_metadata: dict[str, Any]
-    ) -> FunctionMetadata:
+    def merge(sql_metadata: dict[str, Any], python_metadata: dict[str, Any]) -> FunctionMetadata:
         """
         Merge SQL-extracted metadata with Python metadata file.
 

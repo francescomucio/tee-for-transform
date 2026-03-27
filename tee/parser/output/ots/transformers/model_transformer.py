@@ -27,14 +27,14 @@ class ModelTransformer(BaseTransformer):
         self.sql_dialect = sql_dialect
         self.schema_inferencer = SchemaInferencer()
 
-    def transform(self, model_id: str, model_data: ParsedModel, schema: str) -> OTSTransformation:
+    def transform(self, model_id: str, model_data: ParsedModel, _schema: str) -> OTSTransformation:
         """
         Transform a single parsed model to OTS transformation format.
 
         Args:
             model_id: Model identifier (e.g., "my_schema.table")
             model_data: Parsed model data
-            schema: Schema name
+            _schema: Schema name (reserved)
 
         Returns:
             Transformed model as OTSTransformation
@@ -50,11 +50,23 @@ class ModelTransformer(BaseTransformer):
         if code_data is None or not isinstance(code_data, dict):
             # For unevaluated Python models, create placeholder SQL structure
             # OTS validator requires at least one SQL field (original_sql or resolved_sql)
-            code_data = {"sql": {"original_sql": "", "resolved_sql": "", "source_tables": [], "source_functions": []}}
+            code_data = {
+                "sql": {
+                    "original_sql": "",
+                    "resolved_sql": "",
+                    "source_tables": [],
+                    "source_functions": [],
+                }
+            }
         elif "sql" not in code_data or not isinstance(code_data.get("sql"), dict):
             # Ensure sql key exists and is a dict
             code_data = code_data.copy()
-            code_data["sql"] = {"original_sql": "", "resolved_sql": "", "source_tables": [], "source_functions": []}
+            code_data["sql"] = {
+                "original_sql": "",
+                "resolved_sql": "",
+                "source_tables": [],
+                "source_functions": [],
+            }
 
         # Transform structure
         transformation: OTSTransformation = {

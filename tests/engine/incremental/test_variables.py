@@ -44,4 +44,3 @@ class TestVariableResolution(TestIncrementalExecutor):
 
         result = executor._resolve_variables_in_string("created_at >= @missing_var", variables)
         assert result == "created_at >= @missing_var"
-

@@ -174,7 +174,7 @@ Reference in metadata:
 "tests": ["check_minimum_rows"]
 ```
 
-See [Data Quality Tests](user-guide/data-quality-tests.md) for more information.
+See [Data Quality Tests](../user-guide/data-quality-tests.md) for more information.
 
 ## Adding Seeds
 
@@ -196,13 +196,13 @@ t4t run ./my_project
 
 **Note**: The `build` command automatically loads seeds, but `run` requires explicit seed loading.
 
-See [Seeds](user-guide/seeds.md) for more information.
+See [Seeds](../user-guide/seeds.md) for more information.
 
 ## Next Steps
 
 - [Configuration](configuration.md) - Learn about advanced configuration options
-- [Seeds](user-guide/seeds.md) - Load static data files into your database
-- [Database Adapters](user-guide/database-adapters.md) - Explore multi-database support
-- [Data Quality Tests](user-guide/data-quality-tests.md) - Comprehensive testing guide
-- [Tags and Metadata](user-guide/tags-and-metadata.md) - Organize and filter models with tags
-- [Examples](user-guide/examples/) - See more complex examples
+- [Seeds](../user-guide/seeds.md) - Load static data files into your database
+- [Database Adapters](../user-guide/database-adapters.md) - Explore multi-database support
+- [Data Quality Tests](../user-guide/data-quality-tests.md) - Comprehensive testing guide
+- [Tags and Metadata](../user-guide/tags-and-metadata.md) - Organize and filter models with tags
+- [Examples](../user-guide/examples/README.md) - See more complex examples

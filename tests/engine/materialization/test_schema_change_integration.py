@@ -40,8 +40,8 @@ class TestSchemaChangeIntegration:
     @pytest.fixture
     def state_manager(self):
         """Create a state manager instance."""
-        import tempfile
         import os
+        import tempfile
 
         # Create temporary state database
         temp_dir = tempfile.mkdtemp()
@@ -66,7 +66,7 @@ class TestSchemaChangeIntegration:
         """Test append strategy fails when schema changes and on_schema_change='fail'."""
         # Create a source table that we'll query
         adapter.execute_query("CREATE TABLE source_table AS SELECT 1 as id, 'test' as name")
-        
+
         table_name = "test_table"
         sql_query = "SELECT id, name FROM source_table"
 
@@ -78,12 +78,13 @@ class TestSchemaChangeIntegration:
             }
         }
         handler.materialize(table_name, sql_query, "incremental", metadata)
-        
+
         # Save state so next run will be incremental (same SQL, same config)
         from datetime import UTC, datetime
+
         current_time = datetime.now(UTC).isoformat()
         state_manager.update_processed_value(table_name, current_time, "append")
-        
+
         # Add a column to source table - this simulates schema change in source
         adapter.execute_query("ALTER TABLE source_table ADD COLUMN email VARCHAR")
         adapter.execute_query("UPDATE source_table SET email = 'test@example.com'")
@@ -93,22 +94,23 @@ class TestSchemaChangeIntegration:
         # Let's change the query to include the new column
         new_sql_query = "SELECT id, name, email FROM source_table"
         metadata["incremental"]["on_schema_change"] = "fail"
-        
+
         # This will fail because SQL changed, so it won't run incrementally
         # Instead, let's manually check schema changes by calling the executor directly
         from tee.engine.materialization.incremental_executor import IncrementalExecutor
-        executor = IncrementalExecutor(state_manager)
-        
+
+        IncrementalExecutor(state_manager)
+
         # Manually trigger schema change check
         from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
         from tee.engine.materialization.schema_comparator import SchemaComparator
-        
+
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
-        
+
         query_schema = comparator.infer_query_schema(new_sql_query)
         table_schema = comparator.get_table_schema(table_name)
-        
+
         with pytest.raises(ValueError) as exc_info:
             handler_schema.handle_schema_changes(
                 table_name,
@@ -125,7 +127,7 @@ class TestSchemaChangeIntegration:
         """Test append strategy ignores schema changes when on_schema_change='ignore'."""
         # Create source table
         adapter.execute_query("CREATE TABLE source_table AS SELECT 1 as id, 'test' as name")
-        
+
         table_name = "test_table"
         sql_query = "SELECT id, name FROM source_table"
 
@@ -137,9 +139,10 @@ class TestSchemaChangeIntegration:
             }
         }
         handler.materialize(table_name, sql_query, "incremental", metadata)
-        
+
         # Set up state
         from datetime import UTC, datetime
+
         current_time = datetime.now(UTC).isoformat()
         state_manager.update_processed_value(table_name, current_time, "append")
 
@@ -151,13 +154,13 @@ class TestSchemaChangeIntegration:
         # Test schema change handler directly (since SQL change prevents incremental run)
         from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
         from tee.engine.materialization.schema_comparator import SchemaComparator
-        
+
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
-        
+
         query_schema = comparator.infer_query_schema(new_sql_query)
         table_schema = comparator.get_table_schema(table_name)
-        
+
         # Should not raise
         handler_schema.handle_schema_changes(
             table_name,
@@ -179,7 +182,7 @@ class TestSchemaChangeIntegration:
         """Test append strategy adds new columns when on_schema_change='append_new_columns'."""
         # Create source table
         adapter.execute_query("CREATE TABLE source_table AS SELECT 1 as id, 'test' as name")
-        
+
         table_name = "test_table"
         sql_query = "SELECT id, name FROM source_table"
 
@@ -191,9 +194,10 @@ class TestSchemaChangeIntegration:
             }
         }
         handler.materialize(table_name, sql_query, "incremental", metadata)
-        
+
         # Set up state
         from datetime import UTC, datetime
+
         current_time = datetime.now(UTC).isoformat()
         state_manager.update_processed_value(table_name, current_time, "append")
 
@@ -205,13 +209,13 @@ class TestSchemaChangeIntegration:
         # Test schema change handler directly
         from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
         from tee.engine.materialization.schema_comparator import SchemaComparator
-        
+
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
-        
+
         query_schema = comparator.infer_query_schema(new_sql_query)
         table_schema = comparator.get_table_schema(table_name)
-        
+
         handler_schema.handle_schema_changes(
             table_name,
             query_schema,
@@ -286,7 +290,7 @@ class TestSchemaChangeIntegration:
         assert "email" in column_names
 
         # Verify old data is gone (full refresh)
-        result = adapter.execute_query(f"SELECT COUNT(*) FROM {table_name}")
+        adapter.execute_query(f"SELECT COUNT(*) FROM {table_name}")
         # The table should be empty or have only new data from the full query
         # (depending on whether the query returns data)
 
@@ -294,7 +298,7 @@ class TestSchemaChangeIntegration:
         """Test append strategy recreates empty table when on_schema_change='recreate_empty'."""
         # Create source table
         adapter.execute_query("CREATE TABLE source_table AS SELECT 1 as id, 'test' as name")
-        
+
         table_name = "test_table"
         sql_query = "SELECT id, name FROM source_table"
 
@@ -317,13 +321,13 @@ class TestSchemaChangeIntegration:
         # Test schema change handler directly
         from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
         from tee.engine.materialization.schema_comparator import SchemaComparator
-        
+
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
-        
+
         query_schema = comparator.infer_query_schema(new_sql_query)
         table_schema = comparator.get_table_schema(table_name)
-        
+
         handler_schema.handle_schema_changes(
             table_name,
             query_schema,
@@ -413,7 +417,7 @@ class TestSchemaChangeIntegration:
     def test_type_mismatch_fails(self, handler, adapter):
         """Test that type mismatches cause failure even with append_new_columns."""
         table_name = "test_table"
-        
+
         # Create table with INTEGER id
         adapter.execute_query(f"CREATE TABLE {table_name} (id INTEGER, name VARCHAR)")
 
@@ -423,19 +427,19 @@ class TestSchemaChangeIntegration:
         # Test schema change handler directly
         from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
         from tee.engine.materialization.schema_comparator import SchemaComparator
-        
+
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
-        
+
         query_schema = comparator.infer_query_schema(new_sql_query)
         table_schema = comparator.get_table_schema(table_name)
-        
+
         # Check if type mismatch is detected
         differences = comparator.compare_schemas(query_schema, table_schema)
-        
+
         # Should have changes (type mismatch or detected as different)
         assert differences["has_changes"] is True
-        
+
         # Type mismatches should cause failure with 'fail' setting
         # Note: Currently type mismatches may not fail with other settings
         # This test verifies that type differences are at least detected
@@ -474,4 +478,3 @@ class TestSchemaChangeIntegration:
 
         # Verify table still exists
         assert adapter.table_exists(table_name)
-

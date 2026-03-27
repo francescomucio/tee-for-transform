@@ -188,5 +188,5 @@ executor = ModelExecutor("/path/to/project", config)
 ## Next Steps
 
 - [Database Adapters](../database-adapters.md) - Learn about multi-database support and adapters
-- [Configuration](getting-started/configuration.md) - Advanced configuration options
-- [Tags and Metadata](tags-and-metadata.md) - Organize and filter models with tags
+- [Configuration](../../getting-started/configuration.md) - Advanced configuration options
+- [Tags and Metadata](../tags-and-metadata.md) - Organize and filter models with tags

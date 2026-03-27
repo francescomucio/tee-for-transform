@@ -51,7 +51,7 @@ class StateChecker:
         self,
         table_name: str,
         materialization: str,
-        metadata: dict[str, Any] | None,
+        _metadata: dict[str, Any] | None,
         adapter: Any | None = None,
     ) -> None:
         """
@@ -60,7 +60,7 @@ class StateChecker:
         Args:
             table_name: Name of the model
             materialization: Materialization type
-            metadata: Model metadata
+            _metadata: Model metadata (reserved for future state logic)
             adapter: Optional database adapter for existence checking
         """
         # Check if model exists in state

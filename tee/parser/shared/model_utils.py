@@ -127,7 +127,9 @@ def standardize_parsed_model(
         else:
             # For pure SQL models without metadata, create basic structure
             model_metadata = create_model_metadata(
-                table_name=table_name, file_path=file_path, description=f"SQL model for {table_name}"
+                table_name=table_name,
+                file_path=file_path,
+                description=f"SQL model for {table_name}",
             )
 
         # Keep existing code data

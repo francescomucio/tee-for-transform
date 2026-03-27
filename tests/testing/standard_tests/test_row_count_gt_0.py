@@ -2,8 +2,9 @@
 Unit tests for RowCountGreaterThanZeroTest.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from tee.testing.standard_tests import RowCountGreaterThanZeroTest
 
@@ -67,4 +68,3 @@ class TestRowCountGreaterThanZeroTest:
         assert result.passed is False
         assert result.rows_returned == 0
         assert "empty" in result.message.lower()
-

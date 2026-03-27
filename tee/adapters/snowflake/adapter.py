@@ -66,17 +66,23 @@ class SnowflakeAdapter(DatabaseAdapter):
                 raise ValueError("Snowflake account must be a non-empty string")
 
         # Validate warehouse if provided
-        if "warehouse" in config_dict and config_dict["warehouse"]:
-            if (
+        if (
+            "warehouse" in config_dict
+            and config_dict["warehouse"]
+            and (
                 not isinstance(config_dict["warehouse"], str)
                 or not config_dict["warehouse"].strip()
-            ):
-                raise ValueError("Snowflake warehouse must be a non-empty string")
+            )
+        ):
+            raise ValueError("Snowflake warehouse must be a non-empty string")
 
         # Validate role if provided
-        if "role" in config_dict and config_dict["role"]:
-            if not isinstance(config_dict["role"], str) or not config_dict["role"].strip():
-                raise ValueError("Snowflake role must be a non-empty string")
+        if (
+            "role" in config_dict
+            and config_dict["role"]
+            and (not isinstance(config_dict["role"], str) or not config_dict["role"].strip())
+        ):
+            raise ValueError("Snowflake role must be a non-empty string")
 
     def _create_adapter_config(self, config_dict: dict[str, Any]) -> AdapterConfig:
         """Create Snowflake-specific AdapterConfig."""
@@ -209,14 +215,19 @@ class SnowflakeAdapter(DatabaseAdapter):
             result = self._execute_with_cursor(
                 """
                 SELECT COUNT(*) FROM (
-                    SELECT table_name FROM information_schema.tables 
+                    SELECT table_name FROM information_schema.tables
                     WHERE table_schema = %s AND table_name = %s
                     UNION ALL
-                    SELECT table_name FROM information_schema.views 
+                    SELECT table_name FROM information_schema.views
                     WHERE table_schema = %s AND table_name = %s
                 )
                 """,
-                (schema_name.upper(), table_name_only.upper(), schema_name.upper(), table_name_only.upper()),
+                (
+                    schema_name.upper(),
+                    table_name_only.upper(),
+                    schema_name.upper(),
+                    table_name_only.upper(),
+                ),
             )
             return result[0][0] > 0
         except Exception:
@@ -242,8 +253,8 @@ class SnowflakeAdapter(DatabaseAdapter):
 
             schema_result = self._execute_with_cursor(
                 """
-                SELECT column_name, data_type 
-                FROM information_schema.columns 
+                SELECT column_name, data_type
+                FROM information_schema.columns
                 WHERE table_schema = %s AND table_name = %s
                 ORDER BY ordinal_position
             """,
@@ -278,7 +289,7 @@ class SnowflakeAdapter(DatabaseAdapter):
                 # We'll add our own LIMIT 0
                 # Remove trailing LIMIT clause (case-insensitive)
                 query_without_limit = re.sub(
-                    r'\s+LIMIT\s+\d+\s*$', '', sql_query.strip(), flags=re.IGNORECASE
+                    r"\s+LIMIT\s+\d+\s*$", "", sql_query.strip(), flags=re.IGNORECASE
                 )
                 # Create temporary view with LIMIT 0 to avoid data processing
                 create_view_sql = f"CREATE OR REPLACE TEMPORARY VIEW {qualified_temp_view} AS {query_without_limit} LIMIT 0"
@@ -547,7 +558,7 @@ class SnowflakeAdapter(DatabaseAdapter):
         if columns and len(columns) > 0:
             column_list = ", ".join(columns)
             return f"""
-                SELECT COUNT(*) 
+                SELECT COUNT(*)
                 FROM (
                     SELECT {column_list}, COUNT(*) as row_count
                     FROM {table_name}
@@ -572,7 +583,7 @@ class SnowflakeAdapter(DatabaseAdapter):
         # Use the retrieved columns
         column_list = ", ".join(table_columns)
         return f"""
-            SELECT COUNT(*) 
+            SELECT COUNT(*)
             FROM (
                 SELECT {column_list}, COUNT(*) as row_count
                 FROM {table_name}

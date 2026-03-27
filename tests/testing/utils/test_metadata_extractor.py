@@ -2,8 +2,6 @@
 Unit tests for MetadataExtractor.
 """
 
-import pytest
-
 from tee.testing.utils.metadata_extractor import MetadataExtractor
 
 
@@ -76,6 +74,7 @@ class TestMetadataExtractor:
 
     def test_extract_model_metadata_exception_handling(self):
         """Test that exceptions during extraction are handled gracefully."""
+
         # Create a model_data that will cause an exception when accessing .get()
         class BadDict:
             def get(self, key, default=None):
@@ -173,6 +172,7 @@ class TestMetadataExtractor:
 
     def test_extract_function_metadata_exception_handling(self):
         """Test that exceptions during extraction are handled gracefully."""
+
         class BadDict:
             def get(self, key, default=None):
                 raise Exception("Error accessing dict")
@@ -211,4 +211,3 @@ class TestMetadataExtractor:
 
         assert result is not None
         assert result["tests"] == ["test1"]
-

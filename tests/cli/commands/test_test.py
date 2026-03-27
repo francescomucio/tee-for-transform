@@ -2,13 +2,14 @@
 Tests for the test CLI command.
 """
 
-import pytest
-import sys
 import tempfile
+from io import StringIO
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch, MagicMock, Mock
-from io import StringIO
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+import typer
 
 from tee.cli.commands.test import cmd_test
 
@@ -40,19 +41,25 @@ class TestTestCommand:
         args.severity = None
         return args
 
-    def _setup_real_project(self, temp_dir: Path, models_sql: dict[str, str], connection_config: dict[str, Any]) -> Path:
+    def _setup_real_project(
+        self, temp_dir: Path, models_sql: dict[str, str], connection_config: dict[str, Any]
+    ) -> Path:
         """Helper to set up a real project structure with models and compile to OTS."""
         # Create project structure
         models_dir = temp_dir / "models"
         models_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create project.toml
         project_toml = temp_dir / "project.toml"
-        path_config = f'path = "{connection_config.get("path", ":memory:")}"' if "path" in connection_config else ""
+        path_config = (
+            f'path = "{connection_config.get("path", ":memory:")}"'
+            if "path" in connection_config
+            else ""
+        )
         project_toml.write_text(
             f'name = "test_project"\n[connection]\ntype = "{connection_config["type"]}"\n{path_config}\n'
         )
-        
+
         # Create SQL model files
         for table_name, sql in models_sql.items():
             # Extract schema and table from table_name (format: schema.table)
@@ -64,31 +71,41 @@ class TestTestCommand:
             else:
                 model_file = models_dir / f"{table_name}.sql"
             model_file.write_text(sql)
-        
+
         # Actually compile the project to create real OTS modules
         from tee.compiler import compile_project
-        compile_results = compile_project(
+
+        compile_project(
             project_folder=str(temp_dir),
             connection_config=connection_config,
             variables={},
             project_config={"name": "test_project", "connection": connection_config},
         )
-        
+
         return temp_dir
 
     @patch("tee.cli.commands.test.TestExecutor")
     @patch("tee.cli.commands.test.ExecutionEngine")
     @patch("tee.cli.commands.test.ProjectParser")
     @patch("tee.cli.commands.test.CommandContext")
-    def test_cmd_test_success(self, mock_context_class, mock_parser_class, mock_engine_class, mock_executor_class, mock_args):
+    def test_cmd_test_success(
+        self,
+        mock_context_class,
+        mock_parser_class,
+        mock_engine_class,
+        mock_executor_class,
+        mock_args,
+    ):
         """Test successful test command execution with real compilation."""
         # Set up real project with SQL models
         models_sql = {
             "schema1.table1": "SELECT 1 as id, 'test' as name",
         }
         connection_config = {"type": "duckdb", "path": ":memory:"}
-        project_path = self._setup_real_project(Path(mock_args.project_folder), models_sql, connection_config)
-        
+        project_path = self._setup_real_project(
+            Path(mock_args.project_folder), models_sql, connection_config
+        )
+
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = project_path
@@ -145,15 +162,24 @@ class TestTestCommand:
     @patch("tee.cli.commands.test.ExecutionEngine")
     @patch("tee.cli.commands.test.ProjectParser")
     @patch("tee.cli.commands.test.CommandContext")
-    def test_cmd_test_with_failures(self, mock_context_class, mock_parser_class, mock_engine_class, mock_executor_class, mock_args):
+    def test_cmd_test_with_failures(
+        self,
+        mock_context_class,
+        mock_parser_class,
+        mock_engine_class,
+        mock_executor_class,
+        mock_args,
+    ):
         """Test test command with test failures."""
         # Set up real project with SQL models
         models_sql = {
             "schema1.table1": "SELECT 1 as id, 'test' as name",
         }
         connection_config = {"type": "duckdb", "path": ":memory:"}
-        project_path = self._setup_real_project(Path(mock_args.project_folder), models_sql, connection_config)
-        
+        project_path = self._setup_real_project(
+            Path(mock_args.project_folder), models_sql, connection_config
+        )
+
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = project_path
@@ -191,12 +217,15 @@ class TestTestCommand:
         mock_executor_class.return_value = mock_executor
 
         # Capture both stdout and stderr (typer.echo with err=True writes to stderr)
-        with patch("sys.stdout", new=StringIO()) as fake_out, patch("sys.stderr", new=StringIO()) as fake_err:
+        with (
+            patch("sys.stdout", new=StringIO()) as fake_out,
+            patch("sys.stderr", new=StringIO()) as fake_err,
+        ):
             try:
                 cmd_test(mock_args)
             except (SystemExit, typer.Exit) as e:
                 # Should exit with 1 on failure
-                exit_code = getattr(e, 'exit_code', getattr(e, 'code', 0))
+                exit_code = getattr(e, "exit_code", getattr(e, "code", 0))
                 assert exit_code == 1
 
         output = fake_out.getvalue() + fake_err.getvalue()
@@ -208,15 +237,24 @@ class TestTestCommand:
     @patch("tee.cli.commands.test.ExecutionEngine")
     @patch("tee.cli.commands.test.ProjectParser")
     @patch("tee.cli.commands.test.CommandContext")
-    def test_cmd_test_with_warnings(self, mock_context_class, mock_parser_class, mock_engine_class, mock_executor_class, mock_args):
+    def test_cmd_test_with_warnings(
+        self,
+        mock_context_class,
+        mock_parser_class,
+        mock_engine_class,
+        mock_executor_class,
+        mock_args,
+    ):
         """Test test command with warnings."""
         # Set up real project with SQL models
         models_sql = {
             "schema1.table1": "SELECT 1 as id, 'test' as name",
         }
         connection_config = {"type": "duckdb", "path": ":memory:"}
-        project_path = self._setup_real_project(Path(mock_args.project_folder), models_sql, connection_config)
-        
+        project_path = self._setup_real_project(
+            Path(mock_args.project_folder), models_sql, connection_config
+        )
+
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = project_path
@@ -269,7 +307,15 @@ class TestTestCommand:
     @patch("tee.cli.commands.test.ProjectParser")
     @patch("tee.cli.commands.test.ModelSelector")
     @patch("tee.cli.commands.test.CommandContext")
-    def test_cmd_test_with_selection_patterns(self, mock_context_class, mock_selector_class, mock_parser_class, mock_engine_class, mock_executor_class, mock_args):
+    def test_cmd_test_with_selection_patterns(
+        self,
+        mock_context_class,
+        mock_selector_class,
+        mock_parser_class,
+        mock_engine_class,
+        mock_executor_class,
+        mock_args,
+    ):
         """Test test command with select/exclude patterns."""
         # Set up real project with SQL models
         models_sql = {
@@ -277,8 +323,10 @@ class TestTestCommand:
             "schema1.temp": "SELECT 2 as id, 'temp' as name",
         }
         connection_config = {"type": "duckdb", "path": ":memory:"}
-        project_path = self._setup_real_project(Path(mock_args.project_folder), models_sql, connection_config)
-        
+        project_path = self._setup_real_project(
+            Path(mock_args.project_folder), models_sql, connection_config
+        )
+
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = project_path
@@ -291,9 +339,10 @@ class TestTestCommand:
         mock_context_class.return_value = mock_ctx
 
         # Mock parser (for dependency graph building - real OTS modules will be loaded)
-        all_models = {"schema1.table1": {}, "schema1.temp": {}}
         mock_parser = Mock()
-        mock_parser.build_dependency_graph.return_value = {"nodes": ["schema1.table1", "schema1.temp"]}
+        mock_parser.build_dependency_graph.return_value = {
+            "nodes": ["schema1.table1", "schema1.temp"]
+        }
         mock_parser.get_execution_order.return_value = ["schema1.table1", "schema1.temp"]
         mock_parser_class.return_value = mock_parser
 
@@ -333,20 +382,28 @@ class TestTestCommand:
         output = fake_out.getvalue()
         assert "Filtered to 1 models" in output
 
-
     @patch("tee.cli.commands.test.TestExecutor")
     @patch("tee.cli.commands.test.ExecutionEngine")
     @patch("tee.cli.commands.test.ProjectParser")
     @patch("tee.cli.commands.test.CommandContext")
-    def test_cmd_test_verbose_mode(self, mock_context_class, mock_parser_class, mock_engine_class, mock_executor_class, mock_args):
+    def test_cmd_test_verbose_mode(
+        self,
+        mock_context_class,
+        mock_parser_class,
+        mock_engine_class,
+        mock_executor_class,
+        mock_args,
+    ):
         """Test test command with verbose output."""
         # Set up real project with SQL models
         models_sql = {
             "schema1.table1": "SELECT 1 as id, 'test' as name",
         }
         connection_config = {"type": "duckdb", "path": ":memory:"}
-        project_path = self._setup_real_project(Path(mock_args.project_folder), models_sql, connection_config)
-        
+        project_path = self._setup_real_project(
+            Path(mock_args.project_folder), models_sql, connection_config
+        )
+
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = project_path
@@ -398,15 +455,24 @@ class TestTestCommand:
     @patch("tee.cli.commands.test.ExecutionEngine")
     @patch("tee.cli.commands.test.ProjectParser")
     @patch("tee.cli.commands.test.CommandContext")
-    def test_cmd_test_handles_exceptions(self, mock_context_class, mock_parser_class, mock_engine_class, mock_executor_class, mock_args):
+    def test_cmd_test_handles_exceptions(
+        self,
+        mock_context_class,
+        mock_parser_class,
+        mock_engine_class,
+        mock_executor_class,
+        mock_args,
+    ):
         """Test test command handles exceptions gracefully."""
         # Set up real project with SQL models
         models_sql = {
             "schema1.table1": "SELECT 1 as id, 'test' as name",
         }
         connection_config = {"type": "duckdb", "path": ":memory:"}
-        project_path = self._setup_real_project(Path(mock_args.project_folder), models_sql, connection_config)
-        
+        project_path = self._setup_real_project(
+            Path(mock_args.project_folder), models_sql, connection_config
+        )
+
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = project_path
@@ -433,15 +499,24 @@ class TestTestCommand:
     @patch("tee.cli.commands.test.ExecutionEngine")
     @patch("tee.cli.commands.test.ProjectParser")
     @patch("tee.cli.commands.test.CommandContext")
-    def test_cmd_test_cleanup_execution_engine(self, mock_context_class, mock_parser_class, mock_engine_class, mock_executor_class, mock_args):
+    def test_cmd_test_cleanup_execution_engine(
+        self,
+        mock_context_class,
+        mock_parser_class,
+        mock_engine_class,
+        mock_executor_class,
+        mock_args,
+    ):
         """Test that execution engine is disconnected."""
         # Set up real project with SQL models
         models_sql = {
             "schema1.table1": "SELECT 1 as id, 'test' as name",
         }
         connection_config = {"type": "duckdb", "path": ":memory:"}
-        project_path = self._setup_real_project(Path(mock_args.project_folder), models_sql, connection_config)
-        
+        project_path = self._setup_real_project(
+            Path(mock_args.project_folder), models_sql, connection_config
+        )
+
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = project_path
@@ -492,15 +567,24 @@ class TestTestCommand:
     @patch("tee.cli.commands.test.ExecutionEngine")
     @patch("tee.cli.commands.test.ProjectParser")
     @patch("tee.cli.commands.test.CommandContext")
-    def test_cmd_test_relative_path_resolution(self, mock_context_class, mock_parser_class, mock_engine_class, mock_executor_class, mock_args):
+    def test_cmd_test_relative_path_resolution(
+        self,
+        mock_context_class,
+        mock_parser_class,
+        mock_engine_class,
+        mock_executor_class,
+        mock_args,
+    ):
         """Test that relative paths in connection config are resolved."""
         # Set up real project with SQL models
         models_sql = {
             "schema1.table1": "SELECT 1 as id, 'test' as name",
         }
         connection_config = {"type": "duckdb", "path": ":memory:"}
-        project_path = self._setup_real_project(Path(mock_args.project_folder), models_sql, connection_config)
-        
+        project_path = self._setup_real_project(
+            Path(mock_args.project_folder), models_sql, connection_config
+        )
+
         # Setup mocks
         mock_ctx = Mock()
         mock_ctx.project_path = project_path
@@ -547,4 +631,3 @@ class TestTestCommand:
         # Verify ExecutionEngine was called with resolved path
         call_args = mock_engine_class.call_args
         assert call_args.kwargs["config"]["path"] == str(mock_ctx.project_path / "data/test.duckdb")
-

@@ -2,13 +2,14 @@
 Unit tests for DependencyGraphBuilder with test nodes.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-from tee.parser.analysis.dependency_graph import DependencyGraphBuilder
+import pytest
+
 from tee.parser.analysis import TableResolver
+from tee.parser.analysis.dependency_graph import DependencyGraphBuilder
 
 
 class TestDependencyGraphWithTests:
@@ -65,7 +66,9 @@ class TestDependencyGraphWithTests:
             },
         }
 
-    def test_parse_test_dependencies_standard_tests(self, builder, temp_dir, table_resolver, parsed_models_basic):
+    def test_parse_test_dependencies_standard_tests(
+        self, builder, temp_dir, table_resolver, parsed_models_basic
+    ):
         """Test parsing dependencies for standard tests (not_null, unique)."""
         test_deps = builder._parse_test_dependencies(
             parsed_models=parsed_models_basic,
@@ -147,7 +150,9 @@ class TestDependencyGraphWithTests:
         # Singular SQL test should depend on the table it references
         assert "schema1.table1" in test_deps["test:schema1.table1.test_table1"]
 
-    def test_parse_test_dependencies_sql_test_with_multiple_tables(self, builder, temp_dir, table_resolver):
+    def test_parse_test_dependencies_sql_test_with_multiple_tables(
+        self, builder, temp_dir, table_resolver
+    ):
         """Test parsing dependencies for SQL tests that reference multiple tables."""
         # Create a SQL test that references multiple tables
         tests_folder = temp_dir / "tests"
@@ -193,9 +198,7 @@ class TestDependencyGraphWithTests:
         tests_folder = temp_dir / "tests"
         tests_folder.mkdir()
         test_file = tests_folder / "column_not_negative.sql"
-        test_file.write_text(
-            "SELECT @column_name FROM @table_name WHERE @column_name < 0"
-        )
+        test_file.write_text("SELECT @column_name FROM @table_name WHERE @column_name < 0")
 
         parsed_models = {
             "schema1.table1": {
@@ -255,8 +258,8 @@ class TestDependencyGraphWithTests:
         test_file = tests_folder / "my_test.sql"
         test_file.write_text("SELECT * FROM @table_name WHERE id = 1")
 
-        from tee.testing.test_discovery import TestDiscovery
         from tee.parser.parsers.sql_parser import SQLParser
+        from tee.testing.test_discovery import TestDiscovery
 
         discovery = TestDiscovery(temp_dir)
         discovered_tests = discovery.discover_tests()
@@ -282,7 +285,9 @@ class TestDependencyGraphWithTests:
         # SQL test should depend on the table
         assert "schema1.table1" in deps
 
-    def test_build_graph_includes_test_nodes(self, builder, temp_dir, table_resolver, parsed_models_basic):
+    def test_build_graph_includes_test_nodes(
+        self, builder, temp_dir, table_resolver, parsed_models_basic
+    ):
         """Test that build_graph includes test nodes in the graph."""
         graph = builder.build_graph(
             parsed_models=parsed_models_basic,
@@ -299,7 +304,9 @@ class TestDependencyGraphWithTests:
         assert "test:schema1.table1.id.not_null" in graph["dependencies"]
         assert "test:schema1.table1.check_minimum_rows" in graph["dependencies"]
 
-    def test_build_graph_test_nodes_in_execution_order(self, builder, temp_dir, table_resolver, parsed_models_basic):
+    def test_build_graph_test_nodes_in_execution_order(
+        self, builder, temp_dir, table_resolver, parsed_models_basic
+    ):
         """Test that test nodes appear in execution order after their tables."""
         graph = builder.build_graph(
             parsed_models=parsed_models_basic,
@@ -364,7 +371,9 @@ class TestDependencyGraphWithTests:
         test_nodes = [n for n in graph["nodes"] if n.startswith("test:")]
         assert len(test_nodes) == 0
 
-    def test_parse_test_dependencies_handles_missing_test_file(self, builder, temp_dir, table_resolver):
+    def test_parse_test_dependencies_handles_missing_test_file(
+        self, builder, temp_dir, table_resolver
+    ):
         """Test that missing test files are handled gracefully."""
         parsed_models = {
             "schema1.table1": {
@@ -388,7 +397,9 @@ class TestDependencyGraphWithTests:
         assert "test:schema1.table1.nonexistent_test" in test_deps
         assert test_deps["test:schema1.table1.nonexistent_test"] == ["schema1.table1"]
 
-    def test_parse_test_dependencies_table_level_vs_column_level(self, builder, temp_dir, table_resolver):
+    def test_parse_test_dependencies_table_level_vs_column_level(
+        self, builder, temp_dir, table_resolver
+    ):
         """Test that table-level and column-level tests create different nodes."""
         parsed_models = {
             "schema1.table1": {
@@ -420,4 +431,3 @@ class TestDependencyGraphWithTests:
 
         # They should be different nodes
         assert "test:schema1.table1.id.not_null" != "test:schema1.table1.check_minimum_rows"
-

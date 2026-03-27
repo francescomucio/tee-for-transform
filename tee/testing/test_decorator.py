@@ -39,7 +39,9 @@ def _derive_test_name(file_path: str | None, function_name: str | None = None) -
     """
     if not file_path:
         if not function_name:
-            raise TestDecoratorError("Cannot derive test name: both file_path and function_name are None")
+            raise TestDecoratorError(
+                "Cannot derive test name: both file_path and function_name are None"
+            )
         return function_name
 
     path = Path(file_path)
@@ -67,7 +69,7 @@ def test(
     severity: str | TestSeverity = "error",
     description: str | None = None,
     tags: list[str] | None = None,
-    **metadata: Any,
+    **_metadata: Any,
 ) -> Callable:
     """
     Decorator for marking Python functions as SQL tests.
@@ -80,7 +82,7 @@ def test(
         severity: Test severity level ("error" or "warning"). Default: "error"
         description: Optional test description
         tags: Optional list of tags
-        **metadata: Additional metadata to store with the test
+        **_metadata: Additional metadata (reserved for future use on PythonTest)
 
     Returns:
         Decorated function (unchanged, test is registered on definition)
@@ -128,7 +130,9 @@ def test(
                         f"Test function {func.__name__} must return a SQL string, got {type(sql)}"
                     )
                 if not sql.strip():
-                    raise TestDecoratorError(f"Test function {func.__name__} returned an empty SQL string")
+                    raise TestDecoratorError(
+                        f"Test function {func.__name__} returned an empty SQL string"
+                    )
             except Exception as e:
                 raise TestDecoratorError(
                     f"Failed to execute test function {func.__name__} to get SQL: {e}"
@@ -174,7 +178,7 @@ def create_test(
     severity: str | TestSeverity = "error",
     description: str | None = None,
     tags: list[str] | None = None,
-    **metadata: Any,
+    **_metadata: Any,
 ) -> None:
     """
     Dynamically create a test without using a decorator.
@@ -188,7 +192,7 @@ def create_test(
         severity: Test severity level ("error" or "warning"). Default: "error"
         description: Optional test description
         tags: Optional list of tags
-        **metadata: Additional metadata to store with the test
+        **_metadata: Additional metadata (reserved for future use on PythonTest)
 
     Raises:
         TestDecoratorError: If validation fails or name conflicts
@@ -209,7 +213,9 @@ def create_test(
             raise TestDecoratorError("name parameter is required for create_test()")
 
         if not sql or not sql.strip():
-            raise TestDecoratorError("sql parameter is required and cannot be empty for create_test()")
+            raise TestDecoratorError(
+                "sql parameter is required and cannot be empty for create_test()"
+            )
 
         # Validate test name
         if not name.replace("_", "").replace(".", "").isalnum():
@@ -217,7 +223,9 @@ def create_test(
 
         # Convert severity string to enum if needed
         if isinstance(severity, str):
-            severity_enum = TestSeverity.ERROR if severity.lower() == "error" else TestSeverity.WARNING
+            severity_enum = (
+                TestSeverity.ERROR if severity.lower() == "error" else TestSeverity.WARNING
+            )
         else:
             severity_enum = severity
 
@@ -245,4 +253,3 @@ def create_test(
         if isinstance(e, TestDecoratorError):
             raise
         raise TestDecoratorError(f"Failed to create test: {str(e)}") from e
-

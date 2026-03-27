@@ -1,0 +1,71 @@
+{
+  "ots_version": "0.2.1",
+  "test_library_version": "1.0",
+  "description": "Test library for t_project project",
+  "generic_tests": {
+    "check_name_length": {
+      "type": "sql",
+      "level": "table",
+      "description": "Check that name column values are not too long (max 100 characters)",
+      "sql": "SELECT id, name\nFROM @table_name\nWHERE LENGTH(name) > 100",
+      "parameters": []
+    },
+    "check_no_null_ids": {
+      "type": "sql",
+      "level": "table",
+      "description": "SQL test: check_no_null_ids",
+      "sql": "SELECT id\n    FROM @table_name\n    WHERE id IS NULL",
+      "parameters": []
+    },
+    "example_custom_test": {
+      "type": "sql",
+      "level": "table",
+      "description": "Example custom SQL test This test checks that a table has at least 5 rows The table_name variable is automatically substituted",
+      "sql": "SELECT 1 as violation\nFROM @table_name\nGROUP BY 1\nHAVING COUNT(*) < 5",
+      "parameters": []
+    },
+    "column_not_negative": {
+      "type": "sql",
+      "level": "column",
+      "description": "Column-level SQL test example Checks that a numeric column has no negative values Can be used on any column by referencing @column_name",
+      "sql": "SELECT @column_name\nFROM @table_name\nWHERE @column_name < 0",
+      "parameters": []
+    },
+    "check_minimum_rows": {
+      "type": "sql",
+      "level": "table",
+      "description": "Check that a table has at least a minimum number of rows This test accepts a 'min_rows' parameter (defaults to 10)",
+      "sql": "SELECT 1 as violation\nFROM @table_name\nGROUP BY 1\nHAVING COUNT(*) < @min_rows:10",
+      "parameters": {
+        "min_rows": {
+          "type": "number",
+          "default": 10,
+          "description": "Parameter min_rows"
+        }
+      }
+    }
+  },
+  "singular_tests": {
+    "check_my_first_table_not_empty": {
+      "type": "sql",
+      "level": "table",
+      "description": "SQL test: check_my_first_table_not_empty",
+      "sql": "SELECT 1 as violation\n        FROM my_schema.my_first_table\n        GROUP BY 1\n        HAVING COUNT(*) = 0",
+      "target_transformation": "my_schema.my_first_table"
+    },
+    "check_my_first_table_id_positive": {
+      "type": "sql",
+      "level": "table",
+      "description": "SQL test: check_my_first_table_id_positive",
+      "sql": "SELECT id\n        FROM my_schema.my_first_table\n        WHERE id <= 0",
+      "target_transformation": "my_schema.my_first_table"
+    },
+    "test_my_first_table": {
+      "type": "sql",
+      "level": "table",
+      "description": "Singular SQL test for my_first_table This test checks that the 'name' column doesn't contain 'invalid' values Note: Table name is hardcoded - this is a singular SQL test for my_schema.my_first_table",
+      "sql": "SELECT id, name\nFROM my_schema.my_first_table\nWHERE name LIKE '%invalid%'",
+      "target_transformation": "my_schema.my_first_table"
+    }
+  }
+}

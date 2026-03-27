@@ -206,9 +206,23 @@ Both decorators create models with the following metadata structure:
 }
 ```
 
+## Dimension shorthand and automatic registry
+
+For facts, column metadata may include a **`dimension`** string so the parser, dependency graph, dimensional graph, docs site, and default relationship tests can resolve a target dimension table without repeating `fk_to` on every column.
+
+- **Logical name**: `dim_date` → logical key `date`; `dimension: "date"` resolves to that model’s fully qualified name (same schema convention as your project layout).
+- **Grain / level**: `dimension: "date.month"` resolves from the auto-built registry. By default, a level slug comes from **`hierarchy.levels[].name`** on the dimension model (e.g. `"Month"` → `month`) and points at **that** table.
+- **Separate physical table for a grain** (e.g. `dim_month` for month while `dim_date` holds the day hierarchy): on the physical model set **`conformed_dimension`** with **`logical`** (parent logical name, e.g. `date`) and **`level`** (slug, e.g. `month`). That registers `date.month` → that model and **overrides** the hierarchy-only mapping from another table.
+- **Which models count as dimensions**: `table_type` is **`dim`**, **`dimension`** (treated as dim), or the model short name starts with **`dim_`**.
+- **No manual config file**: The mapping is built automatically after models are parsed. Duplicate **base** logical keys from two different dimension models (e.g. two `dim_date` → both `date`) raise an error; composite keys can be disambiguated with **`conformed_dimension`**.
+
+**Troubleshooting:** After parse, the registry is written to **`output/dimension_registry.json`** when you use **`t4t debug`** or **`ProjectParser.save_to_json()`**, and is included in **`export_all`** / compile JSON exports alongside `parsed_models.json`.
+
+For joins that do not match this convention, use explicit **`fk_to`** on the column (`table` + `column`).
+
 ## Related Documentation
 
-- [Tags and Metadata](../../user-guide/tags-and-metadata.md) - Comprehensive guide to tags and metadata
-- [Execution Engine](../../user-guide/execution-engine.md) - Running models
-- [CLI Reference](../../user-guide/cli-reference.md) - Command-line usage
+- [Tags and Metadata](../user-guide/tags-and-metadata.md) - Comprehensive guide to tags and metadata
+- [Execution Engine](../user-guide/execution-engine.md) - Running models
+- [CLI Reference](../user-guide/cli-reference.md) - Command-line usage
 

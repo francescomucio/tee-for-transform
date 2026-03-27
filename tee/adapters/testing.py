@@ -11,7 +11,7 @@ This module provides utilities for testing database adapters including:
 import logging
 import time
 from collections.abc import Callable
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import Any
 
 from .base import DatabaseAdapter
@@ -143,10 +143,8 @@ class AdapterTester:
         except Exception as e:
             return {"success": False, "error": str(e), "message": "Table operations failed"}
         finally:
-            try:
+            with suppress(Exception):
                 self.adapter.disconnect()
-            except Exception:
-                pass
 
     def test_performance(self) -> dict[str, Any]:
         """Test basic performance metrics."""
@@ -184,10 +182,8 @@ class AdapterTester:
         except Exception as e:
             return {"success": False, "error": str(e), "message": "Performance test failed"}
         finally:
-            try:
+            with suppress(Exception):
                 self.adapter.disconnect()
-            except Exception:
-                pass
 
     @contextmanager
     def test_connection_context(self) -> Any:
@@ -196,10 +192,8 @@ class AdapterTester:
             self.adapter.connect()
             yield self.adapter
         finally:
-            try:
+            with suppress(Exception):
                 self.adapter.disconnect()
-            except Exception:
-                pass
 
 
 def test_adapter(adapter: DatabaseAdapter) -> dict[str, Any]:

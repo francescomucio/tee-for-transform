@@ -2,14 +2,14 @@
 Unit tests for FunctionTestExecutor.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 import inspect
+from unittest.mock import Mock, patch
 
+import pytest
+
+from tee.testing.base import TestRegistry, TestSeverity
 from tee.testing.executors.function_test_executor import FunctionTestExecutor
-from tee.testing.base import TestSeverity, TestResult, TestRegistry
 from tee.testing.sql_test import SqlTest
-from tee.testing.parsers.test_definition_parser import ParsedTestDefinition
 
 
 class TestFunctionTestExecutor:
@@ -129,7 +129,9 @@ class TestFunctionTestExecutor:
         assert results[0].test_name == "test_function_test"
         assert results[0].function_name == "my_function"
 
-    def test_execute_tests_for_function_with_severity_override(self, executor, mock_adapter, tmp_path):
+    def test_execute_tests_for_function_with_severity_override(
+        self, executor, mock_adapter, tmp_path
+    ):
         """Test execution with severity override."""
         test_file = tmp_path / "test_function_test.sql"
         test_file.write_text("SELECT @function_name(1) = 2")
@@ -154,7 +156,9 @@ class TestFunctionTestExecutor:
         assert len(results) == 1
         assert results[0].severity == TestSeverity.WARNING
 
-    def test_execute_tests_for_function_test_does_not_support_functions(self, executor, mock_adapter):
+    def test_execute_tests_for_function_test_does_not_support_functions(
+        self, executor, mock_adapter
+    ):
         """Test execution with test that doesn't support function_name parameter."""
         # Create a mock test that doesn't support function_name
         mock_test = Mock()
@@ -171,7 +175,9 @@ class TestFunctionTestExecutor:
 
                 assert len(results) == 0  # Should return None and not add to results
 
-    def test_execute_tests_for_function_test_execution_error(self, executor, mock_adapter, tmp_path):
+    def test_execute_tests_for_function_test_execution_error(
+        self, executor, mock_adapter, tmp_path
+    ):
         """Test execution when test raises an exception."""
         test_file = tmp_path / "test_function_test.sql"
         test_file.write_text("SELECT @function_name(1)")
@@ -244,4 +250,3 @@ class TestFunctionTestExecutor:
         results = executor.execute_tests_for_function("my_function", metadata=metadata)
 
         assert results == []
-

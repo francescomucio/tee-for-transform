@@ -6,7 +6,6 @@ Parses dbt source definitions from __sources.yml files.
 
 import logging
 from pathlib import Path
-from typing import Any
 
 import yaml
 

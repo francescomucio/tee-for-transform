@@ -6,15 +6,6 @@ as a template for testing other database adapters.
 """
 
 import pytest
-from unittest.mock import Mock, patch
-from typing import Any
-
-from tee.adapters.duckdb.adapter import DuckDBAdapter
-from tee.typing.metadata import (
-    IncrementalAppendConfig,
-    IncrementalMergeConfig,
-    IncrementalDeleteInsertConfig,
-)
 
 
 class TestDuckDBIncremental:
@@ -378,4 +369,3 @@ class TestDuckDBIncremental:
         result = duckdb_adapter.execute_query("SELECT COUNT(*) FROM test_schema.target_table")
         count = result[0][0]
         assert count == 4  # 4 active records
-

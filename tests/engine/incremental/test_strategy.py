@@ -68,7 +68,9 @@ class TestStrategyExecution(TestIncrementalExecutor):
         mock_adapter = Mock()
         mock_adapter.execute_incremental_append = None  # Not supported
         mock_adapter.create_table = Mock()
-        mock_adapter.table_exists = Mock(return_value=False)  # Table doesn't exist, so create_table will be called
+        mock_adapter.table_exists = Mock(
+            return_value=False
+        )  # Table doesn't exist, so create_table will be called
 
         executor.execute_append_strategy(
             "test_model", "SELECT * FROM source", sample_append_config, mock_adapter, "test_table"
@@ -76,4 +78,3 @@ class TestStrategyExecution(TestIncrementalExecutor):
 
         mock_adapter.create_table.assert_called_once()
         executor.state_manager.update_processed_value.assert_called_once()
-

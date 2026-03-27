@@ -92,7 +92,7 @@ class IncrementalStateManager:
         logger.info(f"Getting state for {model_name} from database: {self.state_database_path}")
 
         query = """
-        SELECT * FROM tee_incremental_state 
+        SELECT * FROM tee_incremental_state
         WHERE model_name = ?
         """
 
@@ -131,8 +131,8 @@ class IncrementalStateManager:
             logger.info(f"No existing state found, inserting new state for {state.model_name}")
             # Insert new state
             insert_sql = """
-            INSERT INTO tee_incremental_state 
-            (model_name, strategy, last_processed_value, last_run_timestamp, 
+            INSERT INTO tee_incremental_state
+            (model_name, strategy, last_processed_value, last_run_timestamp,
              sqlglot_hash, config_hash, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
@@ -154,7 +154,7 @@ class IncrementalStateManager:
         else:
             # Update existing state
             update_sql = """
-            UPDATE tee_incremental_state 
+            UPDATE tee_incremental_state
             SET strategy = ?, last_processed_value = ?, last_run_timestamp = ?,
                 sqlglot_hash = ?, config_hash = ?, updated_at = ?
             WHERE model_name = ?

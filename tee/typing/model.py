@@ -51,4 +51,3 @@ class Model(TypedDict):
 
 # Backward compatibility alias (deprecated, use Model instead)
 ParsedModel = Model
-

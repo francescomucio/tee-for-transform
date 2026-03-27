@@ -2,8 +2,9 @@
 Unit tests for UniqueTest.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from tee.testing.standard_tests import UniqueTest
 
@@ -45,7 +46,7 @@ class TestUniqueTest:
         mock_adapter = Mock()
         mock_adapter.generate_unique_test_query.return_value = "SELECT COUNT(*) FROM ..."
 
-        query = test.get_test_query(mock_adapter, "my_table", column_name="id")
+        test.get_test_query(mock_adapter, "my_table", column_name="id")
 
         mock_adapter.generate_unique_test_query.assert_called_once_with("my_table", ["id"])
 
@@ -55,9 +56,8 @@ class TestUniqueTest:
         mock_adapter = Mock()
         mock_adapter.generate_unique_test_query.return_value = "SELECT COUNT(*) FROM ..."
 
-        query = test.get_test_query(mock_adapter, "my_table", params={"columns": ["col1", "col2"]})
+        test.get_test_query(mock_adapter, "my_table", params={"columns": ["col1", "col2"]})
 
         mock_adapter.generate_unique_test_query.assert_called_once_with(
             "my_table", ["col1", "col2"]
         )
-

@@ -460,7 +460,7 @@ uv run t4t run ./my_project -v
 
 ## Related Documentation
 
-- [Configuration](getting-started/configuration.md) - Project configuration
+- [Configuration](../getting-started/configuration.md) - Project configuration
 - [Database Adapters](database-adapters.md) - Database-specific features
 - [Execution Engine](execution-engine.md) - Model execution and selection
 

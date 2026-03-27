@@ -27,6 +27,12 @@ class DependencyError(ParserError):
     pass
 
 
+class DimensionalGraphError(ParserError):
+    """Raised when dimensional relationship graph analysis fails."""
+
+    pass
+
+
 class VariableSubstitutionError(ParserError):
     """Raised when variable substitution fails."""
 

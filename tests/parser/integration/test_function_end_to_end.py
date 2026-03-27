@@ -4,12 +4,8 @@ End-to-end integration tests for function workflow.
 Tests the complete workflow: discovery → parsing → dependency graph → OTS export.
 """
 
-import pytest
-from pathlib import Path
 from tee.parser.core.orchestrator import ParserOrchestrator
-from tee.parser.input.ots_converter import OTSConverter
 from tee.parser.output.ots.transformer import OTSTransformer
-from tee.typing import Function, Model
 
 
 class TestFunctionEndToEnd:
@@ -32,8 +28,8 @@ CREATE OR REPLACE FUNCTION calculate_percentage(
     numerator DOUBLE,
     denominator DOUBLE
 ) RETURNS DOUBLE AS $$
-    SELECT 
-        CASE 
+    SELECT
+        CASE
             WHEN denominator = 0 OR denominator IS NULL THEN NULL
             ELSE (numerator / denominator) * 100.0
         END
@@ -61,7 +57,7 @@ metadata = {
         model_sql = models_folder / "my_schema" / "result.sql"
         model_sql.parent.mkdir(parents=True, exist_ok=True)
         model_sql.write_text("""
-SELECT 
+SELECT
     id,
     calculate_percentage(value, total) as percentage
 FROM source_table
@@ -117,7 +113,7 @@ FROM source_table
         # Create a table function
         table_func_sql = schema_folder / "get_users.sql"
         table_func_sql.write_text("""
-CREATE OR REPLACE FUNCTION get_users() 
+CREATE OR REPLACE FUNCTION get_users()
 RETURNS TABLE(id INT, name VARCHAR) AS $$
     SELECT id, name FROM users
 $$;
@@ -149,7 +145,7 @@ $$;
         model_sql = models_folder / "my_schema" / "formatted_users.sql"
         model_sql.parent.mkdir(parents=True, exist_ok=True)
         model_sql.write_text("""
-SELECT 
+SELECT
     id,
     format_name(first_name, last_name) as full_name
 FROM get_users()
@@ -186,10 +182,22 @@ FROM get_users()
 
         # Verify execution order
         execution_order = graph["execution_order"]
-        users_pos = execution_order.index("my_schema.users") if "my_schema.users" in execution_order else -1
-        get_users_pos = execution_order.index("my_schema.get_users") if "my_schema.get_users" in execution_order else -1
-        format_name_pos = execution_order.index("my_schema.format_name") if "my_schema.format_name" in execution_order else -1
-        formatted_pos = execution_order.index("my_schema.formatted_users") if "my_schema.formatted_users" in execution_order else -1
+        execution_order.index("my_schema.users") if "my_schema.users" in execution_order else -1
+        get_users_pos = (
+            execution_order.index("my_schema.get_users")
+            if "my_schema.get_users" in execution_order
+            else -1
+        )
+        format_name_pos = (
+            execution_order.index("my_schema.format_name")
+            if "my_schema.format_name" in execution_order
+            else -1
+        )
+        formatted_pos = (
+            execution_order.index("my_schema.formatted_users")
+            if "my_schema.formatted_users" in execution_order
+            else -1
+        )
 
         # Functions should come before the model that uses them
         if formatted_pos >= 0 and get_users_pos >= 0:
@@ -231,7 +239,7 @@ $$;
         # Create model that depends on func2
         model_sql = models_folder / "my_schema" / "result.sql"
         model_sql.write_text("""
-SELECT 
+SELECT
     id,
     advanced_calc(value) as calculated_value
 FROM source
@@ -243,8 +251,8 @@ FROM source
             connection={"type": "duckdb"},
         )
 
-        parsed_functions = orchestrator.discover_and_parse_functions()
-        parsed_models = orchestrator.discover_and_parse_models()
+        orchestrator.discover_and_parse_functions()
+        orchestrator.discover_and_parse_models()
 
         # Build dependency graph
         graph = orchestrator.build_dependency_graph()
@@ -260,13 +268,24 @@ FROM source
 
         # Verify execution order
         execution_order = graph["execution_order"]
-        base_pos = execution_order.index("my_schema.base_calc") if "my_schema.base_calc" in execution_order else -1
-        advanced_pos = execution_order.index("my_schema.advanced_calc") if "my_schema.advanced_calc" in execution_order else -1
-        result_pos = execution_order.index("my_schema.result") if "my_schema.result" in execution_order else -1
+        base_pos = (
+            execution_order.index("my_schema.base_calc")
+            if "my_schema.base_calc" in execution_order
+            else -1
+        )
+        advanced_pos = (
+            execution_order.index("my_schema.advanced_calc")
+            if "my_schema.advanced_calc" in execution_order
+            else -1
+        )
+        result_pos = (
+            execution_order.index("my_schema.result")
+            if "my_schema.result" in execution_order
+            else -1
+        )
 
         # Verify order: base_calc < advanced_calc < result
         if base_pos >= 0 and advanced_pos >= 0:
             assert base_pos < advanced_pos
         if advanced_pos >= 0 and result_pos >= 0:
             assert advanced_pos < result_pos
-

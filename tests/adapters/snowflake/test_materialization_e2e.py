@@ -37,7 +37,15 @@ def _load_snowflake_config() -> dict[str, Any] | None:
             pass
 
     # Fallback to environment variables
-    if all(os.getenv(var) for var in ["SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_ACCOUNT", "SNOWFLAKE_DATABASE"]):
+    if all(
+        os.getenv(var)
+        for var in [
+            "SNOWFLAKE_USER",
+            "SNOWFLAKE_PASSWORD",
+            "SNOWFLAKE_ACCOUNT",
+            "SNOWFLAKE_DATABASE",
+        ]
+    ):
         return {
             "type": "snowflake",
             "user": os.getenv("SNOWFLAKE_USER"),
@@ -220,9 +228,7 @@ class TestSnowflakeMaterializationEndToEnd:
 
         return count
 
-    def _get_base_incremental_metadata(
-        self, on_schema_change: str | None = None
-    ) -> dict[str, Any]:
+    def _get_base_incremental_metadata(self, on_schema_change: str | None = None) -> dict[str, Any]:
         """Get base incremental metadata configuration."""
         config = IncrementalConfig(on_schema_change=on_schema_change)
         return config.to_metadata()
@@ -232,7 +238,9 @@ class TestSnowflakeMaterializationEndToEnd:
         """Get Snowflake config from file or environment."""
         config = _load_snowflake_config()
         if not config:
-            pytest.skip("Missing Snowflake credentials (check tests/.snowflake_config.json or environment variables)")
+            pytest.skip(
+                "Missing Snowflake credentials (check tests/.snowflake_config.json or environment variables)"
+            )
         return config
 
     @pytest.fixture
@@ -272,7 +280,7 @@ class TestSnowflakeMaterializationEndToEnd:
         """Create initial table with data for testing."""
         schema = snowflake_config.get("schema", "PUBLIC")
         table_name = f"{schema}.source_events"
-        
+
         # Use adapter's qualification method to ensure consistent naming
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
 
@@ -288,7 +296,7 @@ class TestSnowflakeMaterializationEndToEnd:
         adapter.execute_query(
             f"""
             CREATE TABLE {qualified_table_name} AS
-            SELECT 
+            SELECT
                 1::INTEGER as event_id,
                 'event1'::VARCHAR(50) as event_name,
                 '2024-01-01'::DATE as event_date,
@@ -331,7 +339,12 @@ class TestSnowflakeMaterializationEndToEnd:
         reason="Missing Snowflake credentials",
     )
     def test_incremental_append_with_append_new_columns_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental append with append_new_columns on schema change."""
         schema = snowflake_config.get("schema", "PUBLIC")
@@ -390,13 +403,18 @@ class TestSnowflakeMaterializationEndToEnd:
         reason="Missing Snowflake credentials",
     )
     def test_incremental_append_with_sync_all_columns_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental append with sync_all_columns on schema change."""
         schema = snowflake_config.get("schema", "PUBLIC")
         table_name = f"{schema}.target_events_sync"
         source_table = f"{schema}.source_events"
-        
+
         # Use qualified name for cleanup and table creation
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
 
@@ -410,7 +428,7 @@ class TestSnowflakeMaterializationEndToEnd:
         adapter.execute_query(
             f"""
             CREATE TABLE {qualified_table_name} AS
-            SELECT 
+            SELECT
                 1 as event_id,
                 'event1' as event_name,
                 '2024-01-01'::DATE as event_date,
@@ -419,7 +437,9 @@ class TestSnowflakeMaterializationEndToEnd:
         )
 
         # Set up state
-        initial_query = f"SELECT event_id, event_name, event_date, 'old_value' as old_col FROM {source_table}"
+        initial_query = (
+            f"SELECT event_id, event_name, event_date, 'old_value' as old_col FROM {source_table}"
+        )
         initial_metadata = self._get_base_incremental_metadata()
         self._setup_incremental_state(state_manager, table_name, initial_query, initial_metadata)
 
@@ -445,13 +465,17 @@ class TestSnowflakeMaterializationEndToEnd:
         except Exception:
             pass
 
-
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
         reason="Missing Snowflake credentials",
     )
     def test_incremental_append_with_full_refresh_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental append with full_refresh on schema change."""
         schema = snowflake_config.get("schema", "PUBLIC")
@@ -468,7 +492,7 @@ class TestSnowflakeMaterializationEndToEnd:
         adapter.execute_query(
             f"""
             CREATE TABLE {table_name} AS
-            SELECT 
+            SELECT
                 1::INTEGER as event_id,
                 'event1' as event_name,
                 '2024-01-01'::DATE as event_date
@@ -512,7 +536,12 @@ class TestSnowflakeMaterializationEndToEnd:
         reason="Missing Snowflake credentials",
     )
     def test_incremental_append_with_recreate_empty_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental append with recreate_empty on schema change."""
         schema = snowflake_config.get("schema", "PUBLIC")
@@ -529,7 +558,7 @@ class TestSnowflakeMaterializationEndToEnd:
         adapter.execute_query(
             f"""
             CREATE TABLE {table_name} AS
-            SELECT 
+            SELECT
                 1::INTEGER as event_id,
                 'event1' as event_name,
                 '2024-01-01'::DATE as event_date
@@ -568,7 +597,12 @@ class TestSnowflakeMaterializationEndToEnd:
         reason="Missing Snowflake credentials",
     )
     def test_incremental_append_with_fail_on_schema_change_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental append with fail on schema change."""
         schema = snowflake_config.get("schema", "PUBLIC")
@@ -626,13 +660,18 @@ class TestSnowflakeMaterializationEndToEnd:
         reason="Missing Snowflake credentials",
     )
     def test_incremental_merge_with_append_new_columns_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental merge with append_new_columns on schema change."""
         schema = snowflake_config.get("schema", "PUBLIC")
         table_name = f"{schema}.target_events_merge"
         source_table = f"{schema}.source_events"
-        
+
         # Use qualified name for cleanup
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
 
@@ -643,7 +682,9 @@ class TestSnowflakeMaterializationEndToEnd:
             pass
 
         # Step 1: Create initial table
-        initial_query = f"SELECT event_id, event_name, event_date FROM {source_table} WHERE event_id = 1"
+        initial_query = (
+            f"SELECT event_id, event_name, event_date FROM {source_table} WHERE event_id = 1"
+        )
         config = IncrementalConfig(strategy="merge", unique_key=["event_id"])
         metadata = config.to_metadata()
         handler.materialize(table_name, initial_query, "incremental", metadata)
@@ -680,7 +721,9 @@ class TestSnowflakeMaterializationEndToEnd:
         not _has_snowflake_credentials(),
         reason="Missing Snowflake credentials",
     )
-    def test_table_materialization_e2e(self, handler, adapter, initial_table_with_data, snowflake_config):  # noqa: ARG002
+    def test_table_materialization_e2e(
+        self, handler, adapter, initial_table_with_data, snowflake_config
+    ):  # noqa: ARG002
         """Test table materialization (default)."""
         schema = snowflake_config.get("schema", "PUBLIC")
         table_name = f"{schema}.target_table"
@@ -721,7 +764,9 @@ class TestSnowflakeMaterializationEndToEnd:
         not _has_snowflake_credentials(),
         reason="Missing Snowflake credentials",
     )
-    def test_view_materialization_e2e(self, handler, adapter, initial_table_with_data, snowflake_config):  # noqa: ARG002
+    def test_view_materialization_e2e(
+        self, handler, adapter, initial_table_with_data, snowflake_config
+    ):  # noqa: ARG002
         """Test view materialization."""
         schema = snowflake_config.get("schema", "PUBLIC")
         view_name = f"{schema}.target_view"
@@ -753,7 +798,12 @@ class TestSnowflakeMaterializationEndToEnd:
         reason="Missing Snowflake credentials",
     )
     def test_incremental_no_schema_changes_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental with no schema changes."""
         schema = snowflake_config.get("schema", "PUBLIC")
@@ -798,7 +848,12 @@ class TestSnowflakeMaterializationEndToEnd:
         reason="Missing Snowflake credentials",
     )
     def test_incremental_append_with_ignore_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental append with ignore on schema change."""
         schema = snowflake_config.get("schema", "PUBLIC")
@@ -844,7 +899,12 @@ class TestSnowflakeMaterializationEndToEnd:
         reason="Missing Snowflake credentials",
     )
     def test_incremental_append_with_full_incremental_refresh_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data, snowflake_config  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,
+        snowflake_config,  # noqa: ARG002
     ):
         """Test incremental append with full_incremental_refresh on schema change."""
         schema = snowflake_config.get("schema", "PUBLIC")

@@ -2,14 +2,15 @@
 Unit tests for TestDiscovery class.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 
-from tee.testing.test_discovery import TestDiscovery
+import pytest
+
+from tee.testing.base import TestRegistry
 from tee.testing.sql_test import SqlTest
-from tee.testing.base import TestRegistry, TestSeverity
+from tee.testing.test_discovery import TestDiscovery
 
 
 class TestTestDiscovery:
@@ -190,7 +191,7 @@ class TestTestDiscovery:
             mock_sql_test.side_effect = Exception("Failed to load")
 
             discovery = TestDiscovery(temp_dir)
-            tests = discovery.discover_tests()
+            discovery.discover_tests()
 
             # Should skip invalid file but continue
             assert "Failed to load SQL test from" in caplog.text

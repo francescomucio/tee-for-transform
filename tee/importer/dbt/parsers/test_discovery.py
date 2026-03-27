@@ -6,7 +6,6 @@ Discovers test files in the tests/ directory and identifies test types.
 
 import logging
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

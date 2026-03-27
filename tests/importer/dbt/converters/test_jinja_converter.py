@@ -2,11 +2,6 @@
 Tests for the Jinja converter.
 """
 
-import tempfile
-from pathlib import Path
-
-import pytest
-
 from tee.importer.dbt.converters import JinjaConverter
 
 
@@ -17,10 +12,10 @@ class TestJinjaConverter:
         """Test converting SQL with no Jinja templates."""
         dbt_project = {"name": "test_project"}
         converter = JinjaConverter(dbt_project=dbt_project)
-        
+
         sql = "SELECT * FROM users"
         result = converter.convert(sql, "test_model")
-        
+
         assert result["sql"] == sql
         assert result["is_python_model"] is False
         assert len(result["conversion_errors"]) == 0
@@ -34,10 +29,10 @@ class TestJinjaConverter:
             dbt_project=dbt_project,
             model_name_map=model_name_map,
         )
-        
+
         sql = "SELECT * FROM {{ ref('customers') }}"
         result = converter.convert(sql, "test_model")
-        
+
         assert "{{ ref('customers') }}" not in result["sql"]
         assert "public.customers" in result["sql"]
         assert result["is_python_model"] is False
@@ -50,10 +45,10 @@ class TestJinjaConverter:
             dbt_project=dbt_project,
             model_name_map=model_name_map,
         )
-        
+
         sql = 'SELECT * FROM {{ ref("customers") }}'
         result = converter.convert(sql, "test_model")
-        
+
         assert "public.customers" in result["sql"]
         assert result["is_python_model"] is False
 
@@ -65,10 +60,10 @@ class TestJinjaConverter:
             dbt_project=dbt_project,
             model_name_map=model_name_map,
         )
-        
+
         sql = "SELECT * FROM {{ ref('unknown_model') }}"
         result = converter.convert(sql, "test_model")
-        
+
         # Should use model name as fallback
         assert "unknown_model" in result["sql"]
         assert len(result["conversion_warnings"]) > 0
@@ -87,10 +82,10 @@ class TestJinjaConverter:
             dbt_project=dbt_project,
             source_map=source_map,
         )
-        
+
         sql = "SELECT * FROM {{ source('raw', 'users') }}"
         result = converter.convert(sql, "test_model")
-        
+
         assert "{{ source('raw', 'users') }}" not in result["sql"]
         assert "raw.users" in result["sql"]
         assert result["is_python_model"] is False
@@ -103,10 +98,10 @@ class TestJinjaConverter:
             dbt_project=dbt_project,
             source_map=source_map,
         )
-        
+
         sql = "SELECT * FROM {{ source('raw', 'users') }}"
         result = converter.convert(sql, "test_model")
-        
+
         # Should use source_name.table_name as fallback
         assert "raw.users" in result["sql"]
         assert len(result["conversion_warnings"]) > 0
@@ -115,10 +110,10 @@ class TestJinjaConverter:
         """Test converting var() calls with default values."""
         dbt_project = {"name": "test_project"}
         converter = JinjaConverter(dbt_project=dbt_project)
-        
+
         sql = "SELECT * FROM {{ var('env', 'dev') }}"
         result = converter.convert(sql, "test_model")
-        
+
         assert "dev" in result["sql"]
         assert "{{ var(" not in result["sql"]
         assert result["is_python_model"] is False
@@ -127,10 +122,10 @@ class TestJinjaConverter:
         """Test converting var() calls without default values."""
         dbt_project = {"name": "test_project"}
         converter = JinjaConverter(dbt_project=dbt_project)
-        
+
         sql = "SELECT * FROM {{ var('env') }}"
         result = converter.convert(sql, "test_model")
-        
+
         # Should use t4t variable syntax @variable
         assert "@env" in result["sql"]
         assert len(result["conversion_warnings"]) > 0
@@ -147,14 +142,14 @@ class TestJinjaConverter:
             dbt_project=dbt_project,
             model_name_map=model_name_map,
         )
-        
+
         sql = """
         SELECT c.id, o.total
         FROM {{ ref('customers') }} c
         JOIN {{ ref('orders') }} o ON c.id = o.customer_id
         """
         result = converter.convert(sql, "test_model")
-        
+
         assert "public.customers" in result["sql"]
         assert "staging.orders" in result["sql"]
         assert "{{ ref(" not in result["sql"]
@@ -164,14 +159,14 @@ class TestJinjaConverter:
         """Test detecting complex Jinja with loops."""
         dbt_project = {"name": "test_project"}
         converter = JinjaConverter(dbt_project=dbt_project)
-        
+
         sql = """
         {% for table in tables %}
         SELECT * FROM {{ table }}
         {% endfor %}
         """
         result = converter.convert(sql, "test_model")
-        
+
         assert result["is_python_model"] is True
         assert len(result["conversion_warnings"]) > 0
         # Check that warning mentions complex Jinja (case-insensitive)
@@ -182,7 +177,7 @@ class TestJinjaConverter:
         """Test detecting complex Jinja with conditionals."""
         dbt_project = {"name": "test_project"}
         converter = JinjaConverter(dbt_project=dbt_project)
-        
+
         sql = """
         {% if env == 'prod' %}
         SELECT * FROM prod_table
@@ -191,7 +186,7 @@ class TestJinjaConverter:
         {% endif %}
         """
         result = converter.convert(sql, "test_model")
-        
+
         assert result["is_python_model"] is True
         assert len(result["conversion_warnings"]) > 0
 
@@ -199,7 +194,7 @@ class TestJinjaConverter:
         """Test detecting complex Jinja with elif."""
         dbt_project = {"name": "test_project"}
         converter = JinjaConverter(dbt_project=dbt_project)
-        
+
         sql = """
         {% if env == 'prod' %}
         SELECT * FROM prod_table
@@ -208,14 +203,14 @@ class TestJinjaConverter:
         {% endif %}
         """
         result = converter.convert(sql, "test_model")
-        
+
         assert result["is_python_model"] is True
 
     def test_detect_complex_jinja_multiple_ifs(self):
         """Test detecting complex Jinja with multiple if statements."""
         dbt_project = {"name": "test_project"}
         converter = JinjaConverter(dbt_project=dbt_project)
-        
+
         sql = """
         {% if condition1 %}
         SELECT * FROM table1
@@ -225,21 +220,21 @@ class TestJinjaConverter:
         {% endif %}
         """
         result = converter.convert(sql, "test_model")
-        
+
         assert result["is_python_model"] is True
 
     def test_simple_if_not_complex(self):
         """Test that simple if without else/elif is not complex."""
         dbt_project = {"name": "test_project"}
         converter = JinjaConverter(dbt_project=dbt_project)
-        
+
         sql = """
         {% if env == 'prod' %}
         SELECT * FROM prod_table
         {% endif %}
         """
         result = converter.convert(sql, "test_model")
-        
+
         # Simple if should be flagged as unconvertible but not necessarily complex
         # The converter will try to convert it and if it fails, mark as python model
         assert result["is_python_model"] is True  # Because we can't convert {% if %}
@@ -254,7 +249,7 @@ class TestJinjaConverter:
             model_name_map=model_name_map,
             source_map=source_map,
         )
-        
+
         sql = """
         SELECT c.id, u.name
         FROM {{ ref('customers') }} c
@@ -262,7 +257,7 @@ class TestJinjaConverter:
         WHERE env = {{ var('env', 'dev') }}
         """
         result = converter.convert(sql, "test_model")
-        
+
         assert "public.customers" in result["sql"]
         assert "raw.users" in result["sql"]
         assert "dev" in result["sql"]
@@ -276,10 +271,10 @@ class TestJinjaConverter:
             dbt_project=dbt_project,
             model_name_map=model_name_map,
         )
-        
+
         sql = "SELECT * FROM {{ REF('customers') }}"
         result = converter.convert(sql, "test_model")
-        
+
         assert "public.customers" in result["sql"]
         assert result["is_python_model"] is False
 
@@ -291,10 +286,9 @@ class TestJinjaConverter:
             dbt_project=dbt_project,
             model_name_map=model_name_map,
         )
-        
+
         sql = "SELECT * FROM {{  ref( 'customers' )  }}"
         result = converter.convert(sql, "test_model")
-        
+
         assert "public.customers" in result["sql"]
         assert result["is_python_model"] is False
-

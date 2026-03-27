@@ -2,13 +2,14 @@
 Unit tests for SqlTest class.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
 
+import pytest
+
+from tee.testing.base import TestResult, TestSeverity
 from tee.testing.sql_test import SqlTest
-from tee.testing.base import TestSeverity, TestResult
 
 
 class TestSqlTest:
@@ -281,7 +282,7 @@ WHERE status = {{ status | default('active') }}
         adapter = Mock()
         adapter.execute_query.return_value = []
 
-        result = sql_test.execute(adapter=adapter, table_name="my_table", params={"min_rows": 5})
+        sql_test.execute(adapter=adapter, table_name="my_table", params={"min_rows": 5})
 
         # Verify query was called with substituted params
         assert adapter.execute_query.called

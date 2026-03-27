@@ -72,8 +72,10 @@ class SchemaChangeHandler:
         # Enrich new_columns with auto_incremental flag from metadata if available
         if metadata and "schema" in metadata:
             metadata_schema = metadata["schema"]
-            metadata_col_map = {col["name"]: col for col in metadata_schema if isinstance(col, dict)}
-            
+            metadata_col_map = {
+                col["name"]: col for col in metadata_schema if isinstance(col, dict)
+            }
+
             # Add auto_incremental flag to new columns if present in metadata
             for new_col in differences["new_columns"]:
                 col_name = new_col.get("name")
@@ -102,9 +104,7 @@ class SchemaChangeHandler:
             )
         elif on_schema_change == "full_refresh":
             if not sql_query:
-                raise ValueError(
-                    "full_refresh requires sql_query but it was not provided"
-                )
+                raise ValueError("full_refresh requires sql_query but it was not provided")
             self._handle_full_refresh(table_name, sql_query)
         elif on_schema_change == "full_incremental_refresh":
             if not sql_query:
@@ -153,11 +153,14 @@ class SchemaChangeHandler:
         logger.info(f"Ignoring schema changes for {table_name}")
 
     def _handle_append_new_columns(
-        self, table_name: str, new_columns: list[dict[str, Any]], metadata: dict[str, Any] | None = None
+        self,
+        table_name: str,
+        new_columns: list[dict[str, Any]],
+        _metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Add new columns to existing table.
-        
+
         Note: If any new column is marked as auto_incremental, this will fail
         because auto_incremental columns require a full refresh to assign IDs correctly.
         """
@@ -165,9 +168,7 @@ class SchemaChangeHandler:
             return
 
         # Check if any new column is auto_incremental
-        auto_incremental_cols = [
-            col for col in new_columns if col.get("auto_incremental", False)
-        ]
+        auto_incremental_cols = [col for col in new_columns if col.get("auto_incremental", False)]
         if auto_incremental_cols:
             col_names = [col["name"] for col in auto_incremental_cols]
             raise ValueError(
@@ -185,18 +186,16 @@ class SchemaChangeHandler:
         table_name: str,
         new_columns: list[dict[str, Any]],
         missing_columns: list[dict[str, Any]],
-        metadata: dict[str, Any] | None = None,
+        _metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Sync all columns: add new, remove missing.
-        
+
         Note: If any new column is marked as auto_incremental, this will fail
         because auto_incremental columns require a full refresh to assign IDs correctly.
         """
         # Check if any new column is auto_incremental
-        auto_incremental_cols = [
-            col for col in new_columns if col.get("auto_incremental", False)
-        ]
+        auto_incremental_cols = [col for col in new_columns if col.get("auto_incremental", False)]
         if auto_incremental_cols:
             col_names = [col["name"] for col in auto_incremental_cols]
             raise ValueError(
@@ -226,11 +225,11 @@ class SchemaChangeHandler:
             f"Schema change detected for {table_name} with on_schema_change='full_refresh'. "
             f"Dropping and recreating table with new schema."
         )
-        
+
         # Drop existing table
         self.adapter.drop_table(table_name)
         logger.info(f"Dropped table {table_name} due to schema change")
-        
+
         # Recreate with full query (no filtering)
         self.adapter.create_table(table_name, sql_query)
         logger.info(f"Recreated table {table_name} with new schema")
@@ -285,7 +284,7 @@ class SchemaChangeHandler:
         for param in parameters:
             param_name = param["name"]
             end_value = param["end_value"]
-            
+
             # Check if end_value is an expression (contains function calls or column references)
             if self._is_expression(end_value):
                 # Evaluate expression against source tables
@@ -327,15 +326,13 @@ class SchemaChangeHandler:
             executor,
         )
 
-    def _handle_recreate_empty(
-        self, table_name: str, query_schema: list[dict[str, Any]]
-    ) -> None:
+    def _handle_recreate_empty(self, table_name: str, query_schema: list[dict[str, Any]]) -> None:
         """Drop table and recreate as empty table."""
         logger.info(f"Recreating {table_name} as empty table")
-        
+
         # Drop existing table
         self.adapter.drop_table(table_name)
-        
+
         # Create empty table with correct schema
         self._create_empty_table_from_schema(table_name, query_schema)
 
@@ -365,9 +362,7 @@ class SchemaChangeHandler:
     ) -> None:
         """Generate and execute ALTER TABLE ADD COLUMN DDL."""
         # Get qualified table name
-        if hasattr(self.adapter, "utils") and hasattr(
-            self.adapter.utils, "qualify_object_name"
-        ):
+        if hasattr(self.adapter, "utils") and hasattr(self.adapter.utils, "qualify_object_name"):
             qualified_table = self.adapter.utils.qualify_object_name(table_name)
         else:
             qualified_table = table_name
@@ -382,14 +377,10 @@ class SchemaChangeHandler:
             logger.error(f"Failed to add column {column_name} to {table_name}: {e}")
             raise
 
-    def _generate_and_execute_drop_column_ddl(
-        self, table_name: str, column_name: str
-    ) -> None:
+    def _generate_and_execute_drop_column_ddl(self, table_name: str, column_name: str) -> None:
         """Generate and execute ALTER TABLE DROP COLUMN DDL."""
         # Get qualified table name
-        if hasattr(self.adapter, "utils") and hasattr(
-            self.adapter.utils, "qualify_object_name"
-        ):
+        if hasattr(self.adapter, "utils") and hasattr(self.adapter.utils, "qualify_object_name"):
             qualified_table = self.adapter.utils.qualify_object_name(table_name)
         else:
             qualified_table = table_name
@@ -425,9 +416,7 @@ class SchemaChangeHandler:
             column_defs.append(f"{col_name} {col_type}")
 
         # Get qualified table name
-        if hasattr(self.adapter, "utils") and hasattr(
-            self.adapter.utils, "qualify_object_name"
-        ):
+        if hasattr(self.adapter, "utils") and hasattr(self.adapter.utils, "qualify_object_name"):
             qualified_table = self.adapter.utils.qualify_object_name(table_name)
         else:
             qualified_table = table_name
@@ -454,7 +443,7 @@ class SchemaChangeHandler:
         try:
             parsed = sqlglot.parse_one(sql_query)
             source_tables = []
-            
+
             # Find all table references in FROM and JOIN clauses
             for table in parsed.find_all(exp.Table):
                 # Get fully qualified name if available
@@ -464,10 +453,10 @@ class SchemaChangeHandler:
                     table_name = str(table.this)
                 else:
                     continue
-                    
+
                 if table_name not in source_tables:
                     source_tables.append(table_name)
-            
+
             return source_tables
         except Exception as e:
             logger.warning(f"Failed to extract source tables from query: {e}")
@@ -490,18 +479,18 @@ class SchemaChangeHandler:
         """
         if not value or not isinstance(value, str):
             return False
-        
+
         # Check for function calls (e.g., "max(event_date)")
-        if re.search(r'\w+\s*\(', value):
+        if re.search(r"\w+\s*\(", value):
             return True
-        
+
         # Check for column references (simple identifiers)
         # If it's just a date string or number, it's not an expression
-        if re.match(r'^[\d\-\s:]+$', value):  # Date/number pattern
+        if re.match(r"^[\d\-\s:]+$", value):  # Date/number pattern
             return False
-        
+
         # Check for SQL keywords or operators
-        sql_keywords = ['max', 'min', 'count', 'sum', 'avg', 'to_date', 'date']
+        sql_keywords = ["max", "min", "count", "sum", "avg", "to_date", "date"]
         value_lower = value.lower()
         return any(keyword in value_lower for keyword in sql_keywords)
 
@@ -531,19 +520,19 @@ class SchemaChangeHandler:
         try:
             # Parse the expression to extract function and column
             # Simple pattern: function(column) or just column
-            match = re.match(r'(\w+)\s*\(\s*(\w+)\s*\)', expression)
+            match = re.match(r"(\w+)\s*\(\s*(\w+)\s*\)", expression)
             if match:
                 func_name = match.group(1).lower()
                 column_name = match.group(2)
-                
+
                 # Build query: SELECT max(column) FROM source_table
                 # Use first source table (in real scenarios, might need to handle multiple)
                 source_table = source_tables[0]
-                
+
                 eval_query = f"SELECT {func_name}({column_name}) as end_value FROM {source_table}"
-                
+
                 result = self.adapter.execute_query(eval_query)
-                
+
                 # Extract result
                 if hasattr(result, "fetchone"):
                     row = result.fetchone()
@@ -552,11 +541,9 @@ class SchemaChangeHandler:
                     end_value = str(result[0][0]) if result and result[0] else None
                 else:
                     end_value = str(result)
-                
+
                 if end_value:
-                    logger.info(
-                        f"Evaluated {expression} for {param_name}: {end_value}"
-                    )
+                    logger.info(f"Evaluated {expression} for {param_name}: {end_value}")
                     return end_value
                 else:
                     raise ValueError(f"Expression '{expression}' returned no value")
@@ -565,9 +552,9 @@ class SchemaChangeHandler:
                 # Try: SELECT column FROM source_table LIMIT 1
                 source_table = source_tables[0]
                 eval_query = f"SELECT {expression} as end_value FROM {source_table} LIMIT 1"
-                
+
                 result = self.adapter.execute_query(eval_query)
-                
+
                 if hasattr(result, "fetchone"):
                     row = result.fetchone()
                     end_value = str(row[0]) if row else None
@@ -575,12 +562,12 @@ class SchemaChangeHandler:
                     end_value = str(result[0][0]) if result and result[0] else None
                 else:
                     end_value = str(result)
-                
+
                 if end_value:
                     return end_value
                 else:
                     raise ValueError(f"Expression '{expression}' returned no value")
-                    
+
         except Exception as e:
             logger.error(f"Failed to evaluate expression '{expression}': {e}")
             raise ValueError(
@@ -611,14 +598,14 @@ class SchemaChangeHandler:
         """
         # Initialize current values with start_values
         current_values = {param["name"]: param["start_value"] for param in parameters}
-        
+
         # Get step (should be the same for all parameters, or handle per-parameter)
         # For now, assume single step for all (as per OTS spec)
         step = parameters[0]["step"] if parameters else "INTERVAL 1 DAY"
-        
+
         chunk_count = 0
         max_chunks = 10000  # Safety limit to prevent infinite loops
-        
+
         while chunk_count < max_chunks:
             # Check if we've reached end conditions for all parameters
             all_done = True
@@ -626,28 +613,30 @@ class SchemaChangeHandler:
                 param_name = param["name"]
                 current = current_values[param_name]
                 end_value = evaluated_end_values.get(param_name)
-                
+
                 if not end_value:
                     logger.warning(f"No end_value for {param_name}, skipping chunk check")
                     continue
-                
+
                 # Compare current with end_value
                 if not self._has_reached_end(current, end_value, step):
                     all_done = False
                     break
-            
+
             if all_done:
-                logger.info(f"Completed incremental chunks for {table_name} after {chunk_count} chunks")
+                logger.info(
+                    f"Completed incremental chunks for {table_name} after {chunk_count} chunks"
+                )
                 break
-            
+
             # Replace parameter placeholders in SQL query with current values
             chunk_query = self._replace_parameters_in_query(sql_query, current_values)
-            
+
             # Execute incremental strategy for this chunk
             logger.info(
                 f"Executing chunk {chunk_count + 1} for {table_name} with parameters: {current_values}"
             )
-            
+
             try:
                 if strategy == "append":
                     append_config = incremental_config.get("append", {})
@@ -684,18 +673,16 @@ class SchemaChangeHandler:
                     )
                 else:
                     raise ValueError(f"Unknown strategy: {strategy}")
-                
+
                 chunk_count += 1
-                
+
                 # Increment parameters for next chunk
-                current_values = self._increment_parameters(
-                    current_values, parameters, step
-                )
-                
+                current_values = self._increment_parameters(current_values, parameters, step)
+
             except Exception as e:
                 logger.error(f"Error executing chunk {chunk_count + 1}: {e}")
                 raise
-        
+
         if chunk_count >= max_chunks:
             logger.warning(
                 f"Reached maximum chunk limit ({max_chunks}) for {table_name}. "
@@ -721,7 +708,7 @@ class SchemaChangeHandler:
             return current_date >= end_date
         except (ValueError, AttributeError):
             pass
-        
+
         # Try numeric comparison
         try:
             current_num = float(current)
@@ -729,13 +716,11 @@ class SchemaChangeHandler:
             return current_num >= end_num
         except (ValueError, TypeError):
             pass
-        
+
         # String comparison (fallback)
         return current >= end_value
 
-    def _replace_parameters_in_query(
-        self, sql_query: str, parameter_values: dict[str, str]
-    ) -> str:
+    def _replace_parameters_in_query(self, sql_query: str, parameter_values: dict[str, str]) -> str:
         """
         Replace parameter placeholders in SQL query with actual values.
 
@@ -747,17 +732,15 @@ class SchemaChangeHandler:
             SQL query with parameters replaced
         """
         result_query = sql_query
-        
+
         for param_name, param_value in parameter_values.items():
             # Replace @param_name
-            result_query = re.sub(
-                rf"@{re.escape(param_name)}\b", param_value, result_query
-            )
+            result_query = re.sub(rf"@{re.escape(param_name)}\b", param_value, result_query)
             # Replace {{ param_name }}
             result_query = re.sub(
                 rf"{{\{{\s*{re.escape(param_name)}\s*\}}\}}", param_value, result_query
             )
-        
+
         return result_query
 
     def _increment_parameters(
@@ -778,15 +761,15 @@ class SchemaChangeHandler:
             Updated parameter values
         """
         incremented = current_values.copy()
-        
+
         for param in parameters:
             param_name = param["name"]
             current = current_values[param_name]
-            
+
             # Try to increment as date
             try:
                 current_date = datetime.fromisoformat(current.replace(" ", "T"))
-                
+
                 # Parse step as interval
                 if "INTERVAL" in step.upper():
                     # Extract number and unit from "INTERVAL 1 DAY"
@@ -794,7 +777,7 @@ class SchemaChangeHandler:
                     if match:
                         amount = int(match.group(1))
                         unit = match.group(2).lower()
-                        
+
                         # Map unit to timedelta
                         unit_map = {
                             "day": "days",
@@ -806,7 +789,7 @@ class SchemaChangeHandler:
                             "hour": "hours",
                             "hours": "hours",
                         }
-                        
+
                         if unit in unit_map:
                             if unit in ["month", "months"]:
                                 delta = timedelta(days=amount * 30)
@@ -814,11 +797,11 @@ class SchemaChangeHandler:
                                 delta = timedelta(days=amount * 365)
                             else:
                                 delta = timedelta(**{unit_map[unit]: amount})
-                            
+
                             new_date = current_date + delta
                             incremented[param_name] = new_date.isoformat()
                             continue
-                
+
                 # If not an INTERVAL, try numeric step
                 try:
                     step_num = float(step)
@@ -828,10 +811,10 @@ class SchemaChangeHandler:
                     continue
                 except (ValueError, TypeError):
                     pass
-                    
+
             except (ValueError, AttributeError):
                 pass
-            
+
             # Try numeric increment
             try:
                 current_num = float(current)
@@ -840,12 +823,11 @@ class SchemaChangeHandler:
                 continue
             except (ValueError, TypeError):
                 pass
-            
+
             # If we can't increment, log warning and keep current value
             logger.warning(
                 f"Could not increment parameter {param_name} with step {step}. "
                 f"Keeping current value: {current}"
             )
-        
-        return incremented
 
+        return incremented

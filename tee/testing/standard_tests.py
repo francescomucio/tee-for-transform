@@ -14,7 +14,9 @@ class NotNullTest(StandardTest):
         super().__init__("not_null", severity=TestSeverity.ERROR)
 
     def validate_params(
-        self, params: dict[str, Any] | None = None, column_name: str | None = None
+        self,
+        params: dict[str, Any] | None = None,
+        column_name: str | None = None,  # noqa: ARG002
     ) -> None:
         """Validate not_null test parameters (none required currently)."""
         # Future: could support `allow_nulls` parameter
@@ -25,8 +27,8 @@ class NotNullTest(StandardTest):
         adapter,
         table_name: str | None = None,
         column_name: str | None = None,
-        function_name: str | None = None,
-        params: dict[str, Any] | None = None,
+        _function_name: str | None = None,
+        _params: dict[str, Any] | None = None,
     ) -> str:
         """
         Generate SQL query to find NULL values using adapter.
@@ -87,7 +89,7 @@ class UniqueTest(StandardTest):
         adapter,
         table_name: str | None = None,
         column_name: str | None = None,
-        function_name: str | None = None,
+        _function_name: str | None = None,
         params: dict[str, Any] | None = None,
     ) -> str:
         """
@@ -166,8 +168,8 @@ class RowCountGreaterThanZeroTest(StandardTest):
         adapter,
         table_name: str | None = None,
         column_name: str | None = None,
-        function_name: str | None = None,
-        params: dict[str, Any] | None = None,
+        _function_name: str | None = None,
+        _params: dict[str, Any] | None = None,
     ) -> str:
         """
         Generate SQL query to count rows using adapter.
@@ -253,7 +255,7 @@ class AcceptedValuesTest(StandardTest):
         adapter,
         table_name: str | None = None,
         column_name: str | None = None,
-        function_name: str | None = None,
+        _function_name: str | None = None,
         params: dict[str, Any] | None = None,
     ) -> str:
         """
@@ -370,7 +372,7 @@ class RelationshipsTest(StandardTest):
         adapter,
         table_name: str | None = None,
         column_name: str | None = None,
-        function_name: str | None = None,
+        _function_name: str | None = None,
         params: dict[str, Any] | None = None,
     ) -> str:
         """
@@ -422,6 +424,126 @@ class RelationshipsTest(StandardTest):
         )
 
 
+class PrimaryKeyTest(StandardTest):
+    """
+    Test that verifies a column is a valid primary key.
+
+    The test is a combined check:
+    - NOT NULL
+    - UNIQUE
+    """
+
+    def __init__(self):
+        super().__init__("primary_key", severity=TestSeverity.ERROR)
+
+    def validate_params(
+        self, params: dict[str, Any] | None = None, column_name: str | None = None
+    ) -> None:
+        self._validate_unknown_params(params, set())
+
+        # This is a column-level test: column_name is required.
+        if not column_name:
+            raise ValueError("primary_key test requires a column name")
+
+    def get_test_query(
+        self,
+        adapter,
+        table_name: str | None = None,
+        column_name: str | None = None,
+        _function_name: str | None = None,
+        _params: dict[str, Any] | None = None,
+    ) -> str:
+        if not column_name:
+            raise ValueError("primary_key test requires a column name")
+        return adapter.generate_primary_key_test_query(table_name, column_name)
+
+
+class HierarchyNoSplitTest(StandardTest):
+    """
+    Model-level test ensuring each child PK maps to exactly one parent value.
+
+    This prevents split/diamond-shaped hierarchies.
+    """
+
+    def __init__(self):
+        super().__init__("hierarchy_no_split", severity=TestSeverity.ERROR)
+
+    def validate_params(
+        self, params: dict[str, Any] | None = None, column_name: str | None = None
+    ) -> None:
+        self._validate_model_level_only(column_name)
+
+        if not params:
+            raise ValueError("hierarchy_no_split test requires params")
+        if "child_col" not in params or "parent_col" not in params:
+            raise ValueError("hierarchy_no_split requires 'child_col' and 'parent_col' params")
+
+        if not isinstance(params["child_col"], str) or not params["child_col"].strip():
+            raise ValueError("hierarchy_no_split: 'child_col' must be a non-empty string")
+        if not isinstance(params["parent_col"], str) or not params["parent_col"].strip():
+            raise ValueError("hierarchy_no_split: 'parent_col' must be a non-empty string")
+
+        self._validate_unknown_params(params, {"child_col", "parent_col"})
+
+    def get_test_query(
+        self,
+        adapter,
+        table_name: str | None = None,
+        column_name: str | None = None,
+        _function_name: str | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> str:
+        self.validate_params(params=params, column_name=column_name)
+        return adapter.generate_hierarchy_no_split_test_query(
+            table_name=table_name,
+            child_col=params["child_col"],
+            parent_col=params["parent_col"],
+        )
+
+
+class LevelUniquenessTest(StandardTest):
+    """
+    Model-level test ensuring each PK at a hierarchy level has a single consistent attribute tuple.
+    """
+
+    def __init__(self):
+        super().__init__("level_uniqueness", severity=TestSeverity.ERROR)
+
+    def validate_params(
+        self, params: dict[str, Any] | None = None, column_name: str | None = None
+    ) -> None:
+        self._validate_model_level_only(column_name)
+
+        if not params:
+            raise ValueError("level_uniqueness test requires params")
+        if "pk_col" not in params or "attribute_cols" not in params:
+            raise ValueError("level_uniqueness requires 'pk_col' and 'attribute_cols' params")
+
+        if not isinstance(params["pk_col"], str) or not params["pk_col"].strip():
+            raise ValueError("level_uniqueness: 'pk_col' must be a non-empty string")
+        if not isinstance(params["attribute_cols"], list):
+            raise ValueError("level_uniqueness: 'attribute_cols' must be a list")
+        if any(not isinstance(c, str) or not c.strip() for c in params["attribute_cols"]):
+            raise ValueError("level_uniqueness: 'attribute_cols' must contain non-empty strings")
+
+        self._validate_unknown_params(params, {"pk_col", "attribute_cols"})
+
+    def get_test_query(
+        self,
+        adapter,
+        table_name: str | None = None,
+        column_name: str | None = None,
+        _function_name: str | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> str:
+        self.validate_params(params=params, column_name=column_name)
+        return adapter.generate_level_uniqueness_test_query(
+            table_name=table_name,
+            pk_col=params["pk_col"],
+            attribute_cols=params["attribute_cols"],
+        )
+
+
 # Register standard tests
 NOT_NULL = NotNullTest()
 UNIQUE = UniqueTest()
@@ -429,9 +551,15 @@ UNIQUE = UniqueTest()
 ROW_COUNT_GT_0 = RowCountGreaterThanZeroTest()
 ACCEPTED_VALUES = AcceptedValuesTest()
 RELATIONSHIPS = RelationshipsTest()
+PRIMARY_KEY = PrimaryKeyTest()
+HIERARCHY_NO_SPLIT = HierarchyNoSplitTest()
+LEVEL_UNIQUENESS = LevelUniquenessTest()
 
 TestRegistry.register(NOT_NULL)
 TestRegistry.register(UNIQUE)
 TestRegistry.register(ROW_COUNT_GT_0)
 TestRegistry.register(ACCEPTED_VALUES)
 TestRegistry.register(RELATIONSHIPS)
+TestRegistry.register(PRIMARY_KEY)
+TestRegistry.register(HIERARCHY_NO_SPLIT)
+TestRegistry.register(LEVEL_UNIQUENESS)

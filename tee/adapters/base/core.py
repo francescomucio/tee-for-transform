@@ -61,37 +61,55 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
 
     def _validate_field_types(self, config_dict: dict[str, Any]) -> None:
         """Validate field types."""
-        if "port" in config_dict and config_dict["port"] is not None:
-            if not isinstance(config_dict["port"], int):
-                raise ValueError("Port must be an integer")
+        if (
+            "port" in config_dict
+            and config_dict["port"] is not None
+            and not isinstance(config_dict["port"], int)
+        ):
+            raise ValueError("Port must be an integer")
 
-        if "connection_timeout" in config_dict and config_dict["connection_timeout"] is not None:
-            if not isinstance(config_dict["connection_timeout"], int):
-                raise ValueError("Connection timeout must be an integer")
+        if (
+            "connection_timeout" in config_dict
+            and config_dict["connection_timeout"] is not None
+            and not isinstance(config_dict["connection_timeout"], int)
+        ):
+            raise ValueError("Connection timeout must be an integer")
 
-        if "query_timeout" in config_dict and config_dict["query_timeout"] is not None:
-            if not isinstance(config_dict["query_timeout"], int):
-                raise ValueError("Query timeout must be an integer")
+        if (
+            "query_timeout" in config_dict
+            and config_dict["query_timeout"] is not None
+            and not isinstance(config_dict["query_timeout"], int)
+        ):
+            raise ValueError("Query timeout must be an integer")
 
     def _validate_field_values(self, config_dict: dict[str, Any]) -> None:
         """Validate field values."""
-        if "port" in config_dict and config_dict["port"] is not None:
-            if not (1 <= config_dict["port"] <= 65535):
-                raise ValueError("Port must be between 1 and 65535")
+        if (
+            "port" in config_dict
+            and config_dict["port"] is not None
+            and not (1 <= config_dict["port"] <= 65535)
+        ):
+            raise ValueError("Port must be between 1 and 65535")
 
-        if "connection_timeout" in config_dict and config_dict["connection_timeout"] is not None:
-            if config_dict["connection_timeout"] <= 0:
-                raise ValueError("Connection timeout must be positive")
+        if (
+            "connection_timeout" in config_dict
+            and config_dict["connection_timeout"] is not None
+            and config_dict["connection_timeout"] <= 0
+        ):
+            raise ValueError("Connection timeout must be positive")
 
-        if "query_timeout" in config_dict and config_dict["query_timeout"] is not None:
-            if config_dict["query_timeout"] <= 0:
-                raise ValueError("Query timeout must be positive")
+        if (
+            "query_timeout" in config_dict
+            and config_dict["query_timeout"] is not None
+            and config_dict["query_timeout"] <= 0
+        ):
+            raise ValueError("Query timeout must be positive")
 
     def _create_adapter_config(self, config_dict: dict[str, Any]) -> AdapterConfig:
         """Create AdapterConfig from validated dictionary."""
         # Map source_sql_dialect to source_dialect (source_sql_dialect is the preferred name in project.toml)
         source_dialect = config_dict.get("source_dialect") or config_dict.get("source_sql_dialect")
-        
+
         return AdapterConfig(
             type=config_dict["type"],
             host=config_dict.get("host"),
@@ -291,7 +309,7 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
         self.create_table(table_name, source_sql)
 
     def execute_incremental_merge(
-        self, table_name: str, source_sql: str, config: dict[str, Any]
+        self, _table_name: str, source_sql: str, _config: dict[str, Any]
     ) -> None:
         """Execute incremental merge operation.
 
@@ -304,7 +322,7 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
         self.execute_query(source_sql)
 
     def execute_incremental_delete_insert(
-        self, table_name: str, delete_sql: str, insert_sql: str
+        self, _table_name: str, delete_sql: str, insert_sql: str
     ) -> None:
         """Execute incremental delete+insert operation.
 

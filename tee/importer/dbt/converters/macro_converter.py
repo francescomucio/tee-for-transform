@@ -211,14 +211,14 @@ class MacroConverter:
         return "Unknown reason"
 
     def _convert_macro_to_udf(
-        self, default_macro: dict[str, Any], all_versions: list[dict[str, Any]]
+        self, default_macro: dict[str, Any], _all_versions: list[dict[str, Any]]
     ) -> None:
         """
         Convert a macro to a t4t UDF.
 
         Args:
             default_macro: Default macro definition
-            all_versions: All versions of the macro (including adapter-specific)
+            _all_versions: All versions of the macro (including adapter-specific; reserved)
         """
         macro_name = default_macro["base_name"]
         parameters = default_macro["parameters"]
@@ -301,7 +301,7 @@ $$;
             # Parse as PostgreSQL (source dialect for dbt macros)
             # SQLGlot uses "postgres" not "postgresql"
             parsed = sqlglot.parse_one(base_sql, read="postgres")
-            
+
             # Convert to target dialect
             if self.target_dialect != "postgres":
                 converted_sql = parsed.sql(dialect=self.target_dialect)
@@ -340,7 +340,7 @@ $$;
 
         # Try to extract description from macro comments
         description = self._extract_description_from_macro(macro_def)
-        
+
         metadata = f"""# Function metadata converted from dbt macro: {function_name}
 from tee.typing.metadata import FunctionMetadata
 
@@ -372,7 +372,7 @@ metadata: FunctionMetadata = {{
             Description string, or generic fallback
         """
         file_path = macro_def.get("file", "")
-        
+
         # Try to read the original file to get comments
         try:
             if file_path:
@@ -402,6 +402,6 @@ metadata: FunctionMetadata = {{
             if self.verbose:
                 logger.debug(f"Could not extract description from macro: {e}")
             pass
-        
+
         # Fallback to generic description
         return "Function converted from dbt macro"

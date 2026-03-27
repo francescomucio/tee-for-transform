@@ -28,7 +28,7 @@ class VariablesExtractor:
         self,
         model_files: dict[str, Path],
         dbt_project: dict[str, Any],
-        conversion_log: list[dict[str, Any]],
+        _conversion_log: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """
         Extract all variables from models and dbt_project.yml.
@@ -36,7 +36,7 @@ class VariablesExtractor:
         Args:
             model_files: Dictionary mapping relative paths to SQL model files
             dbt_project: Parsed dbt project configuration
-            conversion_log: Conversion log from model converter
+            _conversion_log: Conversion log from model converter (reserved)
 
         Returns:
             Dictionary with variable information:

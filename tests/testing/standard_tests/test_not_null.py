@@ -2,8 +2,9 @@
 Unit tests for NotNullTest.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from tee.testing.standard_tests import NotNullTest
 
@@ -76,4 +77,3 @@ class TestNotNullTest:
 
         assert result.passed is False
         assert result.rows_returned == 5
-

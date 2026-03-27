@@ -20,9 +20,19 @@ t4t docs ./my_project --output-dir ./documentation
 
 # With variables
 t4t docs ./my_project --vars '{"env": "prod"}'
+
+# Skip regenerating lookup models before building the site
+t4t docs ./my_project --skip-lookups
+
+# Infer dimensional links from fact column names (see CLI reference)
+t4t docs ./my_project --infer-dim-from-column-names
 ```
 
-The documentation will be generated in `output/docs/` by default (or your custom output directory).
+The documentation will be generated in `output/docs/` by default (or your custom output directory). For all flags, see the `docs` command in [CLI Reference](cli-reference.md).
+
+### Dimensional relationships in docs
+
+The generator builds a **dimensional relationship graph** from model metadata. Fact columns with **`dimension`** (and optional **`fk_to`**) drive semantic links in the data-model payload. Logical dimension names are resolved using the same **auto-built registry** as the parser: dimension tables are discovered from `table_type` / `dim_*` naming and hierarchy level names, as described in the [Model API reference](../api-reference/models.md#dimension-shorthand-and-automatic-registry).
 
 ## Features
 
@@ -185,6 +195,6 @@ The documentation site is useful for:
 ## Related Documentation
 
 - [CLI Reference](cli-reference.md) - Complete command reference
-- [Models API](api-reference/models.md) - Model creation and metadata
+- [Models API](../api-reference/models.md) - Model creation and metadata
 - [Tags and Metadata](tags-and-metadata.md) - Adding descriptions and metadata to models
 

@@ -69,7 +69,9 @@ def execute_models(
         print(f"✅ Compilation complete: {compile_results['ots_modules_count']} OTS module(s)")
 
         # Extract and validate graph and execution order from compile results
-        graph, execution_order, parsed_models = shared_helpers.validate_compile_results(compile_results)
+        graph, execution_order, parsed_models = shared_helpers.validate_compile_results(
+            compile_results
+        )
 
     except (CompilationError, ParserError) as e:
         logger.error(f"Compilation failed: {e}")
@@ -246,7 +248,9 @@ def build_models(
         print(f"✅ Compilation complete: {compile_results['ots_modules_count']} OTS module(s)")
 
         # Extract and validate graph and execution order from compile results
-        graph, execution_order, parsed_models = shared_helpers.validate_compile_results(compile_results)
+        graph, execution_order, parsed_models = shared_helpers.validate_compile_results(
+            compile_results
+        )
 
     except (CompilationError, ParserError) as e:
         logger.error(f"Compilation failed: {e}")
@@ -269,15 +273,15 @@ def build_models(
     )
 
     # Load seeds even if there are no models (seeds should load regardless)
-    from tee.engine.execution_engine import ExecutionEngine
     from tee.engine import ModelExecutor
-    
+    from tee.engine.execution_engine import ExecutionEngine
+
     temp_executor = ModelExecutor(project_folder, connection_config)
     temp_executor.execution_engine = ExecutionEngine(
         temp_executor.config, project_folder=project_folder, variables=variables
     )
     temp_executor.execution_engine.connect()
-    
+
     seed_results = {"loaded_tables": [], "failed_tables": [], "total_seeds": 0}
     try:
         seed_results = build_helpers._load_seeds_for_build(temp_executor, project_folder)
@@ -322,7 +326,13 @@ def build_models(
         # Step 2.5: Execute functions before models
         # Functions must be created before models that depend on them
         parsed_functions, function_results = build_helpers.execute_functions_in_build(
-            parser, model_executor, test_executor, execution_order, failed_models, skipped_models, all_test_results
+            parser,
+            model_executor,
+            test_executor,
+            execution_order,
+            failed_models,
+            skipped_models,
+            all_test_results,
         )
 
         # Step 3: Execute models and tests interleaved
@@ -346,7 +356,15 @@ def build_models(
 
         # Step 5: Compile and return results
         results = build_helpers.compile_build_results(
-            execution_order, failed_models, skipped_models, all_test_results, parsed_models, graph, parsed_functions, function_results, seed_results
+            execution_order,
+            failed_models,
+            skipped_models,
+            all_test_results,
+            parsed_models,
+            graph,
+            parsed_functions,
+            function_results,
+            seed_results,
         )
         build_helpers.print_build_summary(results, failed_models, skipped_models)
 

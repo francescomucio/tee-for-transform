@@ -19,7 +19,7 @@ class TestDbtProjectParser:
         """Test parsing a valid dbt project."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
-            
+
             # Create dbt_project.yml
             dbt_project_file = tmpdir_path / "dbt_project.yml"
             dbt_config = {
@@ -36,14 +36,14 @@ class TestDbtProjectParser:
             }
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             # Create models directory
             models_dir = tmpdir_path / "models"
             models_dir.mkdir()
-            
+
             parser = DbtProjectParser(tmpdir_path)
             result = parser.parse()
-            
+
             assert result["name"] == "test_project"
             assert result["version"] == "1.0.0"
             assert result["profile"] == "my_profile"
@@ -54,7 +54,7 @@ class TestDbtProjectParser:
         """Test parsing dbt project with default values."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
-            
+
             # Create minimal dbt_project.yml
             dbt_project_file = tmpdir_path / "dbt_project.yml"
             dbt_config = {
@@ -62,14 +62,14 @@ class TestDbtProjectParser:
             }
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             # Create models directory
             models_dir = tmpdir_path / "models"
             models_dir.mkdir()
-            
+
             parser = DbtProjectParser(tmpdir_path)
             result = parser.parse()
-            
+
             assert result["name"] == "test_project"
             assert result["model-paths"] == ["models"]  # default
             assert result["test-paths"] == ["tests"]  # default
@@ -80,7 +80,7 @@ class TestDbtProjectParser:
         """Test parsing when dbt_project.yml is missing."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
-            
+
             # Parser raises error during initialization when dbt_project.yml is missing
             with pytest.raises(DbtProjectNotFoundError, match="dbt_project.yml not found"):
                 DbtProjectParser(tmpdir_path)
@@ -89,13 +89,13 @@ class TestDbtProjectParser:
         """Test parsing invalid YAML."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
-            
+
             # Create invalid YAML file
             dbt_project_file = tmpdir_path / "dbt_project.yml"
             dbt_project_file.write_text("invalid: yaml: content: [")
-            
+
             parser = DbtProjectParser(tmpdir_path)
-            
+
             # Should raise an error when trying to parse
             with pytest.raises((ValueError, yaml.YAMLError)):
                 parser.parse()
@@ -104,7 +104,7 @@ class TestDbtProjectParser:
         """Test parsing dbt project missing required name field."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
-            
+
             # Create dbt_project.yml without name
             dbt_project_file = tmpdir_path / "dbt_project.yml"
             dbt_config = {
@@ -112,9 +112,9 @@ class TestDbtProjectParser:
             }
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             parser = DbtProjectParser(tmpdir_path)
-            
+
             with pytest.raises(DbtProjectNotFoundError, match="missing required 'name' field"):
                 parser.parse()
 
@@ -122,13 +122,13 @@ class TestDbtProjectParser:
         """Test parsing YAML that is not a dictionary."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
-            
+
             # Create YAML that's not a dict
             dbt_project_file = tmpdir_path / "dbt_project.yml"
             dbt_project_file.write_text("- item1\n- item2")
-            
+
             parser = DbtProjectParser(tmpdir_path)
-            
+
             with pytest.raises(DbtProjectNotFoundError, match="not a valid YAML dictionary"):
                 parser.parse()
 
@@ -136,20 +136,19 @@ class TestDbtProjectParser:
         """Test structure validation with common directories."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
-            
+
             # Create dbt_project.yml
             dbt_project_file = tmpdir_path / "dbt_project.yml"
             dbt_config = {"name": "test_project"}
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             # Create multiple directories
             (tmpdir_path / "models").mkdir()
             (tmpdir_path / "tests").mkdir()
             (tmpdir_path / "macros").mkdir()
-            
+
             parser = DbtProjectParser(tmpdir_path, verbose=True)
             # Should not raise
             result = parser.parse()
             assert result["name"] == "test_project"
-

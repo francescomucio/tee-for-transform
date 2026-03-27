@@ -10,10 +10,13 @@ from typing import Any
 from tee.typing.metadata import (
     ColumnTestName,
     DataType,
+    FKReference,
+    HierarchyDefinition,
     IncrementalConfig,
     MaterializationType,
     ModelMetadata,
     ModelTestName,
+    TableType,
 )
 
 logger = logging.getLogger(__name__)
@@ -27,6 +30,8 @@ class ColumnSchema:
     datatype: DataType
     description: str | None = None
     tests: list[ColumnTestName] | None = None
+    fk_to: FKReference | None = None
+    dimension: str | None = None
 
     def __post_init__(self):
         """Validate required fields after initialization."""
@@ -36,6 +41,9 @@ class ColumnSchema:
             raise ValueError("Column datatype is required")
         if self.tests is None:
             self.tests = []
+
+        if self.dimension is not None and not isinstance(self.dimension, str):
+            raise ValueError("dimension must be a string")
 
 
 @dataclass
@@ -48,6 +56,11 @@ class ValidatedModelMetadata:
     materialization: MaterializationType | None = None
     tests: list[ModelTestName] | None = None
     incremental: IncrementalConfig | None = None
+    table_type: TableType | None = None
+    data_model: bool | None = None
+    hierarchy: HierarchyDefinition | None = None
+    conformed_dimension: dict[str, str] | None = None
+    disable_default_tests: bool | list[str] | None = None
 
     def __post_init__(self):
         """Validate metadata after initialization."""
@@ -59,6 +72,10 @@ class ValidatedModelMetadata:
             self.tests = []
         if self.partitions is None:
             self.partitions = []
+
+        if self.disable_default_tests is not None:
+            if not isinstance(self.disable_default_tests, (bool, list)):
+                raise ValueError("disable_default_tests must be a bool or list[str]")
 
         # Validate incremental configuration if present
         if self.incremental:
@@ -146,6 +163,8 @@ def validate_metadata_dict(metadata_dict: ModelMetadata) -> ValidatedModelMetada
                         datatype=col_dict["datatype"],
                         description=col_dict.get("description"),
                         tests=col_dict.get("tests", []),
+                        fk_to=col_dict.get("fk_to"),
+                        dimension=col_dict.get("dimension"),
                     )
                 )
 
@@ -157,6 +176,34 @@ def validate_metadata_dict(metadata_dict: ModelMetadata) -> ValidatedModelMetada
         materialization = metadata_dict.get("materialization")
         if materialization is not None and not isinstance(materialization, str):
             raise ValueError("Materialization must be a string")
+
+        table_type = metadata_dict.get("table_type")
+        if table_type is not None:
+            if table_type not in ["fact", "dim", "lookup", "dimension"]:
+                raise ValueError("Invalid table_type; must be one of: fact, dim, lookup, dimension")
+
+        data_model = metadata_dict.get("data_model")
+        if data_model is not None and not isinstance(data_model, bool):
+            raise ValueError("data_model must be a boolean")
+
+        hierarchy = metadata_dict.get("hierarchy")
+        if hierarchy is not None and not isinstance(hierarchy, dict):
+            raise ValueError("hierarchy must be a dict")
+
+        conformed_dimension = metadata_dict.get("conformed_dimension")
+        if conformed_dimension is not None:
+            if not isinstance(conformed_dimension, dict):
+                raise ValueError("conformed_dimension must be a dict")
+            log = conformed_dimension.get("logical")
+            lev = conformed_dimension.get("level")
+            if not isinstance(log, str) or not isinstance(lev, str):
+                raise ValueError("conformed_dimension requires string 'logical' and 'level'")
+
+        disable_default_tests = metadata_dict.get("disable_default_tests")
+        if disable_default_tests is not None and not isinstance(
+            disable_default_tests, (bool, list)
+        ):
+            raise ValueError("disable_default_tests must be a bool or list[str]")
 
         tests = metadata_dict.get("tests")
         if tests is not None and not isinstance(tests, list):
@@ -174,6 +221,11 @@ def validate_metadata_dict(metadata_dict: ModelMetadata) -> ValidatedModelMetada
             materialization=materialization,
             tests=tests,
             incremental=incremental,
+            table_type=table_type,
+            data_model=data_model,
+            hierarchy=hierarchy,
+            conformed_dimension=conformed_dimension,
+            disable_default_tests=disable_default_tests,
         )
 
     except Exception as e:
@@ -239,11 +291,11 @@ def parse_metadata_from_python_file(file_path: str) -> dict[str, Any] | None:
 
             # Set flag to skip registration during metadata parsing
             # This prevents decorators from re-registering models when we're just parsing metadata
-            from tee.parser.shared.registry import ModelRegistry, FunctionRegistry
-            
+            from tee.parser.shared.registry import FunctionRegistry, ModelRegistry
+
             ModelRegistry.set_skip_registration(True)
             FunctionRegistry.set_skip_registration(True)
-            
+
             try:
                 # Execute the file
                 exec(content, namespace)

@@ -55,10 +55,7 @@ class AdapterRegistry:
             ValueError: If adapter type is not supported
         """
         # Extract adapter type
-        if isinstance(config, AdapterConfig):
-            adapter_type = config.type
-        else:
-            adapter_type = config.get("type")
+        adapter_type = config.type if isinstance(config, AdapterConfig) else config.get("type")
 
         if not adapter_type:
             raise ValueError("Database type is required")

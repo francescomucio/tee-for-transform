@@ -4,7 +4,6 @@ Tests for the dbt importer main function.
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 import pytest
 import yaml
@@ -21,7 +20,7 @@ class TestDbtImporter:
         with tempfile.TemporaryDirectory() as tmpdir:
             source_path = Path(tmpdir) / "source"
             source_path.mkdir()
-            
+
             # Create a minimal dbt project
             dbt_project_file = source_path / "dbt_project.yml"
             dbt_config = {
@@ -30,12 +29,12 @@ class TestDbtImporter:
             }
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             # Create models directory
             (source_path / "models").mkdir()
-            
+
             target_path = Path(tmpdir) / "target"
-            
+
             # Should not raise
             import_dbt_project(
                 source_path=source_path,
@@ -45,7 +44,7 @@ class TestDbtImporter:
                 validate_execution=False,
                 verbose=False,
             )
-            
+
             # Check that target structure was created
             assert (target_path / "models").exists()
             assert (target_path / "tests").exists()
@@ -57,17 +56,17 @@ class TestDbtImporter:
         with tempfile.TemporaryDirectory() as tmpdir:
             source_path = Path(tmpdir) / "source"
             source_path.mkdir()
-            
+
             # Create a minimal dbt project
             dbt_project_file = source_path / "dbt_project.yml"
             dbt_config = {"name": "test_project"}
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             (source_path / "models").mkdir()
-            
+
             target_path = Path(tmpdir) / "target"
-            
+
             import_dbt_project(
                 source_path=source_path,
                 target_path=target_path,
@@ -76,7 +75,7 @@ class TestDbtImporter:
                 validate_execution=False,
                 verbose=False,
             )
-            
+
             # Check that OTS structure was created (ots_modules instead of functions)
             assert (target_path / "models").exists()
             assert (target_path / "ots_modules").exists()
@@ -87,16 +86,16 @@ class TestDbtImporter:
         with tempfile.TemporaryDirectory() as tmpdir:
             source_path = Path(tmpdir) / "source"
             source_path.mkdir()
-            
+
             dbt_project_file = source_path / "dbt_project.yml"
             dbt_config = {"name": "test_project"}
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             (source_path / "models").mkdir()
-            
+
             target_path = Path(tmpdir) / "target"
-            
+
             # Should not raise with verbose=True
             import_dbt_project(
                 source_path=source_path,
@@ -106,7 +105,7 @@ class TestDbtImporter:
                 validate_execution=False,
                 verbose=True,
             )
-            
+
             assert (target_path / "models").exists()
 
     def test_import_dbt_project_preserve_filenames(self):
@@ -114,16 +113,16 @@ class TestDbtImporter:
         with tempfile.TemporaryDirectory() as tmpdir:
             source_path = Path(tmpdir) / "source"
             source_path.mkdir()
-            
+
             dbt_project_file = source_path / "dbt_project.yml"
             dbt_config = {"name": "test_project"}
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             (source_path / "models").mkdir()
-            
+
             target_path = Path(tmpdir) / "target"
-            
+
             # Should not raise with preserve_filenames=True
             import_dbt_project(
                 source_path=source_path,
@@ -133,7 +132,7 @@ class TestDbtImporter:
                 validate_execution=False,
                 verbose=False,
             )
-            
+
             assert (target_path / "models").exists()
 
     def test_import_dbt_project_parser_error(self):
@@ -141,10 +140,10 @@ class TestDbtImporter:
         with tempfile.TemporaryDirectory() as tmpdir:
             source_path = Path(tmpdir) / "source"
             source_path.mkdir()
-            
+
             # Don't create dbt_project.yml - should fail
             target_path = Path(tmpdir) / "target"
-            
+
             with pytest.raises(DbtProjectNotFoundError, match="dbt_project.yml not found"):
                 import_dbt_project(
                     source_path=source_path,
@@ -160,16 +159,16 @@ class TestDbtImporter:
         with tempfile.TemporaryDirectory() as tmpdir:
             source_path = Path(tmpdir) / "source"
             source_path.mkdir()
-            
+
             dbt_project_file = source_path / "dbt_project.yml"
             dbt_config = {"name": "test_project"}
             with dbt_project_file.open("w", encoding="utf-8") as f:
                 yaml.dump(dbt_config, f)
-            
+
             (source_path / "models").mkdir()
-            
+
             target_path = Path(tmpdir) / "target"
-            
+
             # Use relative paths
             import_dbt_project(
                 source_path=str(source_path),
@@ -179,7 +178,6 @@ class TestDbtImporter:
                 validate_execution=False,
                 verbose=False,
             )
-            
+
             # Should still work (paths are resolved internally)
             assert (target_path / "models").exists()
-

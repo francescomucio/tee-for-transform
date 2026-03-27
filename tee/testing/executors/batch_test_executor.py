@@ -196,6 +196,7 @@ class BatchTestExecutor:
                 table_name=table_name,
                 metadata=metadata,
                 severity_overrides=severity_overrides,
+                parsed_models=parsed_models,
             )
 
             all_results.extend(results)

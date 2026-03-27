@@ -4,9 +4,8 @@ Tests for dbt packages handler.
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
 import yaml
 
 from tee.importer.dbt.infrastructure import PackagesHandler
@@ -140,7 +139,7 @@ class TestPackagesHandler:
 
             handler.clone_packages(project_path, packages_info)
 
-            lock_file = project_path / "packages.lock"
+            project_path / "packages.lock"
             # Lock file may or may not be created for local packages
             # (it's mainly for git packages with commit SHAs)
 
@@ -149,18 +148,22 @@ class TestPackagesHandler:
         handler = PackagesHandler(verbose=False)
 
         # Test various URL formats
-        assert handler._extract_package_name_from_git_url(
-            "https://github.com/dbt-labs/dbt_utils.git"
-        ) == "dbt_utils"
-        assert handler._extract_package_name_from_git_url(
-            "https://github.com/dbt-labs/dbt-utils.git"
-        ) == "dbt_utils"
-        assert handler._extract_package_name_from_git_url(
-            "git@github.com:dbt-labs/dbt_utils.git"
-        ) == "dbt_utils"
-        assert handler._extract_package_name_from_git_url(
-            "https://github.com/dbt-labs/dbt_utils"
-        ) == "dbt_utils"
+        assert (
+            handler._extract_package_name_from_git_url("https://github.com/dbt-labs/dbt_utils.git")
+            == "dbt_utils"
+        )
+        assert (
+            handler._extract_package_name_from_git_url("https://github.com/dbt-labs/dbt-utils.git")
+            == "dbt_utils"
+        )
+        assert (
+            handler._extract_package_name_from_git_url("git@github.com:dbt-labs/dbt_utils.git")
+            == "dbt_utils"
+        )
+        assert (
+            handler._extract_package_name_from_git_url("https://github.com/dbt-labs/dbt_utils")
+            == "dbt_utils"
+        )
 
     def test_hub_package_to_git_url(self):
         """Test converting Hub package name to Git URL."""
@@ -462,4 +465,3 @@ class TestPackagesHandler:
             # But the directory structure should be created
             packages_dir = project_path / ".packages"
             assert packages_dir.exists()
-

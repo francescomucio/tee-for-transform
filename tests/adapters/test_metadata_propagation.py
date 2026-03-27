@@ -9,6 +9,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -16,12 +17,10 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from unittest.mock import MagicMock, patch
-
-from tee.adapters.duckdb.adapter import DuckDBAdapter
-from tee.adapters.snowflake.adapter import SnowflakeAdapter
-from tee.executor import execute_models
-from tests.adapters.fixtures.metadata_fixtures import (
+from tee.adapters.duckdb.adapter import DuckDBAdapter  # noqa: E402
+from tee.adapters.snowflake.adapter import SnowflakeAdapter  # noqa: E402
+from tee.executor import execute_models  # noqa: E402
+from tests.adapters.fixtures.metadata_fixtures import (  # noqa: E402
     INVALID_SCHEMA_TYPE_METADATA,
 )
 
@@ -56,7 +55,11 @@ class TestMetadataPropagation:
             metadata = {
                 "description": "Test table for metadata propagation",
                 "schema": [
-                    {"name": "id", "datatype": "integer", "description": "Unique identifier for the record"},
+                    {
+                        "name": "id",
+                        "datatype": "integer",
+                        "description": "Unique identifier for the record",
+                    },
                     {"name": "name", "datatype": "string", "description": "Name of the record"},
                 ],
             }
@@ -246,6 +249,7 @@ path = "{db_path}"
                 config = {"type": "duckdb", "path": db_path}
                 # Load project config if available
                 from tee.cli.utils import load_project_config
+
                 project_config = None
                 try:
                     project_config = load_project_config(str(project_dir))
@@ -264,15 +268,16 @@ path = "{db_path}"
 
                 # Check that decorator metadata (not file metadata) was used
                 import duckdb
+
                 conn = duckdb.connect(db_path)
                 try:
                     # Query DuckDB's native system tables to get column comments
                     # Using duckdb_columns() instead of information_schema.columns for better compatibility
                     # with both local DuckDB and MotherDuck
                     result = conn.execute("""
-                        SELECT column_name, comment 
-                        FROM duckdb_columns() 
-                        WHERE table_name = 'priority_test' 
+                        SELECT column_name, comment
+                        FROM duckdb_columns()
+                        WHERE table_name = 'priority_test'
                         AND schema_name = 'test_schema'
                         ORDER BY column_index
                     """).fetchall()
@@ -320,25 +325,25 @@ path = "{db_path}"
             metadata = {
                 "description": "Test table",
                 "schema": [
-                    {
-                        "name": "id",
-                        "datatype": "integer",
-                        "description": "Primary key identifier"
-                    },
-                    {
-                        "name": "name",
-                        "datatype": "varchar",
-                        "description": "User name"
-                    }
-                ]
+                    {"name": "id", "datatype": "integer", "description": "Primary key identifier"},
+                    {"name": "name", "datatype": "varchar", "description": "User name"},
+                ],
             }
 
             # Create table with metadata
-            adapter.create_table("test_schema.test_table", "SELECT 1 as id, 'test' as name", metadata=metadata)
+            adapter.create_table(
+                "test_schema.test_table", "SELECT 1 as id, 'test' as name", metadata=metadata
+            )
 
             # Verify that COMMENT ON COLUMN was called for each column
-            comment_calls = [str(call) for call in mock_cursor.execute.call_args_list if "COMMENT ON COLUMN" in str(call)]
-            assert len(comment_calls) == 2, f"Expected 2 COMMENT ON COLUMN calls, got {len(comment_calls)}"
+            comment_calls = [
+                str(call)
+                for call in mock_cursor.execute.call_args_list
+                if "COMMENT ON COLUMN" in str(call)
+            ]
+            assert len(comment_calls) == 2, (
+                f"Expected 2 COMMENT ON COLUMN calls, got {len(comment_calls)}"
+            )
 
             # Verify the comments contain the descriptions
             all_calls = [str(call) for call in mock_cursor.execute.call_args_list]

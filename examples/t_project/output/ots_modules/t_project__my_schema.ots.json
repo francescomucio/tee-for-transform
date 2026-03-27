@@ -1,0 +1,444 @@
+{
+  "ots_version": "0.2.2",
+  "module_name": "t_project.my_schema",
+  "module_description": "Transformations for my_schema schema",
+  "target": {
+    "database": "t_project",
+    "schema": "my_schema",
+    "sql_dialect": "duckdb"
+  },
+  "transformations": [
+    {
+      "transformation_id": "my_schema.users_summary",
+      "description": "Summary of user data",
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_first_table",
+          "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.recent_users",
+      "description": null,
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_schema.my_first_table",
+          "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.complex_join",
+      "description": null,
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_schema.my_first_table",
+          "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_first_table_from_loop",
+      "description": "Select from  my_schema.my_first_table",
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_first_table",
+          "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_second_table_from_loop",
+      "description": "Select from  my_schema.my_second_table",
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_second_table",
+          "resolved_sql": "SELECT * FROM my_schema.my_second_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_second_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_third_table_from_loop",
+      "description": "Select from  my_schema.my_third_table",
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_third_table",
+          "resolved_sql": "SELECT * FROM my_schema.my_third_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_third_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.incremental_example",
+      "description": "Incremental table using delete+insert strategy",
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT id, name, CURRENT_TIMESTAMP() AS created_at, CURRENT_TIMESTAMP() AS updated_at FROM my_schema.my_first_table",
+          "resolved_sql": "SELECT id, name, CURRENT_TIMESTAMP() AS created_at, CURRENT_TIMESTAMP() AS updated_at FROM my_schema.my_first_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table"
+          ],
+          "source_functions": [
+            "CURRENT_TIMESTAMP()"
+          ]
+        }
+      },
+      "schema": {
+        "columns": [
+          {
+            "name": "created_at",
+            "datatype": "date",
+            "description": null
+          },
+          {
+            "name": "updated_at",
+            "datatype": "date",
+            "description": null
+          }
+        ],
+        "partitioning": []
+      },
+      "materialization": {
+        "type": "incremental",
+        "incremental_details": {
+          "strategy": "delete_insert",
+          "delete_condition": "updated_at >= '@start_date'",
+          "filter_condition": "updated_at >= '@start_date'",
+          "filter_column": "updated_at",
+          "start_value": "@start_date"
+        }
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/incremental_example.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_auto_table_one",
+      "description": null,
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_first_table",
+          "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_auto_tables.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_first_table",
+      "description": null,
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT 1 AS id, 'first test' AS name UNION ALL SELECT 2 AS id, 'second test' AS name UNION ALL SELECT 3 AS id, 'third test' AS name",
+          "resolved_sql": "SELECT 1 AS id, 'first test' AS name UNION ALL SELECT 2 AS id, 'second test' AS name UNION ALL SELECT 3 AS id, 'third test' AS name",
+          "operation_type": "union",
+          "source_tables": [],
+          "source_functions": []
+        }
+      },
+      "schema": {
+        "columns": [
+          {
+            "name": "id",
+            "datatype": "number",
+            "description": "Unique identifier for the record"
+          },
+          {
+            "name": "name",
+            "datatype": "string",
+            "description": "Name of the record"
+          }
+        ],
+        "partitioning": [
+          "id"
+        ]
+      },
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_first_table.py"
+      },
+      "tests": {
+        "columns": {
+          "id": [
+            "not_null",
+            "unique"
+          ],
+          "name": [
+            "not_null"
+          ]
+        },
+        "table": [
+          "row_count_gt_0",
+          "test_my_first_table"
+        ]
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_second_table",
+      "description": null,
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_first_table",
+          "resolved_sql": "SELECT * FROM my_first_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": {
+        "columns": [
+          {
+            "name": "id",
+            "datatype": "number",
+            "description": "Foreign key reference to my_first_table"
+          },
+          {
+            "name": "name",
+            "datatype": "string",
+            "description": "Additional information"
+          }
+        ],
+        "partitioning": []
+      },
+      "materialization": {
+        "type": "view"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_second_table.py"
+      },
+      "tests": {
+        "columns": {
+          "name": [
+            "not_null"
+          ]
+        },
+        "table": [
+          "row_count_gt_0",
+          "unique"
+        ]
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_view",
+      "description": null,
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT * FROM my_forth_table",
+          "resolved_sql": "SELECT * FROM my_forth_table",
+          "operation_type": "select",
+          "source_tables": [
+            "my_forth_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "view"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_view.py"
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_forth_table",
+      "description": "SQL model for my_schema.my_forth_table",
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT id FROM my_first_table WHERE id = 1",
+          "resolved_sql": "SELECT id FROM my_schema.my_first_table WHERE id = 1",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_forth_table.sql"
+      }
+    },
+    {
+      "transformation_id": "my_schema.my_third_table",
+      "description": "SQL model for my_schema.my_third_table",
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT t1.*, t2.* FROM my_first_table AS t1 INNER JOIN my_second_table AS t2 ON t1.id = t2.id",
+          "resolved_sql": "SELECT t1.*, t2.* FROM my_schema.my_first_table AS t1 INNER JOIN my_schema.my_second_table AS t2 ON t1.id = t2.id",
+          "operation_type": "select",
+          "source_tables": [
+            "my_first_table",
+            "my_second_table"
+          ],
+          "source_functions": []
+        }
+      },
+      "schema": null,
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_third_table.sql"
+      }
+    }
+  ],
+  "functions": [
+    {
+      "function_id": "my_schema.calculate_percentage",
+      "description": "Calculates the percentage of a numerator over a denominator. Returns NULL if denominator is zero or NULL.",
+      "function_type": "scalar",
+      "language": "sql",
+      "code": {
+        "generic_sql": "-- Simple UDF function to calculate percentage\n-- Usage: SELECT calculate_percentage(25, 100) -- returns 25.0\n\nCREATE OR REPLACE FUNCTION calculate_percentage(\n    numerator DOUBLE,\n    denominator DOUBLE\n) RETURNS DOUBLE AS $$\n      \n        CASE \n            WHEN denominator = 0 OR denominator IS NULL THEN NULL\n            ELSE (numerator / denominator) * 100.0\n        END\n$$;",
+        "database_specific": {}
+      },
+      "metadata": {
+        "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/functions/my_schema/calculate_percentage.py",
+        "tags": [
+          "math",
+          "utility"
+        ],
+        "object_tags": {
+          "category": "calculation",
+          "complexity": "simple"
+        }
+      },
+      "parameters": [
+        {
+          "name": "numerator",
+          "type": "DOUBLE",
+          "description": "The numerator value"
+        },
+        {
+          "name": "denominator",
+          "type": "DOUBLE",
+          "description": "The denominator value"
+        }
+      ],
+      "return_type": "DOUBLE",
+      "deterministic": true,
+      "dependencies": {
+        "tables": [],
+        "functions": []
+      }
+    }
+  ],
+  "test_library_path": "t_project_test_library.ots.json"
+}

@@ -2,20 +2,25 @@
 Unit tests for build command.
 """
 
-import pytest
-import sys
 import tempfile
-import typer
-from click.exceptions import Exit as ClickExit
+from io import StringIO
 from pathlib import Path
 from unittest.mock import Mock, patch
-from io import StringIO
+
+import pytest
+from click.exceptions import Exit as ClickExit
 
 from tee.cli.commands.build import cmd_build
 
 
 class TestBuildCommand:
     """Test cases for build command."""
+
+    @pytest.fixture(autouse=True)
+    def mock_lookup_generation(self):
+        """Prevent lookup generator side effects in unit tests."""
+        with patch("tee.cli.commands.build.generate_lookups"):
+            yield
 
     @pytest.fixture
     def temp_dir(self):
@@ -48,7 +53,12 @@ class TestBuildCommand:
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_success(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test successful build with all tests passing."""
         # Setup mocks
@@ -84,7 +94,7 @@ class TestBuildCommand:
             except SystemExit as e:
                 # Should exit with 0 on success
                 # typer.Exit uses .exit_code, SystemExit uses .code
-                exit_code = getattr(e, 'exit_code', getattr(e, 'code', 0))
+                exit_code = getattr(e, "exit_code", getattr(e, "code", 0))
                 assert exit_code == 0
 
         output = fake_out.getvalue()
@@ -108,7 +118,12 @@ class TestBuildCommand:
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_with_test_failures(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test build that fails due to test failures."""
         # Setup mocks
@@ -143,7 +158,7 @@ class TestBuildCommand:
                 cmd_build(mock_args)
             except SystemExit as e:
                 # Should exit with 1 on failure
-                exit_code = getattr(e, 'exit_code', getattr(e, 'code', 0))
+                exit_code = getattr(e, "exit_code", getattr(e, "code", 0))
                 assert exit_code == 1
 
         output = fake_out.getvalue()
@@ -153,7 +168,12 @@ class TestBuildCommand:
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_with_model_failures(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test build that fails due to model execution failures."""
         # Setup mocks
@@ -188,7 +208,7 @@ class TestBuildCommand:
                 cmd_build(mock_args)
             except SystemExit as e:
                 # Should exit with 1 on failure
-                exit_code = getattr(e, 'exit_code', getattr(e, 'code', 0))
+                exit_code = getattr(e, "exit_code", getattr(e, "code", 0))
                 assert exit_code == 1
 
         output = fake_out.getvalue()
@@ -198,7 +218,12 @@ class TestBuildCommand:
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_with_warnings(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test build with test warnings (should still succeed)."""
         # Setup mocks
@@ -233,18 +258,26 @@ class TestBuildCommand:
                 cmd_build(mock_args)
             except SystemExit as e:
                 # Should exit with 0 (warnings don't fail the build)
-                exit_code = getattr(e, 'exit_code', getattr(e, 'code', 0))
+                exit_code = getattr(e, "exit_code", getattr(e, "code", 0))
                 assert exit_code == 0
 
         output = fake_out.getvalue()
         # New format uses pluralize: "All 1 table executed successfully!" (singular)
-        assert "All 1 table executed successfully!" in output or "All 1 tables executed successfully!" in output
+        assert (
+            "All 1 table executed successfully!" in output
+            or "All 1 tables executed successfully!" in output
+        )
 
     @patch("tee.cli.commands.build.build_models")
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_handles_keyboard_interrupt(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test that KeyboardInterrupt is handled gracefully."""
         # Setup mocks
@@ -270,7 +303,7 @@ class TestBuildCommand:
                 # Should exit with 130 for KeyboardInterrupt
                 # typer.Exit raises click.exceptions.Exit which is a SystemExit subclass
                 # click.exceptions.Exit uses .exit_code attribute
-                exit_code = getattr(e, 'exit_code', getattr(e, 'code', 0))
+                exit_code = getattr(e, "exit_code", getattr(e, "code", 0))
                 assert exit_code == 130, f"Expected exit code 130, got {exit_code}"
 
         output = fake_out.getvalue()
@@ -280,7 +313,12 @@ class TestBuildCommand:
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_handles_exceptions(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test that exceptions are handled and reported."""
         # Setup mocks
@@ -314,7 +352,12 @@ class TestBuildCommand:
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_cleanup_connection_manager(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test that connection manager is cleaned up."""
         # Setup mocks
@@ -355,7 +398,12 @@ class TestBuildCommand:
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_with_variables(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test build with variables passed through."""
         # Setup mocks
@@ -399,7 +447,12 @@ class TestBuildCommand:
     @patch("tee.cli.commands.build.ConnectionManager")
     @patch("tee.cli.commands.build.CommandContext")
     def test_build_with_selection_patterns(
-        self, mock_context_class, mock_connection_manager_class, mock_build_models, mock_args, mock_config
+        self,
+        mock_context_class,
+        mock_connection_manager_class,
+        mock_build_models,
+        mock_args,
+        mock_config,
     ):
         """Test build with select/exclude patterns."""
         # Setup mocks
@@ -439,4 +492,3 @@ class TestBuildCommand:
         call_args = mock_build_models.call_args
         assert call_args.kwargs["select_patterns"] == ["schema1.*"]
         assert call_args.kwargs["exclude_patterns"] == ["*.temp"]
-

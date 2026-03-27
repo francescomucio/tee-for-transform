@@ -9,8 +9,9 @@ These tests verify the complete flow including:
 - Schema change handling
 """
 
-import pytest
 from typing import Any
+
+import pytest
 
 from tee.engine.materialization.incremental_executor import IncrementalExecutor
 from tee.engine.materialization.materialization_handler import MaterializationHandler
@@ -34,7 +35,7 @@ class TestAutoIncrementalE2E:
         self, state_manager, table_name: str, sql_query: str, metadata: dict[str, Any]
     ):
         """Helper to save model state after execution."""
-        from datetime import datetime, UTC
+        from datetime import UTC, datetime
 
         sql_hash = state_manager.compute_sql_hash(sql_query)
         incremental_config = metadata.get("incremental", {}) if metadata else {}
@@ -83,24 +84,26 @@ class TestAutoIncrementalE2E:
                 # Continue with Brand M onwards (but we need to account for SportCap)
                 # Actually, let's use simpler names that sort correctly
                 pass
-        
+
         # Create brand names that will sort with SportCap as 13th alphabetically
         # Use: BrandA, BrandB, ..., BrandL (12 brands), then "BrandLA" (13th, comes after L, before M), then BrandM, BrandN, ..., BrandS (7 more)
         # When sorted: BrandA < BrandB < ... < BrandL < BrandLA < BrandM < ... < BrandS
         brand_names = [f"Brand{chr(65 + i)}" for i in range(12)]  # BrandA to BrandL (12 brands)
-        brand_names.append("BrandLA")  # Will be 13th when sorted (comes after BrandL, before BrandM)
+        brand_names.append(
+            "BrandLA"
+        )  # Will be 13th when sorted (comes after BrandL, before BrandM)
         brand_names.extend([f"Brand{chr(77 + i)}" for i in range(7)])  # BrandM to BrandS (7 brands)
         # Total: 12 + 1 + 7 = 20 brands
         # We'll use "BrandLA" as our test brand (like SportCap in the user's scenario)
-        
+
         values = []
         for i, brand in enumerate(brand_names):
-            values.append(f"({i+1}, '{brand}', 'Category {i%3 + 1}', '2024-01-{i+1:02d}')")
+            values.append(f"({i + 1}, '{brand}', 'Category {i % 3 + 1}', '2024-01-{i + 1:02d}')")
 
         duckdb_adapter.execute_query(
             f"""
             INSERT INTO test_schema.national_articles VALUES
-            {', '.join(values)}
+            {", ".join(values)}
             """
         )
 
@@ -512,8 +515,8 @@ class TestAutoIncrementalE2E:
         """Test explicit mode where query includes ROW_NUMBER() for ID column."""
         # Explicit mode: query includes the ID column
         sql = """
-        SELECT 
-            row_number() over (order by brand) as brand_id, 
+        SELECT
+            row_number() over (order by brand) as brand_id,
             brand as brand_name
         FROM test_schema.national_articles
         WHERE brand IS NOT NULL
@@ -568,8 +571,8 @@ class TestAutoIncrementalE2E:
     ):
         """Test explicit mode ID stability after deletion."""
         sql = """
-        SELECT 
-            row_number() over (order by brand) as brand_id, 
+        SELECT
+            row_number() over (order by brand) as brand_id,
             brand as brand_name
         FROM test_schema.national_articles
         WHERE brand IS NOT NULL
@@ -620,7 +623,7 @@ class TestAutoIncrementalE2E:
         self, materialization_handler, source_table, state_manager
     ):
         """Test delete+insert strategy with auto_incremental.
-        
+
         Note: delete+insert requires where_condition, but for dimension tables
         we use a simple condition that works on the target table.
         """
@@ -666,9 +669,7 @@ class TestAutoIncrementalE2E:
         )
 
         # Save state after first run
-        self._save_model_state(
-            state_manager, "test_schema.dim_brand_delete_insert", sql, metadata
-        )
+        self._save_model_state(state_manager, "test_schema.dim_brand_delete_insert", sql, metadata)
 
         # Verify table was created
         assert materialization_handler.adapter.table_exists("test_schema.dim_brand_delete_insert")
@@ -871,4 +872,3 @@ class TestAutoIncrementalE2E:
             )
         }
         assert first_run_ids == third_run_ids, "IDs should remain stable across multiple runs"
-

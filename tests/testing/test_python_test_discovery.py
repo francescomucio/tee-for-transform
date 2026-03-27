@@ -299,4 +299,3 @@ def check_minimum_rows():
 
         # Name should be derived: {file_name}__{function_name}
         assert "check_minimum_rows__check_minimum_rows" in tests
-

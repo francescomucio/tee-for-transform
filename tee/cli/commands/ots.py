@@ -45,11 +45,12 @@ def cmd_ots_run(
         # Load OTS modules
         typer.echo("\nLoading OTS modules...")
         ots_parsed_models, ots_parsed_functions = load_ots_modules(ots_path_obj)
-        typer.echo(f"✅ Loaded {len(ots_parsed_models)} transformations", end="")
+        loaded_msg = f"✅ Loaded {len(ots_parsed_models)} transformations"
         if ots_parsed_functions:
-            typer.echo(f" and {len(ots_parsed_functions)} functions from OTS modules")
+            loaded_msg += f" and {len(ots_parsed_functions)} functions from OTS modules"
         else:
-            typer.echo(" from OTS modules")
+            loaded_msg += " from OTS modules"
+        typer.echo(loaded_msg)
 
         # Note: Functions from OTS modules are not yet integrated into execution
         # This will be handled in Phase 8 (Execution Engine Integration)
@@ -172,8 +173,11 @@ def cmd_ots_run(
                 )
                 raise typer.Exit(1)
 
+            # In standalone mode there is no CommandContext, so use CLI vars directly.
+            variables = vars or {}
+
             # Create a minimal parser for dependency graph building
-            parser = ProjectParser(str(project_path), connection_config, variables or {})
+            parser = ProjectParser(str(project_path), connection_config, variables)
             parser.parsed_models = ots_parsed_models
 
             # Build dependency graph
@@ -188,7 +192,7 @@ def cmd_ots_run(
             model_executor = ModelExecutor(str(project_path), connection_config)
             results = model_executor.execute_models(
                 parser=parser,
-                variables=variables or {},
+                variables=variables,
                 parsed_models=ots_parsed_models,
                 execution_order=execution_order,
             )
@@ -197,7 +201,7 @@ def cmd_ots_run(
             from tee.testing import TestExecutor
 
             test_executor = TestExecutor(model_executor.execution_engine)
-            test_results = test_executor.run_tests(ots_parsed_models, variables=variables or {})
+            test_results = test_executor.run_tests(ots_parsed_models, variables=variables)
             results["test_results"] = test_results
 
             # Disconnect

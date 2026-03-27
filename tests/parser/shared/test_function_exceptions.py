@@ -5,10 +5,10 @@ Tests for function-related exceptions.
 import pytest
 
 from tee.parser.shared.exceptions import (
-    ParserError,
-    FunctionParsingError,
     FunctionExecutionError,
     FunctionMetadataError,
+    FunctionParsingError,
+    ParserError,
 )
 
 
@@ -56,4 +56,3 @@ class TestFunctionExceptions:
         for exc in exceptions:
             with pytest.raises(ParserError):
                 raise exc
-

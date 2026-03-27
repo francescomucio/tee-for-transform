@@ -64,7 +64,9 @@ def get_caller_file_path(frames_up: int = 2) -> str | None:
 MAX_FRAME_WALK_DEPTH = 5
 
 
-def _iter_frames(start_frame: inspect.FrameType | None, max_frames: int) -> Iterator[inspect.FrameType]:
+def _iter_frames(
+    start_frame: inspect.FrameType | None, max_frames: int
+) -> Iterator[inspect.FrameType]:
     """
     Generator that yields frames walking up the call stack.
 
@@ -139,10 +141,10 @@ def get_caller_file_and_main(max_frames: int = MAX_FRAME_WALK_DEPTH) -> tuple[st
     # This handles the case when running a file directly
     if not caller_file and caller_main:
         import sys
+
         if sys.argv and sys.argv[0] and sys.argv[0] != "-c":
             potential_file = os.path.abspath(sys.argv[0])
             if os.path.isfile(potential_file):
                 return potential_file, True
 
     return caller_file, caller_main
-

@@ -2,13 +2,14 @@
 Unit tests for SqlTestMetadata class.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
 
-from tee.testing.test_builder import SqlTestMetadata, TestBuilderError
+import pytest
+
 from tee.testing.base import TestRegistry, TestSeverity
 from tee.testing.python_test import PythonTest
+from tee.testing.test_builder import SqlTestMetadata, TestBuilderError
 
 
 class TestSqlTestMetadata:
@@ -67,15 +68,13 @@ HAVING COUNT(*) < 5
         py_file, sql_file = test_files
 
         # Execute the Python file (simulating test discovery)
-        import sys
         import importlib.util
+        import sys
 
         module_name = f"temp_module_{hash(py_file)}"
         spec = importlib.util.spec_from_loader(module_name, loader=None)
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
-
-        from tee.testing import SqlTestMetadata
 
         module.SqlTestMetadata = SqlTestMetadata
         module.__file__ = str(py_file.absolute())
@@ -113,15 +112,13 @@ test = SqlTestMetadata(name="test", severity="error")
         )
 
         # Execute and expect error
-        import sys
         import importlib.util
+        import sys
 
         module_name = f"temp_module_{hash(py_file)}"
         spec = importlib.util.spec_from_loader(module_name, loader=None)
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
-
-        from tee.testing import SqlTestMetadata
 
         module.SqlTestMetadata = SqlTestMetadata
         module.__file__ = str(py_file.absolute())
@@ -154,15 +151,13 @@ test = SqlTestMetadata(name="test", severity="error")
 
         sql_file.write_text("")  # Empty file
 
-        import sys
         import importlib.util
+        import sys
 
         module_name = f"temp_module_{hash(py_file)}"
         spec = importlib.util.spec_from_loader(module_name, loader=None)
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
-
-        from tee.testing import SqlTestMetadata
 
         module.SqlTestMetadata = SqlTestMetadata
         module.__file__ = str(py_file.absolute())
@@ -188,15 +183,13 @@ test = SqlTestMetadata(name="test", severity="error")
         TestRegistry.register(existing_test)
 
         # Now try to create SqlTestMetadata with same name
-        import sys
         import importlib.util
+        import sys
 
         module_name = f"temp_module_{hash(py_file)}"
         spec = importlib.util.spec_from_loader(module_name, loader=None)
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
-
-        from tee.testing import SqlTestMetadata
 
         module.SqlTestMetadata = SqlTestMetadata
         module.__file__ = str(py_file.absolute())
@@ -229,15 +222,13 @@ test = SqlTestMetadata(name="test", severity="warning")
 
         sql_file.write_text("SELECT 1")
 
-        import sys
         import importlib.util
+        import sys
 
         module_name = f"temp_module_{hash(py_file)}"
         spec = importlib.util.spec_from_loader(module_name, loader=None)
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
-
-        from tee.testing import SqlTestMetadata
 
         module.SqlTestMetadata = SqlTestMetadata
         module.__file__ = str(py_file.absolute())
@@ -252,4 +243,3 @@ test = SqlTestMetadata(name="test", severity="warning")
         # Cleanup
         if module_name in sys.modules:
             del sys.modules[module_name]
-

@@ -4,15 +4,14 @@ OTS round-trip tests for functions.
 Tests: Parse → Export → Import → Verify consistency.
 """
 
-import pytest
 import json
-import tempfile
-from pathlib import Path
+
+import pytest
+
 from tee.parser.core.orchestrator import ParserOrchestrator
 from tee.parser.input.ots_converter import OTSConverter
 from tee.parser.input.ots_reader import OTSModuleReader
 from tee.parser.output.ots.transformer import OTSTransformer
-from tee.typing import Function, Model
 
 
 class TestOTSRoundTrip:
@@ -58,7 +57,7 @@ metadata = {
         assert "my_schema.test_func" in parsed_functions
 
         original_function = parsed_functions["my_schema.test_func"]
-        
+
         # Debug: Check function structure
         if not original_function.get("code"):
             # If code is missing, the function might not have been standardized properly
@@ -71,9 +70,7 @@ metadata = {
             "connection": {"type": "duckdb"},
         }
         transformer = OTSTransformer(project_config)
-        ots_modules = transformer.transform_to_ots_modules(
-            {}, parsed_functions=parsed_functions
-        )
+        ots_modules = transformer.transform_to_ots_modules({}, parsed_functions=parsed_functions)
 
         # Step 3: Save OTS to file
         ots_file = tmp_path / "test_module.ots.json"
@@ -119,7 +116,7 @@ metadata = {
         # Verify SQL is preserved (may have minor formatting differences)
         assert "original_sql" in original_sql_code, "Original SQL code should have original_sql"
         assert "original_sql" in imported_sql_code, "Imported SQL code should have original_sql"
-        
+
         # The imported SQL should contain the function name if it's not empty
         # (Note: generic_sql might be empty if original_sql wasn't exported properly)
         if imported_sql_code.get("original_sql"):
@@ -191,7 +188,9 @@ $$;
         # Dependencies should be in code["sql"]
         assert "source_tables" in imported_code
         # Should have source table dependency
-        assert len(imported_code["source_tables"]) > 0 or "source" in str(imported_code["source_tables"])
+        assert len(imported_code["source_tables"]) > 0 or "source" in str(
+            imported_code["source_tables"]
+        )
 
     def test_ots_version_0_2_0_with_functions(self, tmp_path):
         """Test that OTS version is 0.2.1 when functions are present."""
@@ -215,9 +214,7 @@ $$;
             "connection": {"type": "duckdb"},
         }
         transformer = OTSTransformer(project_config)
-        ots_modules = transformer.transform_to_ots_modules(
-            {}, parsed_functions=parsed_functions
-        )
+        ots_modules = transformer.transform_to_ots_modules({}, parsed_functions=parsed_functions)
 
         module = list(ots_modules.values())[0]
         assert module["ots_version"] == "0.2.2"
@@ -283,7 +280,7 @@ $$;
         # Create model that depends on func2 and source
         model_sql = models_folder / "my_schema" / "result.sql"
         model_sql.write_text("""
-SELECT 
+SELECT
     id,
     func2(id) as calculated
 FROM source
@@ -330,4 +327,3 @@ FROM source
         assert "source_functions" in func2_code
         # func2 should depend on func1
         assert "func1" in str(func2_code["source_functions"])
-

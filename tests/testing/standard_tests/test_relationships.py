@@ -2,8 +2,9 @@
 Unit tests for RelationshipsTest.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from tee.testing.standard_tests import RelationshipsTest
 
@@ -68,7 +69,7 @@ class TestRelationshipsTest:
         mock_adapter = Mock()
         mock_adapter.generate_relationships_test_query.return_value = "SELECT COUNT(*) FROM ..."
 
-        query = test.get_test_query(
+        test.get_test_query(
             mock_adapter,
             "my_schema.orders",
             column_name="user_id",
@@ -85,7 +86,7 @@ class TestRelationshipsTest:
         mock_adapter = Mock()
         mock_adapter.generate_relationships_test_query.return_value = "SELECT COUNT(*) FROM ..."
 
-        query = test.get_test_query(
+        test.get_test_query(
             mock_adapter,
             "my_schema.order_items",
             column_name="order_id",  # Primary column (for backward compat)
@@ -174,4 +175,3 @@ class TestRelationshipsTest:
                 },
                 column_name="user_id",
             )
-

@@ -88,4 +88,3 @@ def ensure_directory_exists(file_path: Path) -> None:
         file_path: Path to file
     """
     file_path.parent.mkdir(parents=True, exist_ok=True)
-

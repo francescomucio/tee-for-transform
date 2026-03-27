@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from tee.parser.shared.exceptions import FunctionMetadataError, FunctionParsingError
+from tee.parser.shared.exceptions import FunctionParsingError
 from tee.parser.shared.file_utils import find_metadata_file
 from tee.parser.shared.metadata_schema import parse_metadata_from_python_file
 from tee.parser.shared.types import FilePath

@@ -3,9 +3,10 @@ Tests for OTS module reader.
 """
 
 import json
-import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+import pytest
 
 from tee.parser.input import OTSModuleReader, OTSModuleReaderError
 
@@ -16,7 +17,7 @@ class TestOTSModuleReader:
     def test_read_valid_module(self):
         """Test reading a valid OTS module."""
         reader = OTSModuleReader()
-        
+
         # Create a minimal valid OTS module
         module_data = {
             "ots_version": "0.1.0",
@@ -51,7 +52,7 @@ class TestOTSModuleReader:
     def test_read_module_missing_required_field(self):
         """Test reading a module with missing required field."""
         reader = OTSModuleReader()
-        
+
         # Missing target field
         module_data = {
             "ots_version": "0.1.0",
@@ -116,7 +117,7 @@ class TestOTSModuleReader:
             # Create two module files
             module_file1 = Path(tmpdir) / "module1.ots.json"
             module_file2 = Path(tmpdir) / "module2.ots.json"
-            
+
             with open(module_file1, "w") as f:
                 json.dump({**module_data, "module_name": "module1"}, f)
             with open(module_file2, "w") as f:
@@ -130,7 +131,7 @@ class TestOTSModuleReader:
     def test_get_module_info(self):
         """Test getting module information."""
         reader = OTSModuleReader()
-        
+
         module_data = {
             "ots_version": "0.2.2",
             "module_name": "test.module",
@@ -162,4 +163,3 @@ class TestOTSModuleReader:
         assert info["transformation_count"] == 1
         assert info["has_test_library"] is True
         assert len(info["module_tags"]) == 2
-

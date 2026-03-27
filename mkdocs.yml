@@ -1,8 +1,8 @@
-site_name: TEE Documentation
-site_description: Transform, Extract, Execute - A Python framework for SQL data transformations
-site_url: https://your-username.github.io/tee
-repo_url: https://github.com/your-username/tee
-repo_name: your-username/tee
+site_name: Tee for Transform (t4t)
+site_description: Transform, Extract, Execute — SQL transformations with multiple database backends
+site_url: https://francescomucio.github.io/tee-as-transformation/
+repo_url: https://github.com/francescomucio/tee-as-transformation
+repo_name: francescomucio/tee-as-transformation
 
 theme:
   name: material
@@ -78,29 +78,38 @@ nav:
     - user-guide/overview.md
     - user-guide/cli-reference.md
     - user-guide/execution-engine.md
+    - user-guide/functions.md
+    - user-guide/seeds.md
     - user-guide/data-quality-tests.md
+    - user-guide/incremental-materialization.md
     - user-guide/database-adapters.md
     - user-guide/tags-and-metadata.md
     - user-guide/sql-dialect-conversion.md
+    - user-guide/documentation-site.md
+    - user-guide/dbt-import.md
+    - user-guide/dbt-import-limitations.md
     - Examples:
+      - user-guide/examples/README.md
       - user-guide/examples/basic-usage.md
+      - user-guide/examples/functions.md
       - user-guide/examples/incremental-example.md
       - user-guide/examples/testing-example.md
   - API Reference:
     - api-reference/README.md
-    - api-reference/engine/
-    - api-reference/parser/
-    - api-reference/adapters/
+    - api-reference/functions.md
+    - api-reference/models.md
+    - api-reference/engine/README.md
+    - api-reference/parser/README.md
+    - api-reference/adapters/README.md
   - Development:
     - development/architecture.md
+    - parser-model-flow.md
     - development/contributing.md
-    - development/migration-guides/
+    - development/migration-guides/index.md
 
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/your-username/tee
-    - icon: fontawesome/brands/python
-      link: https://pypi.org/project/tee
+      link: https://github.com/francescomucio/tee-as-transformation
   version:
     provider: mike

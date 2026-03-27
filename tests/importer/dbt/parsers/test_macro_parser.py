@@ -2,10 +2,8 @@
 Unit tests for MacroParser.
 """
 
-import tempfile
 from pathlib import Path
 
-import pytest
 
 from tee.importer.dbt.parsers import MacroParser
 
@@ -51,9 +49,7 @@ class TestMacroParser:
         """Test parsing adapter-specific macros."""
         macro_file = tmp_path / "test.sql"
         macro_file.write_text(
-            "{% macro postgres__test_macro(param) %}\n"
-            "    SELECT {{ param }}::text\n"
-            "{% endmacro %}"
+            "{% macro postgres__test_macro(param) %}\n    SELECT {{ param }}::text\n{% endmacro %}"
         )
 
         parser = MacroParser()
@@ -98,4 +94,3 @@ class TestMacroParser:
         assert len(all_macros) == 2
         assert "macro1" in all_macros
         assert "macro2" in all_macros
-

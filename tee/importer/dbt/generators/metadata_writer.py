@@ -11,7 +11,9 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def write_metadata_file(target_file: Path, metadata: dict[str, Any], table_name: str | None = None) -> None:
+def write_metadata_file(
+    target_file: Path, metadata: dict[str, Any], table_name: str | None = None
+) -> None:
     """
     Write a Python metadata file in t4t format.
 

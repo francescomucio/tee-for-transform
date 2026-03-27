@@ -108,6 +108,7 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
 ]
+
 # Exclude common directories
 exclude = [
     ".bzr",
@@ -134,3 +135,7 @@ exclude = [
     "htmlcov",
     "*.egg-info",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests: unused params are often pytest fixtures (injected by name) or mock protocol stubs.
+"tests/**" = ["ARG001", "ARG002"]

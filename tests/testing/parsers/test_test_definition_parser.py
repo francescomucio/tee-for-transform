@@ -2,10 +2,8 @@
 Unit tests for TestDefinitionParser.
 """
 
-import pytest
-
-from tee.testing.parsers.test_definition_parser import TestDefinitionParser, ParsedTestDefinition
 from tee.testing.base import TestSeverity
+from tee.testing.parsers.test_definition_parser import TestDefinitionParser
 
 
 class TestTestDefinitionParser:
@@ -173,5 +171,3 @@ class TestTestDefinitionParser:
 
         assert result is not None
         assert result.severity_override == TestSeverity.WARNING
-
-

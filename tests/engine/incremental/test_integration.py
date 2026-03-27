@@ -5,8 +5,8 @@ Integration test cases for incremental executor.
 from datetime import datetime
 from unittest.mock import Mock
 
-from tests.engine.incremental.test_executor_base import TestIncrementalExecutor
 from tee.engine.model_state import ModelState
+from tests.engine.incremental.test_executor_base import TestIncrementalExecutor
 
 
 class TestIntegration(TestIncrementalExecutor):
@@ -123,4 +123,3 @@ class TestIntegration(TestIncrementalExecutor):
         # Verify calls
         mock_adapter.execute_incremental_merge.assert_called_once()
         executor.state_manager.update_processed_value.assert_called_once()
-

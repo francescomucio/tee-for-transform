@@ -8,13 +8,9 @@ This module provides PostgreSQL-specific functionality including:
 - Materialization support
 """
 
+import importlib.util
 import uuid
 from typing import Any
-
-try:
-    import psycopg2.extensions
-except ImportError:
-    psycopg2 = None
 
 from tee.adapters.base import AdapterConfig, DatabaseAdapter, MaterializationType
 from tee.adapters.registry import register_adapter
@@ -24,9 +20,7 @@ class PostgreSQLAdapter(DatabaseAdapter):
     """PostgreSQL database adapter with SQLglot integration."""
 
     def __init__(self, config: AdapterConfig) -> None:
-        try:
-            import psycopg2
-        except ImportError:
+        if importlib.util.find_spec("psycopg2") is None:
             raise ImportError(
                 "psycopg2 is not installed. Install it with: uv add psycopg2-binary"
             ) from None
@@ -95,7 +89,10 @@ class PostgreSQLAdapter(DatabaseAdapter):
             raise
 
     def create_table(
-        self, table_name: str, query: str, metadata: dict[str, Any] | None = None
+        self,
+        table_name: str,
+        query: str,
+        metadata: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> None:
         """Create a table from a qualified SQL query."""
         if not self.connection:
@@ -245,10 +242,10 @@ class PostgreSQLAdapter(DatabaseAdapter):
             cursor.execute(
                 """
                 SELECT COUNT(*) FROM (
-                    SELECT table_name FROM information_schema.tables 
+                    SELECT table_name FROM information_schema.tables
                     WHERE table_schema = %s AND table_name = %s
                     UNION ALL
-                    SELECT table_name FROM information_schema.views 
+                    SELECT table_name FROM information_schema.views
                     WHERE table_schema = %s AND table_name = %s
                 )
                 """,
@@ -295,8 +292,8 @@ class PostgreSQLAdapter(DatabaseAdapter):
             # Get table schema (filter by schema like Snowflake)
             cursor.execute(
                 """
-                SELECT column_name, data_type 
-                FROM information_schema.columns 
+                SELECT column_name, data_type
+                FROM information_schema.columns
                 WHERE table_schema = %s AND table_name = %s
                 ORDER BY ordinal_position
             """,
@@ -323,8 +320,6 @@ class PostgreSQLAdapter(DatabaseAdapter):
         if not self.connection:
             raise RuntimeError("Not connected to database. Call connect() first.")
 
-        import uuid
-
         # Use temporary table approach for accurate type information (similar to Snowflake)
         temp_table_name = f"temp_schema_infer_{uuid.uuid4().hex[:8]}"
 
@@ -337,8 +332,8 @@ class PostgreSQLAdapter(DatabaseAdapter):
             # Query information_schema to get column types
             cursor.execute(
                 """
-                SELECT column_name, data_type 
-                FROM information_schema.columns 
+                SELECT column_name, data_type
+                FROM information_schema.columns
                 WHERE table_name = %s
                 ORDER BY ordinal_position
                 """,
@@ -451,7 +446,11 @@ class PostgreSQLAdapter(DatabaseAdapter):
 
             raise FunctionExecutionError(f"Failed to create function {function_name}: {e}") from e
 
-    def function_exists(self, function_name: str, signature: str | None = None) -> bool:
+    def function_exists(
+        self,
+        function_name: str,
+        signature: str | None = None,  # noqa: ARG002
+    ) -> bool:
         """Check if a function exists in the database."""
         if not self.connection:
             raise RuntimeError("Not connected to database. Call connect() first.")
@@ -468,8 +467,8 @@ class PostgreSQLAdapter(DatabaseAdapter):
             cursor = self.connection.cursor()
             cursor.execute(
                 """
-                SELECT COUNT(*) 
-                FROM information_schema.routines 
+                SELECT COUNT(*)
+                FROM information_schema.routines
                 WHERE routine_schema = %s AND routine_name = %s AND routine_type = 'FUNCTION'
                 """,
                 [schema_name, func_name],

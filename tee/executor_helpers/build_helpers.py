@@ -98,7 +98,7 @@ def initialize_build_executors(
 def _load_seeds_for_build(model_executor: ModelExecutor, project_folder: str) -> dict[str, Any]:
     """
     Load seed files from the seeds folder into database tables.
-    
+
     Returns:
         Dictionary with seed loading results (loaded_tables, failed_tables, total_seeds)
     """
@@ -152,7 +152,7 @@ def should_skip_model(
     # Check if this model depends on any failed model
     node_deps = graph["dependencies"].get(node_name, [])
     depends_on_failed = any(
-                        dep in failed_models for dep in node_deps if not dep.startswith(TEST_NODE_PREFIX)
+        dep in failed_models for dep in node_deps if not dep.startswith(TEST_NODE_PREFIX)
     )
     if depends_on_failed:
         return True
@@ -219,7 +219,7 @@ def handle_model_execution_result(
 def execute_tests_for_model(
     node_name: str,
     parsed_models: dict[str, Any],
-    model_executor: ModelExecutor,
+    _model_executor: ModelExecutor,
     test_executor: TestExecutor,
 ) -> list[Any]:
     """Execute tests for a model and return test results."""
@@ -233,7 +233,11 @@ def execute_tests_for_model(
         return []
 
     print(f"  🧪 Running tests for {node_name}...")
-    test_results = test_executor.execute_tests_for_model(table_name=node_name, metadata=metadata)
+    test_results = test_executor.execute_tests_for_model(
+        table_name=node_name,
+        metadata=metadata,
+        parsed_models=parsed_models,
+    )
 
     return test_results
 
@@ -241,7 +245,7 @@ def execute_tests_for_model(
 def execute_tests_for_function(
     function_name: str,
     parsed_functions: dict[str, Any],
-    model_executor: ModelExecutor,
+    _model_executor: ModelExecutor,
     test_executor: TestExecutor,
 ) -> list[Any]:
     """Execute tests for a function and return test results."""
@@ -313,13 +317,13 @@ def compile_build_results(
     """Compile final build results."""
     parsed_functions = parsed_functions or {}
     function_results = function_results or {"executed_functions": [], "failed_functions": []}
-    
+
     # Filter out functions from executed_tables - only count actual models
     executed_tables = [
         name
         for name in execution_order
-        if name not in skipped_models 
-        and name not in failed_models 
+        if name not in skipped_models
+        and name not in failed_models
         and name not in parsed_functions  # Exclude functions
         and not name.startswith(TEST_NODE_PREFIX)
     ]
@@ -353,7 +357,8 @@ def compile_build_results(
         "executed_functions": function_results.get("executed_functions", []),
         "failed_functions": function_results.get("failed_functions", []),
         "test_results": test_results_summary,
-        "seed_results": seed_results or {"loaded_tables": [], "failed_tables": [], "total_seeds": 0},
+        "seed_results": seed_results
+        or {"loaded_tables": [], "failed_tables": [], "total_seeds": 0},
         "analysis": {
             "total_models": len(parsed_models),
             "execution_order": execution_order,
@@ -387,9 +392,7 @@ def execute_functions_in_build(
                 parsed_functions, execution_order
             )
             if function_results.get("executed_functions"):
-                print(
-                    f"  ✅ Executed {len(function_results['executed_functions'])} function(s)"
-                )
+                print(f"  ✅ Executed {len(function_results['executed_functions'])} function(s)")
                 for func_name in function_results["executed_functions"]:
                     print(f"    - {func_name}")
 
@@ -421,9 +424,7 @@ def execute_functions_in_build(
         from tee.parser.shared.exceptions import ParserError
 
         if isinstance(e, ParserError):
-            logger.warning(
-                f"Function parsing error: {e}. Continuing with model execution."
-            )
+            logger.warning(f"Function parsing error: {e}. Continuing with model execution.")
         else:
             logger.warning(
                 f"Could not discover/parse functions: {e}. Continuing with model execution."
@@ -458,16 +459,16 @@ def execute_models_with_tests(
             if node_name not in skipped_models and not node_name.startswith(TEST_NODE_PREFIX):
                 node_deps = graph["dependencies"].get(node_name, [])
                 if any(
-                    dep in failed_models for dep in node_deps if not dep.startswith(TEST_NODE_PREFIX)
+                    dep in failed_models
+                    for dep in node_deps
+                    if not dep.startswith(TEST_NODE_PREFIX)
                 ):
                     skipped_models.add(node_name)
             continue
 
         try:
             # Execute the model
-            model_results = execute_single_model(
-                node_name, parsed_models, model_executor
-            )
+            model_results = execute_single_model(node_name, parsed_models, model_executor)
 
             # Handle model execution result
             if not handle_model_execution_result(
@@ -482,9 +483,7 @@ def execute_models_with_tests(
 
             if test_results:
                 # Handle test results (raises SystemExit on ERROR failures)
-                handle_test_results(
-                    node_name, test_results, failed_models, parser, skipped_models
-                )
+                handle_test_results(node_name, test_results, failed_models, parser, skipped_models)
                 all_test_results.extend(test_results)
 
         except SystemExit:
@@ -506,18 +505,20 @@ def print_build_summary(
     executed_functions = results.get("executed_functions", [])
     failed_functions = results.get("failed_functions", [])
     test_results = results["test_results"]
-    seed_results = results.get("seed_results", {"loaded_tables": [], "failed_tables": [], "total_seeds": 0})
+    seed_results = results.get(
+        "seed_results", {"loaded_tables": [], "failed_tables": [], "total_seeds": 0}
+    )
 
     print("\n" + "=" * 50)
     print("BUILD RESULTS")
     print("=" * 50)
-    
+
     # Seed information
     if seed_results["total_seeds"] > 0:
         print(f"  Seeds loaded: {len(seed_results['loaded_tables'])}")
         if seed_results["failed_tables"]:
             print(f"  Seeds failed: {len(seed_results['failed_tables'])}")
-    
+
     print(f"  Models executed: {len(executed_tables)}")
     print(f"  Models failed: {len(failed_models)}")
     print(f"  Models skipped: {len(skipped_models)}")

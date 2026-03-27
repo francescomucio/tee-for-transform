@@ -1,0 +1,355 @@
+{
+  "my_schema.users_summary": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_first_table",
+        "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_schema.users_summary",
+      "function_name": "create_users_summary",
+      "description": "Summary of user data",
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+    },
+    "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07",
+    "needs_evaluation": false
+  },
+  "my_schema.recent_users": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_schema.my_first_table",
+        "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_schema.recent_users",
+      "function_name": "get_recent_users",
+      "description": null,
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+    },
+    "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07",
+    "needs_evaluation": false
+  },
+  "my_schema.complex_join": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_schema.my_first_table",
+        "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_schema.complex_join",
+      "function_name": "create_complex_join",
+      "description": null,
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+    },
+    "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07",
+    "needs_evaluation": false
+  },
+  "my_schema.my_first_table_from_loop": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_first_table",
+        "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_first_table_from_loop",
+      "function_name": "create_my_first_table_from_loop",
+      "description": "Select from  my_schema.my_first_table",
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+    },
+    "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07"
+  },
+  "my_schema.my_second_table_from_loop": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_second_table",
+        "resolved_sql": "SELECT * FROM my_schema.my_second_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_second_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_second_table_from_loop",
+      "function_name": "create_my_second_table_from_loop",
+      "description": "Select from  my_schema.my_second_table",
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+    },
+    "sqlglot_hash": "c631a5897c7d8164facaf39df4d434cc4bfdc5a743249b3601b695f4e7381382"
+  },
+  "my_schema.my_third_table_from_loop": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_third_table",
+        "resolved_sql": "SELECT * FROM my_schema.my_third_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_third_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_third_table_from_loop",
+      "function_name": "create_my_third_table_from_loop",
+      "description": "Select from  my_schema.my_third_table",
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+    },
+    "sqlglot_hash": "5d113606605b0563befa9443f3842146977ac11761f528123e20f9e7be151172"
+  },
+  "my_schema.incremental_example": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT id, name, CURRENT_TIMESTAMP() AS created_at, CURRENT_TIMESTAMP() AS updated_at FROM my_schema.my_first_table",
+        "resolved_sql": "SELECT id, name, CURRENT_TIMESTAMP() AS created_at, CURRENT_TIMESTAMP() AS updated_at FROM my_schema.my_first_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table"
+        ],
+        "source_functions": [
+          "CURRENT_TIMESTAMP()"
+        ]
+      }
+    },
+    "model_metadata": {
+      "table_name": "incremental_example",
+      "function_name": null,
+      "description": "Incremental table using delete+insert strategy",
+      "variables": [],
+      "metadata": {
+        "description": "Incremental table using delete+insert strategy",
+        "materialization": "incremental",
+        "incremental": {
+          "strategy": "delete_insert",
+          "delete_insert": {
+            "where_condition": "updated_at >= '@start_date'",
+            "filter_column": "updated_at",
+            "start_value": "@start_date"
+          }
+        }
+      },
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/incremental_example.py"
+    },
+    "sqlglot_hash": "9f97e2965f504ca16944fd759f428c715575cf30926165fef90dac6496c16e56"
+  },
+  "my_schema.my_auto_table_one": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_first_table",
+        "resolved_sql": "SELECT * FROM my_schema.my_first_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_schema.my_auto_table_one",
+      "function_name": "auto_table_one",
+      "description": null,
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_auto_tables.py"
+    },
+    "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07",
+    "needs_evaluation": false
+  },
+  "my_schema.my_first_table": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT 1 AS id, 'first test' AS name UNION ALL SELECT 2 AS id, 'second test' AS name UNION ALL SELECT 3 AS id, 'third test' AS name",
+        "resolved_sql": "SELECT 1 AS id, 'first test' AS name UNION ALL SELECT 2 AS id, 'second test' AS name UNION ALL SELECT 3 AS id, 'third test' AS name",
+        "operation_type": "union",
+        "source_tables": [],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_first_table",
+      "function_name": null,
+      "description": null,
+      "variables": [],
+      "metadata": {
+        "schema": [
+          {
+            "name": "id",
+            "datatype": "number",
+            "description": "Unique identifier for the record",
+            "tests": [
+              "not_null",
+              "unique"
+            ]
+          },
+          {
+            "name": "name",
+            "datatype": "string",
+            "description": "Name of the record",
+            "tests": [
+              "not_null"
+            ]
+          }
+        ],
+        "partitions": [
+          "id"
+        ],
+        "materialization": "table",
+        "tests": [
+          "row_count_gt_0",
+          "test_my_first_table"
+        ]
+      },
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_first_table.py"
+    },
+    "sqlglot_hash": "cf5d755536438a4884a5d23ecd12700d0565d907f945ae4a48709a3258e1ea15"
+  },
+  "my_schema.my_second_table": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_first_table",
+        "resolved_sql": "SELECT * FROM my_first_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_second_table",
+      "function_name": null,
+      "description": null,
+      "variables": [],
+      "metadata": {
+        "schema": [
+          {
+            "name": "id",
+            "datatype": "number",
+            "description": "Foreign key reference to my_first_table"
+          },
+          {
+            "name": "name",
+            "datatype": "string",
+            "description": "Additional information",
+            "tests": [
+              "not_null"
+            ]
+          }
+        ],
+        "materialization": "view",
+        "tests": [
+          "row_count_gt_0",
+          "unique"
+        ]
+      },
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_second_table.py"
+    },
+    "sqlglot_hash": "7bda040e8397f8974e0d3bcc4c85093fd1ec961835cdcfcffb66196fc49d177b"
+  },
+  "my_schema.my_view": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT * FROM my_forth_table",
+        "resolved_sql": "SELECT * FROM my_forth_table",
+        "operation_type": "select",
+        "source_tables": [
+          "my_forth_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_view",
+      "function_name": null,
+      "description": null,
+      "variables": [],
+      "metadata": {
+        "materialization": "view"
+      },
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_view.py"
+    },
+    "sqlglot_hash": "5411f7ecf1931833c59ce4d1a8ca68cba40be26929d6e7c21f52c4a8c81af511"
+  },
+  "my_schema.my_forth_table": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT id FROM my_first_table WHERE id = 1",
+        "resolved_sql": "SELECT id FROM my_schema.my_first_table WHERE id = 1",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_schema.my_forth_table",
+      "function_name": null,
+      "description": "SQL model for my_schema.my_forth_table",
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_forth_table.sql"
+    },
+    "sqlglot_hash": "3b1ecd8d945c471109194ea08d8bba1f485fcdb8e739a6fc97f49c063e92f90d"
+  },
+  "my_schema.my_third_table": {
+    "code": {
+      "sql": {
+        "original_sql": "SELECT t1.*, t2.* FROM my_first_table AS t1 INNER JOIN my_second_table AS t2 ON t1.id = t2.id",
+        "resolved_sql": "SELECT t1.*, t2.* FROM my_schema.my_first_table AS t1 INNER JOIN my_schema.my_second_table AS t2 ON t1.id = t2.id",
+        "operation_type": "select",
+        "source_tables": [
+          "my_first_table",
+          "my_second_table"
+        ],
+        "source_functions": []
+      }
+    },
+    "model_metadata": {
+      "table_name": "my_schema.my_third_table",
+      "function_name": null,
+      "description": "SQL model for my_schema.my_third_table",
+      "variables": [],
+      "metadata": {},
+      "file_path": "/home/mucio/tee/tee-for-transform/examples/t_project/models/my_schema/my_third_table.sql"
+    },
+    "sqlglot_hash": "a06a906e28d9ae187d4f47471a7862f6c743cb784380996e41422a2720a953d9"
+  }
+}

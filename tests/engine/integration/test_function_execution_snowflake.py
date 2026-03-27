@@ -5,10 +5,11 @@ These tests verify that functions are correctly created and executed in Snowflak
 Note: These tests require Snowflake credentials and may be slow due to network latency.
 """
 
-import pytest
-import os
 import json
+import os
 from pathlib import Path
+
+import pytest
 
 from tee.engine.execution_engine import ExecutionEngine
 from tee.parser.core.orchestrator import ParserOrchestrator
@@ -29,14 +30,15 @@ class TestFunctionExecutionSnowflake:
         project_root = test_file_dir.parent.parent.parent  # tee-for-transform/
         config_file = project_root / "tests" / ".snowflake_config.json"
         config = {}
-        
+
         if config_file.exists():
             try:
                 with open(config_file, "r") as f:
                     file_config = json.load(f)
                     config = {
                         "type": "snowflake",
-                        "host": file_config.get("host") or f"{file_config.get('account')}.snowflakecomputing.com",
+                        "host": file_config.get("host")
+                        or f"{file_config.get('account')}.snowflakecomputing.com",
                         "account": file_config.get("account"),
                         "user": file_config.get("user"),
                         "password": file_config.get("password"),
@@ -62,7 +64,9 @@ class TestFunctionExecutionSnowflake:
 
         # Skip if credentials not available
         if not all([config.get("account"), config.get("user"), config.get("password")]):
-            pytest.skip("Snowflake credentials not available (check tests/.snowflake_config.json or environment variables)")
+            pytest.skip(
+                "Snowflake credentials not available (check tests/.snowflake_config.json or environment variables)"
+            )
 
         return config
 
@@ -70,16 +74,17 @@ class TestFunctionExecutionSnowflake:
     def temp_project_snowflake(self):
         """Create a temporary project with Snowflake-specific function files."""
         import tempfile
+
         temp_dir = tempfile.mkdtemp()
         project_path = Path(temp_dir)
-        
+
         # Create data directory for state database
         data_dir = project_path / "data"
         data_dir.mkdir(parents=True, exist_ok=True)
-        
+
         functions_dir = project_path / "functions" / "my_schema"
         functions_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create empty models folder (required for dependency graph building)
         models_dir = project_path / "models"
         models_dir.mkdir(parents=True, exist_ok=True)
@@ -90,7 +95,7 @@ class TestFunctionExecutionSnowflake:
 CREATE OR REPLACE FUNCTION my_schema.calculate_percentage(numerator FLOAT, denominator FLOAT)
 RETURNS FLOAT
 AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100.0
     END
@@ -125,9 +130,10 @@ type = "snowflake"
 """)
 
         yield project_path
-        
+
         # Cleanup: remove temporary directory
         import shutil
+
         if project_path.exists():
             shutil.rmtree(project_path, ignore_errors=True)
 
@@ -135,7 +141,7 @@ type = "snowflake"
     def snowflake_engine(self, snowflake_config, temp_project_snowflake):
         """
         Reusable Snowflake engine for all tests in class.
-        
+
         This fixture creates a single connection that is reused across all tests
         in the class, reducing connection overhead from ~2.3s per test to ~2.3s per class.
         """
@@ -147,7 +153,9 @@ type = "snowflake"
         yield engine
         engine.disconnect()
 
-    def test_execute_function_in_snowflake(self, temp_project_snowflake, snowflake_config, snowflake_engine):
+    def test_execute_function_in_snowflake(
+        self, temp_project_snowflake, snowflake_config, snowflake_engine
+    ):
         """Test executing a function in Snowflake."""
         # Use shared engine (connection reused from class-scoped fixture)
         engine = snowflake_engine
@@ -185,7 +193,9 @@ type = "snowflake"
         assert len(result) > 0
         assert result[0][0] == 50.0
 
-    def test_function_tags_in_snowflake(self, temp_project_snowflake, snowflake_config, snowflake_engine):
+    def test_function_tags_in_snowflake(
+        self, temp_project_snowflake, snowflake_config, snowflake_engine
+    ):
         """Test that function tags are attached in Snowflake."""
         # Use shared engine (connection reused from class-scoped fixture)
         engine = snowflake_engine
@@ -211,4 +221,3 @@ type = "snowflake"
         # We can verify by checking function info (if available)
         func_info = engine.adapter.get_function_info("my_schema.calculate_percentage")
         assert func_info["exists"] is True
-

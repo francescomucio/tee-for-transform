@@ -47,16 +47,18 @@ class SchemaComparator:
             except Exception as e:
                 # Check if the error is due to a missing table reference (common with auto_incremental wrapped queries)
                 error_str = str(e).lower()
-                if "does not exist" in error_str or "not found" in error_str or "not authorized" in error_str:
+                if (
+                    "does not exist" in error_str
+                    or "not found" in error_str
+                    or "not authorized" in error_str
+                ):
                     # This is likely a wrapped query referencing a table that doesn't exist yet
                     # Log at debug level instead of warning since this is expected behavior
                     logger.debug(
                         f"describe_query_schema failed (likely due to missing table reference in wrapped query): {e}"
                     )
                 else:
-                    logger.warning(
-                        f"describe_query_schema failed, falling back to LIMIT 0: {e}"
-                    )
+                    logger.warning(f"describe_query_schema failed, falling back to LIMIT 0: {e}")
                 # Fall through to LIMIT 0 approach
 
         # Fallback: Execute query with LIMIT 0 and extract schema from result
@@ -73,7 +75,7 @@ class SchemaComparator:
                 for col in result.description:
                     schema.append({"name": col[0], "type": col[1]})
             elif hasattr(result, "columns"):  # Pandas-like
-                for col_name, col_type in zip(result.columns, result.dtypes):
+                for col_name, col_type in zip(result.columns, result.dtypes, strict=True):
                     schema.append({"name": col_name, "type": str(col_type)})
             else:
                 # Try to get schema from cursor if available
@@ -87,9 +89,7 @@ class SchemaComparator:
 
             # Check if the error in the outer try block was due to missing table reference
             # If so, this is expected and we should log at debug level
-            logger.debug(
-                "Could not extract schema from query result, using empty schema"
-            )
+            logger.debug("Could not extract schema from query result, using empty schema")
             return []
         except Exception as e:
             logger.error(f"Failed to infer query schema: {e}")
@@ -159,9 +159,7 @@ class SchemaComparator:
             else:
                 # Check for type mismatch
                 query_type = self._normalize_type(col_info.get("type", ""))
-                table_type = self._normalize_type(
-                    table_cols[col_name].get("type", "")
-                )
+                table_type = self._normalize_type(table_cols[col_name].get("type", ""))
                 if query_type != table_type:
                     type_mismatches.append(
                         {
@@ -176,11 +174,7 @@ class SchemaComparator:
             if col_name not in query_cols:
                 missing_columns.append(col_info)
 
-        has_changes = (
-            len(new_columns) > 0
-            or len(missing_columns) > 0
-            or len(type_mismatches) > 0
-        )
+        has_changes = len(new_columns) > 0 or len(missing_columns) > 0 or len(type_mismatches) > 0
 
         return {
             "new_columns": new_columns,
@@ -240,4 +234,3 @@ class SchemaComparator:
                 return canonical
 
         return normalized
-

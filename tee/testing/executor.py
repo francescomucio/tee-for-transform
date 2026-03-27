@@ -36,7 +36,7 @@ class TestExecutor:
 
         # Initialize executors
         self.function_executor = FunctionTestExecutor(adapter)
-        self.model_executor = ModelTestExecutor(adapter)
+        self.model_executor = ModelTestExecutor(adapter, parsed_models=None)
 
         # Discover and register SQL tests from tests/ folder
         if self.project_folder:
@@ -48,6 +48,8 @@ class TestExecutor:
         table_name: str,
         metadata: dict[str, Any] | None = None,
         severity_overrides: dict[str, TestSeverity] | None = None,
+        *,
+        parsed_models: dict[str, Any] | None = None,
     ) -> list[Any]:
         """
         Execute all tests for a given model based on its metadata.
@@ -56,6 +58,7 @@ class TestExecutor:
             table_name: Fully qualified table name
             metadata: Model metadata containing test definitions
             severity_overrides: Optional dict to override test severities
+            parsed_models: Optional parsed project models for dimension-aware default tests
 
         Returns:
             List of TestResult objects
@@ -67,6 +70,7 @@ class TestExecutor:
             table_name=table_name,
             metadata=metadata,
             severity_overrides=severity_overrides,
+            parsed_models=parsed_models,
         )
 
     def execute_tests_for_function(
@@ -121,6 +125,8 @@ class TestExecutor:
         # If execution_order not provided, use all models
         if execution_order is None:
             execution_order = list(parsed_models.keys())
+
+        self.model_executor.parsed_models = parsed_models
 
         # Initialize batch executor
         batch_executor = BatchTestExecutor(

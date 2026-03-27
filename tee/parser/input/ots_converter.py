@@ -336,7 +336,9 @@ class OTSConverter:
             # Use filter_column, start_value, and destination_filter_column if present (OTS 0.2.2+)
             # Fallback to start_date for backward compatibility (OTS < 0.2.2)
             filter_column = incremental_details.get("filter_column", "")
-            start_value = incremental_details.get("start_value") or incremental_details.get("start_date", "auto")
+            start_value = incremental_details.get("start_value") or incremental_details.get(
+                "start_date", "auto"
+            )
             destination_filter_column = incremental_details.get("destination_filter_column")
             result["delete_insert"] = {
                 "where_condition": delete_condition,
@@ -352,13 +354,16 @@ class OTSConverter:
             # Use filter_column, start_value, and destination_filter_column if present (OTS 0.2.2+)
             # Fallback to start_date for backward compatibility (OTS < 0.2.2)
             filter_column = incremental_details.get("filter_column", "")
-            start_value = incremental_details.get("start_value") or incremental_details.get("start_date", "auto")
+            start_value = incremental_details.get("start_value") or incremental_details.get(
+                "start_date", "auto"
+            )
             destination_filter_column = incremental_details.get("destination_filter_column")
             if not filter_column:
                 # Fallback: Try to extract from filter_condition (for older OTS versions)
                 filter_condition = incremental_details.get("filter_condition", "")
                 # Simple heuristic: extract column name from "column >= value" or "column > value"
                 import re
+
                 match = re.match(r"(\w+)\s*[><=]+\s*", filter_condition)
                 if match:
                     filter_column = match.group(1)
@@ -376,7 +381,9 @@ class OTSConverter:
             # Use filter_column, start_value, and destination_filter_column if present (OTS 0.2.2+)
             # Fallback to start_date for backward compatibility (OTS < 0.2.2)
             filter_column = incremental_details.get("filter_column", "")
-            start_value = incremental_details.get("start_value") or incremental_details.get("start_date", "auto")
+            start_value = incremental_details.get("start_value") or incremental_details.get(
+                "start_date", "auto"
+            )
             destination_filter_column = incremental_details.get("destination_filter_column")
             result["merge"] = {
                 "unique_key": merge_key,

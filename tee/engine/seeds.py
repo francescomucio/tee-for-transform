@@ -215,7 +215,7 @@ class SeedLoader:
         else:
             self._load_json_generic(table_name, columns, rows)
 
-    def _load_csv_duckdb(self, file_path: Path, table_name: str, columns: list[str]) -> None:
+    def _load_csv_duckdb(self, file_path: Path, table_name: str, _columns: list[str]) -> None:
         """Load CSV using DuckDB's read_csv_auto function."""
         # Use DuckDB's read_csv_auto for efficient loading
         # Explicitly specify comma delimiter for CSV files
@@ -229,7 +229,7 @@ class SeedLoader:
             self.logger.error(f"Error loading CSV with DuckDB: {e}")
             raise
 
-    def _load_tsv_duckdb(self, file_path: Path, table_name: str, columns: list[str]) -> None:
+    def _load_tsv_duckdb(self, file_path: Path, table_name: str, _columns: list[str]) -> None:
         """Load TSV using DuckDB's read_csv_auto function with delimiter option."""
         # Escape single quotes in path and convert backslashes to forward slashes
         file_path_str = str(file_path.absolute()).replace("\\", "/").replace("'", "''")
@@ -241,7 +241,7 @@ class SeedLoader:
             self.logger.error(f"Error loading TSV with DuckDB: {e}")
             raise
 
-    def _load_json_duckdb(self, file_path: Path, table_name: str, columns: list[str]) -> None:
+    def _load_json_duckdb(self, file_path: Path, table_name: str, _columns: list[str]) -> None:
         """Load JSON using DuckDB's read_json_auto function."""
         # Escape single quotes in path and convert backslashes to forward slashes
         file_path_str = str(file_path.absolute()).replace("\\", "/").replace("'", "''")
@@ -254,7 +254,7 @@ class SeedLoader:
             raise
 
     def _load_csv_generic(
-        self, file_path: Path, table_name: str, columns: list[str], rows: list[dict[str, Any]]
+        self, _file_path: Path, table_name: str, columns: list[str], rows: list[dict[str, Any]]
     ) -> None:
         """Load CSV using generic INSERT statements."""
         # Create table first

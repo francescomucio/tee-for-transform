@@ -2,14 +2,15 @@
 Unit tests for UnusedTestChecker.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
+
+import pytest
 
 from tee.testing.checkers.unused_test_checker import UnusedTestChecker
-from tee.testing.test_discovery import TestDiscovery
 from tee.testing.sql_test import SqlTest
+from tee.testing.test_discovery import TestDiscovery
 
 
 class TestUnusedTestChecker:
@@ -54,13 +55,7 @@ class TestUnusedTestChecker:
         test_file = tests_folder / "my_test.sql"
         test_file.write_text("SELECT COUNT(*) FROM @table_name WHERE id IS NULL")
 
-        parsed_models = {
-            "my_table": {
-                "model_metadata": {
-                    "metadata": {"tests": ["my_test"]}
-                }
-            }
-        }
+        parsed_models = {"my_table": {"model_metadata": {"metadata": {"tests": ["my_test"]}}}}
 
         used_test_names = {"my_test"}
 
@@ -94,11 +89,7 @@ class TestUnusedTestChecker:
         test_file.write_text("SELECT COUNT(*) FROM @table_name WHERE id IS NULL")
 
         parsed_models = {
-            "my_table": {
-                "model_metadata": {
-                    "metadata": {"tests": ["referenced_test"]}
-                }
-            }
+            "my_table": {"model_metadata": {"metadata": {"tests": ["referenced_test"]}}}
         }
         used_test_names = set()  # Not used yet, but referenced
 
@@ -148,9 +139,7 @@ class TestUnusedTestChecker:
 
         parsed_functions = {
             "my_function": {
-                "function_metadata": {
-                    "metadata": {"tests": ["referenced_function_test"]}
-                }
+                "function_metadata": {"metadata": {"tests": ["referenced_function_test"]}}
             }
         }
         used_test_names = set()
@@ -184,11 +173,7 @@ class TestUnusedTestChecker:
     def test_collect_referenced_tests_from_functions(self, checker):
         """Test collecting referenced tests from function metadata."""
         parsed_functions = {
-            "func1": {
-                "function_metadata": {
-                    "metadata": {"tests": ["test1", {"name": "test2"}]}
-                }
-            }
+            "func1": {"function_metadata": {"metadata": {"tests": ["test1", {"name": "test2"}]}}}
         }
 
         result = checker._collect_referenced_tests({}, parsed_functions)
@@ -267,7 +252,9 @@ class TestUnusedTestChecker:
     def test_is_generic_test_with_jinja_placeholders(self, checker, temp_dir):
         """Test identifying generic test with Jinja placeholders."""
         test_file = temp_dir / "test.sql"
-        test_file.write_text("SELECT COUNT(*) FROM {{ table_name }} WHERE {{ column_name }} IS NULL")
+        test_file.write_text(
+            "SELECT COUNT(*) FROM {{ table_name }} WHERE {{ column_name }} IS NULL"
+        )
 
         sql_test = SqlTest(name="test", sql_file_path=test_file, project_folder=temp_dir)
 
@@ -318,5 +305,3 @@ class TestUnusedTestChecker:
         )
 
         assert result == []
-
-

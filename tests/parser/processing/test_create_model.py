@@ -10,12 +10,10 @@ Tests verify that create_model() correctly:
 """
 
 import os
-import tempfile
-from pathlib import Path
 
 import pytest
 
-from tee.parser.processing.model import create_model, ModelFactoryError
+from tee.parser.processing.model import ModelFactoryError, create_model
 from tee.parser.shared.registry import ModelRegistry
 
 
@@ -169,7 +167,7 @@ class TestCreateModel:
     def test_create_model_detects_name_conflicts(self, tmp_path):
         """Test that create_model() raises error on name conflicts from different files."""
         from tee.parser.shared.registry import ModelRegistry
-        
+
         schema_folder = tmp_path / "conflict_schema"
         schema_folder.mkdir()
         file1 = schema_folder / "file1.py"
@@ -188,7 +186,7 @@ class TestCreateModel:
                 sql="SELECT 1",
                 description="First model",
             )
-            
+
             # Manually update the file_path to simulate it coming from file1
             first_model = ModelRegistry.get("conflict_test")
             assert first_model is not None
@@ -198,19 +196,20 @@ class TestCreateModel:
 
             # Now try to register same name from file2 - should raise error
             # We'll manually patch the file path detection to simulate file2
-            import inspect
             original_get_caller_file_info = None
             try:
                 from tee.parser.shared.inspect_utils import get_caller_file_info
+
                 original_get_caller_file_info = get_caller_file_info
-                
+
                 def mock_get_caller_file_info(*args, **kwargs):
                     return str(file2.absolute()), False
-                
+
                 # Patch the function temporarily
                 import tee.parser.processing.model as model_module
+
                 model_module.get_caller_file_info = mock_get_caller_file_info
-                
+
                 with pytest.raises(ModelFactoryError, match="Model name conflict"):
                     create_model(
                         table_name="conflict_test",
@@ -323,7 +322,7 @@ class TestCreateModel:
             WITH cte AS (
                 SELECT * FROM cte_table
             )
-            SELECT 
+            SELECT
                 cte.*,
                 other_table.column
             FROM cte
@@ -373,4 +372,3 @@ class TestCreateModel:
 
         finally:
             os.chdir(original_cwd)
-

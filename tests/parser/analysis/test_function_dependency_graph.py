@@ -2,11 +2,8 @@
 Unit tests for function dependency graph integration.
 """
 
-import pytest
-from pathlib import Path
 from tee.parser.analysis.dependency_graph import DependencyGraphBuilder
 from tee.parser.analysis.table_resolver import TableResolver
-from tee.typing import Function, Model
 
 
 class TestFunctionDependencyGraph:
@@ -19,7 +16,9 @@ class TestFunctionDependencyGraph:
 
         parsed_models = {
             "my_schema.table1": {
-                "code": {"sql": {"source_tables": [], "resolved_sql": "SELECT * FROM my_schema.table2"}},
+                "code": {
+                    "sql": {"source_tables": [], "resolved_sql": "SELECT * FROM my_schema.table2"}
+                },
                 "model_metadata": {},
             }
         }
@@ -124,7 +123,9 @@ class TestFunctionDependencyGraph:
                 "code": {
                     "sql": {
                         "source_tables": [],
-                        "source_functions": ["my_schema.calculate_metric"],  # Pre-extracted during parsing
+                        "source_functions": [
+                            "my_schema.calculate_metric"
+                        ],  # Pre-extracted during parsing
                         "resolved_sql": "SELECT my_schema.calculate_metric(value) FROM data",
                     }
                 },
@@ -182,11 +183,11 @@ class TestFunctionDependencyGraph:
         graph = builder.build_graph(parsed_models, resolver, parsed_functions=parsed_functions)
 
         execution_order = graph["execution_order"]
-        
+
         # Find positions
         func_pos = execution_order.index("my_schema.func1")
         model_pos = execution_order.index("my_schema.table1")
-        
+
         # Function should come before model
         assert func_pos < model_pos
 
@@ -262,7 +263,9 @@ class TestFunctionDependencyGraph:
                 "code": {
                     "sql": {
                         "source_tables": ["my_schema.users"],  # Table dependency from SQL
-                        "source_functions": ["my_schema.process_users"],  # Pre-extracted during parsing
+                        "source_functions": [
+                            "my_schema.process_users"
+                        ],  # Pre-extracted during parsing
                         "resolved_sql": "SELECT my_schema.process_users(id) FROM my_schema.users",
                     }
                 },
@@ -393,4 +396,3 @@ class TestFunctionDependencyGraph:
 
         # Should resolve qualified function name
         assert "my_schema.helper" in graph["dependencies"]["my_schema.main"]
-

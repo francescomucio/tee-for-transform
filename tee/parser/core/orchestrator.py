@@ -6,16 +6,22 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from tee.parser.analysis import DependencyGraphBuilder, TableResolver
+from tee.parser.analysis import (
+    DependencyGraphBuilder,
+    DimensionalRelationshipGraphBuilder,
+    TableResolver,
+)
 from tee.parser.output import JSONExporter, ReportGenerator
 from tee.parser.parsers import FunctionPythonParser, FunctionSQLParser, ParserFactory
 from tee.parser.processing import FileDiscovery, substitute_sql_variables, validate_sql_variables
+from tee.parser.shared.dimension_registry import build_dimension_registry_from_models
 from tee.parser.shared.exceptions import ParserError
 from tee.parser.shared.function_utils import standardize_parsed_function
 from tee.parser.shared.registry import FunctionRegistry, ModelRegistry
 from tee.parser.shared.types import (
     ConnectionConfig,
     DependencyGraph,
+    DimensionalGraph,
     ParsedFunction,
     ParsedModel,
     Variables,
@@ -51,12 +57,21 @@ class ParserOrchestrator:
         self.functions_folder = self.project_folder / "functions"
         self.project_config = project_config or {}
 
+        self._dimension_registry: dict[str, str] = {}
+
         # Initialize components
         self.file_discovery = FileDiscovery(
             self.models_folder, functions_folder=self.functions_folder
         )
         self.table_resolver = TableResolver(connection)
         self.dependency_builder = DependencyGraphBuilder()
+        infer_dim_from_names = bool(
+            self.project_config.get("infer_dimensional_relationships_from_column_names", False)
+        )
+        self.dimensional_builder = DimensionalRelationshipGraphBuilder(
+            include_lookup=True,
+            infer_from_column_names=infer_dim_from_names,
+        )
         self.json_exporter = JSONExporter(
             self.project_folder / "output", project_config, project_folder=self.project_folder
         )
@@ -67,6 +82,12 @@ class ParserOrchestrator:
         self._parsed_models: dict[str, ParsedModel] | None = None
         self._parsed_functions: dict[str, ParsedFunction] | None = None
         self._dependency_graph: DependencyGraph | None = None
+        self._dimensional_graph: DimensionalGraph | None = None
+
+    @property
+    def dimension_registry(self) -> dict[str, str]:
+        """Logical-dimension → fully qualified table mapping (from parsed dimension models)."""
+        return self._dimension_registry
 
     def discover_and_parse_models(self) -> dict[str, ParsedModel]:
         """
@@ -187,6 +208,11 @@ class ParserOrchestrator:
             # Evaluate Python models to populate their code data
             logger.info("Evaluating Python models to populate code data")
             parsed_models = self.evaluate_python_models(parsed_models, self.variables)
+
+            try:
+                self._dimension_registry = build_dimension_registry_from_models(parsed_models)
+            except ValueError as e:
+                raise ParserError(f"Failed to build dimension registry from models: {e}") from e
 
             # Cache the result
             self._parsed_models = parsed_models
@@ -364,10 +390,14 @@ class ParserOrchestrator:
             all_registered_functions = FunctionRegistry.get_all()
             for function_name, function_data in all_registered_functions.items():
                 function_file_path = function_data.get("function_metadata", {}).get("file_path")
-                if function_file_path and Path(function_file_path).is_relative_to(self.functions_folder):
+                if function_file_path and Path(function_file_path).is_relative_to(
+                    self.functions_folder
+                ):
                     # Generate qualified function name
                     qualified_name = self.table_resolver.generate_full_function_name(
-                        Path(function_file_path), self.functions_folder, function_data["function_metadata"]
+                        Path(function_file_path),
+                        self.functions_folder,
+                        function_data["function_metadata"],
                     )
                     parsed_functions[qualified_name] = function_data
                     logger.debug(f"Collected Python function from registry: {qualified_name}")
@@ -483,14 +513,52 @@ class ParserOrchestrator:
                 self.table_resolver,
                 project_folder=Path(self.project_folder),
                 parsed_functions=parsed_functions,
+                dimension_registry=self._dimension_registry,
             )
 
-            logger.debug(f"Built dependency graph with {len(self._dependency_graph['nodes'])} nodes")
+            logger.debug(
+                f"Built dependency graph with {len(self._dependency_graph['nodes'])} nodes"
+            )
 
             return self._dependency_graph
 
         except Exception as e:
             raise ParserError(f"Failed to build dependency graph: {e}") from e
+
+    def build_dimensional_graph(
+        self, infer_from_column_names: bool | None = None
+    ) -> DimensionalGraph:
+        """
+        Build dimensional relationship graph from parsed model metadata.
+
+        Args:
+            infer_from_column_names: Optional override for name-based inference
+
+        Returns:
+            Dict containing dimensional graph information
+        """
+        if self._dimensional_graph is not None and infer_from_column_names is None:
+            return self._dimensional_graph
+
+        try:
+            parsed_models = (
+                self.discover_and_parse_models()
+                if self._parsed_models is None
+                else self._parsed_models
+            )
+
+            dimensional_graph = self.dimensional_builder.build_graph(
+                parsed_models,
+                infer_from_column_names=infer_from_column_names,
+                dimension_registry=self._dimension_registry,
+            )
+
+            if infer_from_column_names is None:
+                self._dimensional_graph = dimensional_graph
+
+            return dimensional_graph
+        except Exception as e:
+            raise ParserError(f"Failed to build dimensional graph: {e}") from e
 
     def export_all(self) -> dict[str, Path]:
         """
@@ -503,9 +571,17 @@ class ParserOrchestrator:
             # Ensure we have parsed models and dependency graph
             parsed_models = self.discover_and_parse_models()
             dependency_graph = self.build_dependency_graph()
+            dimensional_graph = self.build_dimensional_graph()
 
             # Export JSON files
-            json_results = self.json_exporter.export_all(parsed_models, dependency_graph)
+            json_results = self.json_exporter.export_all(
+                parsed_models,
+                dependency_graph,
+                dimension_registry=self._dimension_registry,
+            )
+            json_results["dimensional_graph"] = self.json_exporter.export_dimensional_graph(
+                dimensional_graph
+            )
 
             # Export OTS modules and test library
             ots_results = {}

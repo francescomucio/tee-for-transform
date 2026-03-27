@@ -83,9 +83,7 @@ class TestJinjaRenderer:
             # Create a simple macro
             macro_file = macros_dir / "test_macro.sql"
             macro_file.write_text(
-                "{% macro cents_to_dollars(column_name) %}"
-                "{{ column_name }} / 100.0"
-                "{% endmacro %}"
+                "{% macro cents_to_dollars(column_name) %}{{ column_name }} / 100.0{% endmacro %}"
             )
 
             renderer = JinjaRenderer(
@@ -283,9 +281,7 @@ class TestJinjaRenderer:
             # Create a macro that uses ref()
             macro_file = macros_dir / "get_table.sql"
             macro_file.write_text(
-                "{% macro get_table(model_name) %}"
-                "{{ ref(model_name) }}"
-                "{% endmacro %}"
+                "{% macro get_table(model_name) %}{{ ref(model_name) }}{% endmacro %}"
             )
 
             renderer = JinjaRenderer(
@@ -333,17 +329,13 @@ class TestJinjaRenderer:
             pkg1_dir.mkdir()
             pkg1_macros = pkg1_dir / "macros"
             pkg1_macros.mkdir()
-            (pkg1_macros / "macro1.sql").write_text(
-                "{% macro macro1() %}pkg1_macro{% endmacro %}"
-            )
+            (pkg1_macros / "macro1.sql").write_text("{% macro macro1() %}pkg1_macro{% endmacro %}")
 
             pkg2_dir = packages_dir / "dbt_date@0.10.0"
             pkg2_dir.mkdir()
             pkg2_macros = pkg2_dir / "macros"
             pkg2_macros.mkdir()
-            (pkg2_macros / "macro2.sql").write_text(
-                "{% macro macro2() %}pkg2_macro{% endmacro %}"
-            )
+            (pkg2_macros / "macro2.sql").write_text("{% macro macro2() %}pkg2_macro{% endmacro %}")
 
             package_paths = {"dbt_utils": pkg1_dir, "dbt_date": pkg2_dir}
 
@@ -400,9 +392,7 @@ class TestJinjaRenderer:
             # Create a macro with 3 parameters but call it with 2 args
             macro_file = macros_dir / "test_macro.sql"
             macro_file.write_text(
-                "{% macro test_macro(a, b, c='default') %}"
-                "{{ a }}-{{ b }}-{{ c }}"
-                "{% endmacro %}"
+                "{% macro test_macro(a, b, c='default') %}{{ a }}-{{ b }}-{{ c }}{% endmacro %}"
             )
 
             renderer = JinjaRenderer(
@@ -509,11 +499,7 @@ class TestJinjaRenderer:
 
             # Create a macro that uses return()
             macro_file = macros_dir / "get_value.sql"
-            macro_file.write_text(
-                "{% macro get_value() %}"
-                "{{ return(42) }}"
-                "{% endmacro %}"
-            )
+            macro_file.write_text("{% macro get_value() %}{{ return(42) }}{% endmacro %}")
 
             renderer = JinjaRenderer(
                 project_path=project_path,
@@ -530,6 +516,7 @@ class TestJinjaRenderer:
     def test_render_with_env_var(self):
         """Test rendering with env_var() function."""
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             project_path = Path(tmpdir)
             macros_dir = project_path / "macros"
@@ -608,9 +595,7 @@ class TestJinjaRenderer:
 
             # Create adapter-specific and default macros
             macro_file = macros_dir / "test_macro.sql"
-            macro_file.write_text(
-                "{% macro default__test_macro() %}default{% endmacro %}"
-            )
+            macro_file.write_text("{% macro default__test_macro() %}default{% endmacro %}")
 
             renderer = JinjaRenderer(
                 project_path=project_path,
@@ -662,9 +647,7 @@ class TestJinjaRenderer:
             pkg_macros_dir.mkdir()
 
             macro_file = pkg_macros_dir / "test_macro.sql"
-            macro_file.write_text(
-                "{% macro test_macro() %}pkg_macro{% endmacro %}"
-            )
+            macro_file.write_text("{% macro test_macro() %}pkg_macro{% endmacro %}")
 
             package_paths = {"test_pkg": pkg_dir}
 

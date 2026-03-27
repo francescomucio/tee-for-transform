@@ -2,18 +2,24 @@
 Tests for the run CLI command.
 """
 
-import pytest
 import tempfile
-import sys
-from pathlib import Path
-from unittest.mock import patch, MagicMock, Mock
 from io import StringIO
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from tee.cli.commands.run import cmd_run
 
 
 class TestRunCommand:
     """Tests for the run CLI command."""
+
+    @pytest.fixture(autouse=True)
+    def mock_lookup_generation(self):
+        """Prevent lookup generator side effects in unit tests."""
+        with patch("tee.cli.commands.run.generate_lookups"):
+            yield
 
     @pytest.fixture
     def temp_project_dir(self):
@@ -41,7 +47,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_success(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_success(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test successful run command execution."""
         # Setup mocks
         mock_ctx = Mock()
@@ -87,7 +95,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_with_failures(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_with_failures(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test run command with some failures."""
         # Setup mocks
         mock_ctx = Mock()
@@ -122,7 +132,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_with_warnings(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_with_warnings(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test run command with warnings."""
         # Setup mocks
         mock_ctx = Mock()
@@ -156,7 +168,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_verbose_mode(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_verbose_mode(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test run command with verbose output."""
         # Setup mocks
         mock_ctx = Mock()
@@ -191,7 +205,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_with_variables(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_with_variables(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test run command with variables."""
         # Setup mocks
         mock_ctx = Mock()
@@ -225,7 +241,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_with_selection_patterns(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_with_selection_patterns(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test run command with select/exclude patterns."""
         # Setup mocks
         mock_ctx = Mock()
@@ -260,7 +278,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_handles_exceptions(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_handles_exceptions(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test run command handles exceptions gracefully."""
         # Setup mocks
         mock_ctx = Mock()
@@ -288,7 +308,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_cleanup_connection_manager(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_cleanup_connection_manager(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test that connection manager is cleaned up."""
         # Setup mocks
         mock_ctx = Mock()
@@ -321,7 +343,9 @@ class TestRunCommand:
     @patch("tee.cli.commands.run.execute_models")
     @patch("tee.cli.commands.run.ConnectionManager")
     @patch("tee.cli.commands.run.CommandContext")
-    def test_cmd_run_cleanup_on_exception(self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args):
+    def test_cmd_run_cleanup_on_exception(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
         """Test that connection manager is cleaned up even on exception."""
         # Setup mocks
         mock_ctx = Mock()
@@ -345,4 +369,3 @@ class TestRunCommand:
 
         # Verify cleanup was still called
         mock_connection_manager.cleanup.assert_called_once()
-

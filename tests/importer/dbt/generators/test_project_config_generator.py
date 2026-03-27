@@ -5,7 +5,6 @@ Tests for project.toml generator.
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from tee.importer.dbt.generators import ProjectConfigGenerator
 
@@ -35,9 +34,9 @@ class TestProjectConfigGenerator:
 
             content = project_toml.read_text()
             assert 'project_folder = "target"' in content
-            assert '[connection]' in content
+            assert "[connection]" in content
             assert 'type = "duckdb"' in content
-            assert '[flags]' in content
+            assert "[flags]" in content
 
     def test_generate_project_toml_with_connection(self):
         """Test generating project.toml with connection config."""
@@ -100,4 +99,3 @@ class TestProjectConfigGenerator:
             assert "# Note: This project uses dbt packages:" in content
             assert "#   - dbt-utils (version: 1.0.0)" in content
             assert "#   - dbt-date (version: 0.7.0)" in content
-

@@ -193,9 +193,7 @@ class TestMaterializationEndToEnd:
 
         return count
 
-    def _get_base_incremental_metadata(
-        self, on_schema_change: str | None = None
-    ) -> dict[str, Any]:
+    def _get_base_incremental_metadata(self, on_schema_change: str | None = None) -> dict[str, Any]:
         """Get base incremental metadata configuration."""
         config = IncrementalConfig(on_schema_change=on_schema_change)
         return config.to_metadata()
@@ -277,7 +275,11 @@ class TestMaterializationEndToEnd:
         )
 
     def test_incremental_append_with_append_new_columns_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental append with append_new_columns on schema change."""
         table_name = "target_events"
@@ -315,7 +317,11 @@ class TestMaterializationEndToEnd:
         assert first_row[3] == 100
 
     def test_incremental_append_with_sync_all_columns_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental append with sync_all_columns on schema change."""
         table_name = "target_events_sync"
@@ -356,7 +362,11 @@ class TestMaterializationEndToEnd:
         assert row_list[1] == 100
 
     def test_incremental_append_with_full_refresh_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental append with full_refresh on schema change."""
         table_name = "target_events_refresh"
@@ -371,9 +381,7 @@ class TestMaterializationEndToEnd:
                 '2024-01-01'::DATE as event_date
             """
         )
-        adapter.execute_query(
-            f"INSERT INTO {table_name} VALUES (2, 'event2', '2024-01-02'::DATE)"
-        )
+        adapter.execute_query(f"INSERT INTO {table_name} VALUES (2, 'event2', '2024-01-02'::DATE)")
 
         # Set up state
         initial_query = "SELECT event_id, event_name, event_date FROM source_events"
@@ -399,7 +407,11 @@ class TestMaterializationEndToEnd:
         assert rows[2][1] == 300
 
     def test_incremental_append_with_recreate_empty_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental append with recreate_empty on schema change."""
         table_name = "target_events_empty"
@@ -414,9 +426,7 @@ class TestMaterializationEndToEnd:
                 '2024-01-01'::DATE as event_date
             """
         )
-        adapter.execute_query(
-            f"INSERT INTO {table_name} VALUES (2, 'event2', '2024-01-02'::DATE)"
-        )
+        adapter.execute_query(f"INSERT INTO {table_name} VALUES (2, 'event2', '2024-01-02'::DATE)")
 
         # Set up state
         initial_query = "SELECT event_id, event_name, event_date FROM source_events"
@@ -437,7 +447,11 @@ class TestMaterializationEndToEnd:
         assert count >= 0  # At least schema is correct, may have incremental data
 
     def test_incremental_append_with_fail_on_schema_change_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental append with fail on schema change."""
         table_name = "target_events_fail"
@@ -475,13 +489,19 @@ class TestMaterializationEndToEnd:
         self._verify_table_schema(adapter, table_name, self.BASE_COLUMNS, ["value"])
 
     def test_incremental_merge_with_append_new_columns_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental merge with append_new_columns on schema change."""
         table_name = "target_events_merge"
 
         # Step 1: Create initial table
-        initial_query = "SELECT event_id, event_name, event_date FROM source_events WHERE event_id = 1"
+        initial_query = (
+            "SELECT event_id, event_name, event_date FROM source_events WHERE event_id = 1"
+        )
         config = IncrementalConfig(strategy="merge", unique_key=["event_id"])
         metadata = config.to_metadata()
         handler.materialize(table_name, initial_query, "incremental", metadata)
@@ -543,7 +563,11 @@ class TestMaterializationEndToEnd:
         self._verify_table_count(adapter, view_name, 14)  # Only events with value > 150
 
     def test_incremental_no_schema_changes_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental with no schema changes."""
         table_name = "target_events_no_change"
@@ -569,7 +593,11 @@ class TestMaterializationEndToEnd:
         assert final_count >= initial_count
 
     def test_incremental_append_with_ignore_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental append with ignore on schema change."""
         table_name = "target_events_ignore"
@@ -595,7 +623,11 @@ class TestMaterializationEndToEnd:
         self._verify_table_schema(adapter, table_name, self.BASE_COLUMNS)
 
     def test_incremental_append_with_full_incremental_refresh_e2e(
-        self, handler, adapter, state_manager, initial_table_with_data  # noqa: ARG002
+        self,
+        handler,
+        adapter,
+        state_manager,
+        initial_table_with_data,  # noqa: ARG002
     ):
         """Test incremental append with full_incremental_refresh on schema change."""
         table_name = "target_events_full_inc_refresh"

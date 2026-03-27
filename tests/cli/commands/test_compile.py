@@ -2,13 +2,12 @@
 Unit tests for the compile CLI command.
 """
 
-import pytest
 import tempfile
-import json
-import yaml
-from pathlib import Path
-from unittest.mock import patch, Mock, MagicMock
 from io import StringIO
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from tee.cli.commands.compile import cmd_compile
 
@@ -103,7 +102,7 @@ class TestCompileCommand:
         }
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()) as fake_out:
+        with patch("sys.stdout", new=StringIO()):
             cmd_compile(
                 project_folder=mock_args.project_folder,
                 vars=mock_args.vars,
@@ -138,7 +137,10 @@ class TestCompileCommand:
         mock_compile.side_effect = CompilationError("Test compilation error")
 
         # Capture both stdout and stderr (typer.echo with err=True writes to stderr)
-        with patch("sys.stdout", new=StringIO()) as fake_out, patch("sys.stderr", new=StringIO()) as fake_err:
+        with (
+            patch("sys.stdout", new=StringIO()) as fake_out,
+            patch("sys.stderr", new=StringIO()) as fake_err,
+        ):
             try:
                 cmd_compile(
                     project_folder=mock_args.project_folder,
@@ -152,4 +154,3 @@ class TestCompileCommand:
         output = fake_out.getvalue() + fake_err.getvalue()
         assert "Compilation failed:" in output
         mock_ctx.handle_error.assert_called_once()
-

@@ -5,7 +5,6 @@ Unit tests for dbt project validator.
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from tee.importer.dbt.infrastructure import ProjectValidator, ValidationResult
 
@@ -54,9 +53,7 @@ class TestProjectValidator:
             sql_file = models_dir / "test.sql"
             sql_file.write_text("SELECT id, name FROM users WHERE id > 0")
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             errors = validator.validate_syntax()
 
             assert len(errors) == 0
@@ -72,9 +69,7 @@ class TestProjectValidator:
             sql_file = models_dir / "test.sql"
             sql_file.write_text("SELECT FROM WHERE")  # Invalid SQL
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             errors = validator.validate_syntax()
 
             assert len(errors) > 0
@@ -92,9 +87,7 @@ class TestProjectValidator:
             sql_file = models_dir / "test.sql"
             sql_file.write_text("")
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             errors = validator.validate_syntax()
 
             # Empty files should be skipped
@@ -131,9 +124,7 @@ class TestProjectValidator:
             sql_file = models_dir / "test.sql"
             sql_file.write_text("SELECT * FROM @missing_table")
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             errors = validator.validate_dependencies()
 
             # Should detect missing reference
@@ -163,9 +154,7 @@ def users():
 """
             )
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             errors = validator.validate_metadata()
 
             assert len(errors) == 0
@@ -185,9 +174,7 @@ def users():
             metadata_file = models_dir / "test.py"
             metadata_file.write_text("# Just a comment")
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             errors = validator.validate_metadata()
 
             assert len(errors) > 0
@@ -200,9 +187,7 @@ def users():
             models_dir = target_path / "models" / "public"
             models_dir.mkdir(parents=True)
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             errors = validator.validate_execution(connection_config=None)
 
             assert len(errors) > 0
@@ -219,9 +204,7 @@ def users():
             sql_file = models_dir / "test.sql"
             sql_file.write_text("SELECT id, name FROM users")
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             result = validator.validate_all(validate_execution=False)
 
             assert isinstance(result, ValidationResult)
@@ -239,12 +222,9 @@ def users():
             sql_file = models_dir / "test.sql"
             sql_file.write_text("SELECT FROM WHERE")  # Invalid
 
-            validator = ProjectValidator(
-                target_path=target_path, model_name_map={}, verbose=False
-            )
+            validator = ProjectValidator(target_path=target_path, model_name_map={}, verbose=False)
             result = validator.validate_all(validate_execution=False)
 
             assert isinstance(result, ValidationResult)
             assert result.is_valid is False
             assert len(result.syntax_errors) > 0
-

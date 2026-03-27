@@ -8,40 +8,38 @@ A Python framework for managing SQL data transformations with support for multip
 
 ## 🚀 Quick Start
 
-Since this is an initial release, there's no pip package available yet. The only way to use t4t is by cloning this repository:
+Since this is an initial release, there's no pip package available yet. Clone this repository, install with [uv](https://github.com/astral-sh/uv), then scaffold a project with the CLI:
 
 ```bash
 # Clone the repository
 git clone https://github.com/francescomucio/tee-as-transformation
 cd tee-as-transformation
 
-# Install dependencies
+# Install the package and dependencies (makes `t4t` available via `uv run`)
 uv sync
 
-# Create your first project
-mkdir my_project
-cd my_project
+# Create a new project (DuckDB by default: data/<name>.duckdb, models/, seeds/, tests/)
+uv run t4t init my_project
 
-# Initialize project configuration
-cat > project.toml << EOF
-project_folder = "my_project"
+# Optional: pick another backend
+# uv run t4t init my_project -d postgresql
+# uv run t4t init my_project -d snowflake
+# uv run t4t init my_project -d bigquery
+# uv run t4t init my_project -d motherduck
 
-[connection]
-type = "duckdb"
-path = "data/my_project.db"
-schema = "public"
+# Add a model
+echo "SELECT 1 AS id, 'hello' AS message" > my_project/models/my_first_model.sql
 
-[flags]
-source_dialect = "postgresql"
-EOF
+# Confirm config and connectivity (edit my_project/project.toml first if not using defaults)
+uv run t4t debug my_project
 
-# Create your first model
-mkdir models
-echo "SELECT 1 as id, 'hello' as message" > models/my_first_model.sql
-
-# Run your models
-uv run t4t run .
+# Run models
+uv run t4t run my_project
 ```
+
+**Coming from dbt?** You can generate a t4t layout from an existing project with `uv run t4t import <path-to-dbt-project> <path-to-new-t4t-project>` (see `t4t import --help`).
+
+**Prefer a hand-written `project.toml`?** Create a folder, add `project.toml`, `models/`, and the rest yourself—the layout matches what `t4t init` produces.
 
 ## ✨ Key Features
 
@@ -50,6 +48,7 @@ uv run t4t run .
 - **Dependency-Aware Execution**: Automatic model and function dependency resolution
 - **Incremental Materialization**: Efficient data processing with append, merge, and delete+insert strategies
 - **Rich Metadata Support**: Python-based metadata configuration with full type safety
+- **Dimensional shorthand**: Fact columns can use `dimension` metadata (`date`, `date.month`, …); a logical-name registry is **derived automatically** from dimension models (`table_type` `dim` / `dimension`, or `dim_*` table names) and optional hierarchy level names—no separate config file
 - **Comprehensive Tagging**: dbt-style tags and database object tags for tables, views, and schemas
 - **Pluggable Architecture**: Easy to add new database adapters
 - **Configuration Management**: Flexible configuration via `project.toml`
@@ -99,21 +98,19 @@ The `init` command creates:
 - Default directories: `models/`, `tests/`, `seeds/`
 - `data/` directory (for DuckDB projects only)
 
-**Generated `project.toml` structure:**
+**Generated `project.toml` structure (DuckDB example):**
 ```toml
 project_folder = "my_project"
 
 [connection]
-# Database-specific connection settings
-# For DuckDB: type, path
-# For Snowflake: type, host, user, password, role, warehouse, database
-# For PostgreSQL: type, host, port, database, user, password
-# For BigQuery: type, project, database
-# For MotherDuck: type, path (md:database_name), database, schema
+type = "duckdb"
+path = "data/my_project.duckdb"
 
 [flags]
 materialization_change_behavior = "warn"  # Options: "warn", "error", "ignore"
 ```
+
+Other backends get placeholder connection keys (Snowflake host/user/warehouse, PostgreSQL host/database, BigQuery project/dataset, MotherDuck `md:` path plus optional `[connection.extra]`). Edit these to match your environment.
 
 After initialization, edit `project.toml` to configure your database connection. For Snowflake, PostgreSQL, and BigQuery, you'll need to update the connection parameters with your actual credentials.
 
@@ -200,6 +197,12 @@ uv run t4t build --help
 uv run t4t compile --help
 uv run t4t debug --help
 uv run t4t test --help
+uv run t4t seed --help
+uv run t4t import --help
+uv run t4t docs --help
+
+# Full command list (includes OTS subcommands)
+uv run t4t --help
 ```
 
 ## 📚 Documentation

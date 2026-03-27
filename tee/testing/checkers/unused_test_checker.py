@@ -232,7 +232,11 @@ class UnusedTestChecker:
             File information string
         """
         if isinstance(test, SqlTest):
-            file_path = test.sql_file_path.relative_to(self.project_folder) if self.project_folder else test.sql_file_path
+            file_path = (
+                test.sql_file_path.relative_to(self.project_folder)
+                if self.project_folder
+                else test.sql_file_path
+            )
             return f"File: {file_path}"
         else:
             # PythonTest - use test name to indicate it's from a Python file

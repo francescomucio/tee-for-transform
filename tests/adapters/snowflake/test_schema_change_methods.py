@@ -191,5 +191,6 @@ class TestSnowflakeSchemaChangeMethods:
         adapter.drop_column("test_table", "email")
 
         # Verify all operations were called
-        assert mock_cursor.execute.call_count >= 4  # DESCRIBE (CREATE VIEW + DESCRIBE + DROP VIEW) + ADD + DROP
-
+        assert (
+            mock_cursor.execute.call_count >= 4
+        )  # DESCRIBE (CREATE VIEW + DESCRIBE + DROP VIEW) + ADD + DROP

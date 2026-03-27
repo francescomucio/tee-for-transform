@@ -30,7 +30,12 @@ class OTSModuleReader:
         """Initialize the OTS module reader."""
         # Support 0.1.0, 0.2.0, 0.2.1, and 0.2.2 (semantic versioning comparison)
         self.max_supported_version = "0.2.2"
-        self.supported_ots_versions = ["0.1.0", "0.2.0", "0.2.1", "0.2.2"]  # Explicitly supported versions
+        self.supported_ots_versions = [
+            "0.1.0",
+            "0.2.0",
+            "0.2.1",
+            "0.2.2",
+        ]  # Explicitly supported versions
 
     def read_module(self, file_path: Path) -> OTSModule:
         """

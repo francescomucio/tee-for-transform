@@ -101,6 +101,7 @@ def build_and_print_model(metadata: ModelMetadata, file_path: str | None = None)
     # Auto-detect file_path from caller if not provided
     if file_path is None:
         import inspect
+
         frame = inspect.currentframe()
         if frame and frame.f_back:
             file_path = frame.f_back.f_globals.get("__file__")
@@ -150,4 +151,3 @@ def auto_build_model(metadata: ModelMetadata) -> Model | None:
 
     # If we're in __main__, build and print the model
     return build_and_print_model(metadata)
-

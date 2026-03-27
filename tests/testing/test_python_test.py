@@ -2,11 +2,12 @@
 Unit tests for PythonTest class.
 """
 
-import pytest
 from unittest.mock import Mock
 
+import pytest
+
+from tee.testing.base import TestResult, TestSeverity
 from tee.testing.python_test import PythonTest
-from tee.testing.base import TestSeverity, TestResult
 
 
 class TestPythonTest:
@@ -206,4 +207,3 @@ class TestPythonTest:
 
         assert result.passed is True
         assert "expected 3" in result.message.lower()
-

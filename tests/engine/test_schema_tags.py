@@ -2,7 +2,6 @@
 Test cases for schema-level tag functionality in execution engine.
 """
 
-import pytest
 from tee.engine.execution_engine import ExecutionEngine
 from tee.engine.metadata import MetadataExtractor
 
@@ -27,7 +26,9 @@ object_tags = {"sensitivity_tag" = "pii", "classification" = "public"}
 """)
 
         metadata_extractor = MetadataExtractor()
-        schema_metadata = metadata_extractor.load_schema_metadata("my_schema", str(temp_project_dir))
+        schema_metadata = metadata_extractor.load_schema_metadata(
+            "my_schema", str(temp_project_dir)
+        )
         assert schema_metadata is not None
         assert "tags" in schema_metadata
         assert schema_metadata["tags"] == ["analytics", "production"]
@@ -51,7 +52,9 @@ object_tags = {"sensitivity_tag" = "pii"}
 """)
 
         metadata_extractor = MetadataExtractor()
-        schema_metadata = metadata_extractor.load_schema_metadata("my_schema", str(temp_project_dir))
+        schema_metadata = metadata_extractor.load_schema_metadata(
+            "my_schema", str(temp_project_dir)
+        )
         assert schema_metadata is not None
         assert "tags" in schema_metadata
         assert schema_metadata["tags"] == ["analytics", "production"]
@@ -71,7 +74,9 @@ path = ":memory:"
 """)
 
         metadata_extractor = MetadataExtractor()
-        schema_metadata = metadata_extractor.load_schema_metadata("my_schema", str(temp_project_dir))
+        schema_metadata = metadata_extractor.load_schema_metadata(
+            "my_schema", str(temp_project_dir)
+        )
         assert schema_metadata is not None
         assert "tags" in schema_metadata
         assert schema_metadata["tags"] == ["analytics", "production"]
@@ -94,7 +99,9 @@ tags = ["schema_tag"]
 """)
 
         metadata_extractor = MetadataExtractor()
-        schema_metadata = metadata_extractor.load_schema_metadata("my_schema", str(temp_project_dir))
+        schema_metadata = metadata_extractor.load_schema_metadata(
+            "my_schema", str(temp_project_dir)
+        )
         assert schema_metadata is not None
         assert schema_metadata["tags"] == ["schema_tag"]  # Per-schema overrides
 
@@ -107,9 +114,14 @@ tags = ["schema_tag"]
 
         # Schema name extraction is now in executors, test via model executor
         from tee.engine.executors.model_executor import ModelExecutor
+
         model_executor = ModelExecutor(
-            engine.adapter, str(temp_project_dir), {}, 
-            engine.materialization_handler, engine.metadata_extractor, engine.state_checker
+            engine.adapter,
+            str(temp_project_dir),
+            {},
+            engine.materialization_handler,
+            engine.metadata_extractor,
+            engine.state_checker,
         )
         assert model_executor._extract_schema_name("my_schema.table_name") == "my_schema"
         assert model_executor._extract_schema_name("schema.table") == "schema"
@@ -136,9 +148,14 @@ tags = ["analytics"]
 
         # Schema tag attachment is now in executors, test via model executor
         from tee.engine.executors.model_executor import ModelExecutor
+
         model_executor = ModelExecutor(
-            engine.adapter, str(temp_project_dir), {}, 
-            engine.materialization_handler, engine.metadata_extractor, engine.state_checker
+            engine.adapter,
+            str(temp_project_dir),
+            {},
+            engine.materialization_handler,
+            engine.metadata_extractor,
+            engine.state_checker,
         )
         # First call should process
         model_executor._attach_schema_tags_if_needed("my_schema")
@@ -161,7 +178,9 @@ path = ":memory:"
 """)
 
         metadata_extractor = MetadataExtractor()
-        schema_metadata = metadata_extractor.load_schema_metadata("my_schema", str(temp_project_dir))
+        schema_metadata = metadata_extractor.load_schema_metadata(
+            "my_schema", str(temp_project_dir)
+        )
         assert schema_metadata is None
 
     def test_multiple_schemas_with_different_tags(self, temp_project_dir):
@@ -190,4 +209,3 @@ object_tags = {"classification" = "internal"}
         assert schema2_metadata["tags"] == ["staging", "test"]
         assert "object_tags" in schema2_metadata
         assert schema2_metadata["object_tags"]["classification"] == "internal"
-

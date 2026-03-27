@@ -2,8 +2,9 @@
 Unit tests for schema comparison functionality.
 """
 
+from unittest.mock import MagicMock, Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
 
 from tee.engine.materialization.schema_comparator import SchemaComparator
 
@@ -199,10 +200,12 @@ class TestSchemaComparator:
 
     def test_infer_query_schema_uses_adapter_method(self, comparator, mock_adapter):
         """Test that infer_query_schema uses adapter.describe_query_schema if available."""
-        mock_adapter.describe_query_schema = Mock(return_value=[
-            {"name": "id", "type": "INTEGER"},
-            {"name": "name", "type": "VARCHAR"},
-        ])
+        mock_adapter.describe_query_schema = Mock(
+            return_value=[
+                {"name": "id", "type": "INTEGER"},
+                {"name": "name", "type": "VARCHAR"},
+            ]
+        )
 
         schema = comparator.infer_query_schema("SELECT id, name FROM test")
 
@@ -213,7 +216,7 @@ class TestSchemaComparator:
     def test_infer_query_schema_fallback_on_error(self, comparator, mock_adapter):
         """Test that infer_query_schema falls back to LIMIT 0 on adapter method error."""
         mock_adapter.describe_query_schema = Mock(side_effect=Exception("Not implemented"))
-        
+
         # Mock the fallback LIMIT 0 approach
         mock_cursor = MagicMock()
         mock_cursor.description = [
@@ -223,7 +226,7 @@ class TestSchemaComparator:
         mock_adapter.connection = mock_cursor
         mock_adapter.execute_query = Mock(return_value=mock_cursor)
 
-        schema = comparator.infer_query_schema("SELECT id, name FROM test")
+        comparator.infer_query_schema("SELECT id, name FROM test")
 
         # Should have attempted describe_query_schema first
         mock_adapter.describe_query_schema.assert_called_once()
@@ -235,7 +238,7 @@ class TestSchemaComparator:
         # Don't set describe_query_schema (it shouldn't exist)
         if hasattr(mock_adapter, "describe_query_schema"):
             delattr(mock_adapter, "describe_query_schema")
-        
+
         # Mock the result of execute_query to have description attribute
         mock_result = MagicMock()
         mock_result.description = [
@@ -243,11 +246,10 @@ class TestSchemaComparator:
         ]
         mock_adapter.execute_query = Mock(return_value=mock_result)
 
-        schema = comparator.infer_query_schema("SELECT id FROM test")
+        comparator.infer_query_schema("SELECT id FROM test")
 
         # Should have tried LIMIT 0 approach
         mock_adapter.execute_query.assert_called()
         # Verify it was called with LIMIT 0 query
         call_args = mock_adapter.execute_query.call_args[0][0]
         assert "LIMIT 0" in call_args
-

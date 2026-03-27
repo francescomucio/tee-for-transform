@@ -2,9 +2,9 @@
 Tests for the help CLI command.
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from io import StringIO
+from unittest.mock import Mock, patch
+
 
 from tee.cli.commands.help import cmd_help
 
@@ -43,4 +43,3 @@ t4t - T(ee) for Transform (and t-shirts!)
         assert "help" in output
         # Verify parent context's get_help was called
         mock_parent_ctx.get_help.assert_called_once()
-

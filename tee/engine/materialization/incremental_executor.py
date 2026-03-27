@@ -42,9 +42,7 @@ class IncrementalExecutor:
         self.state_manager = state_manager
         self._auto_incremental_wrapper: AutoIncrementalWrapper | None = None
 
-    def _get_auto_incremental_wrapper(
-        self, adapter: "DatabaseAdapter"
-    ) -> AutoIncrementalWrapper:
+    def _get_auto_incremental_wrapper(self, adapter: "DatabaseAdapter") -> AutoIncrementalWrapper:
         """Get or create auto_incremental wrapper for the adapter."""
         if self._auto_incremental_wrapper is None:
             self._auto_incremental_wrapper = AutoIncrementalWrapper(adapter)
@@ -121,7 +119,9 @@ class IncrementalExecutor:
 
         # Determine which column to use for MAX() subquery in target table
         # Use destination_filter_column if provided, otherwise use filter_column
-        target_column_for_max = destination_filter_column if destination_filter_column else filter_column
+        target_column_for_max = (
+            destination_filter_column if destination_filter_column else filter_column
+        )
 
         # If we have a last processed value, use it (subsequent runs)
         # But first check if filter_column exists in target table (for dimension tables)
@@ -171,7 +171,7 @@ class IncrementalExecutor:
                         "Skipping time filter."
                     )
                     return None
-                
+
                 # Column exists in target table, proceed with auto start_value
                 # For 'auto', no COALESCE - just MAX()
                 lookback = config.get("lookback")
@@ -227,7 +227,9 @@ class IncrementalExecutor:
                     return f"{filter_column} >= '{resolved_start_value}'"
                 else:
                     # Fallback to default if variable not found
-                    logger.warning(f"Variable {start_value} not found, using default 7-day lookback")
+                    logger.warning(
+                        f"Variable {start_value} not found, using default 7-day lookback"
+                    )
                     seven_days_ago = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
                     return f"{filter_column} >= '{seven_days_ago}'"
             else:
@@ -468,9 +470,7 @@ class IncrementalExecutor:
             adapter.create_table(table_name, filtered_sql, metadata=None)
             # Update state after full load to enable incremental runs
             current_time = datetime.now(UTC).isoformat()
-            self.state_manager.update_processed_value(
-                model_name, current_time, strategy="append"
-            )
+            self.state_manager.update_processed_value(model_name, current_time, strategy="append")
             return
 
         # Execute the filtered query and insert into target table
@@ -509,7 +509,7 @@ class IncrementalExecutor:
 
         # Check if table exists (required for merge)
         table_exists = adapter.table_exists(table_name)
-        
+
         # Apply time filter
         # For dimension tables, filter_column might be in source, not target
         # So we need to check if filter_column exists in target before using it
@@ -533,16 +533,14 @@ class IncrementalExecutor:
             )
             # Clear time_filter since it's now in wrapped query
             time_filter = None
-        
+
         if not table_exists:
             # For first run, create table as full load (with wrapped query if auto_incremental)
             logger.info(f"Table {table_name} does not exist. Creating it as a full load first.")
             adapter.create_table(table_name, sql_query, metadata)
             # Update state after full load to enable incremental runs
             current_time = datetime.now(UTC).isoformat()
-            self.state_manager.update_processed_value(
-                model_name, current_time, strategy="merge"
-            )
+            self.state_manager.update_processed_value(model_name, current_time, strategy="merge")
             return
 
         # Handle schema changes if table exists (OTS 0.2.1)
@@ -632,7 +630,7 @@ class IncrementalExecutor:
             incremental_config = metadata.get("incremental", {})
             delete_insert_config = incremental_config.get("delete_insert", {})
             unique_key = delete_insert_config.get("unique_key")
-            
+
             # Wrap BEFORE applying time filter (wrapper handles time filter internally)
             sql_query = wrapper.wrap_query_for_delete_insert(
                 sql_query=sql_query,

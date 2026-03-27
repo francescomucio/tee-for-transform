@@ -78,7 +78,7 @@ class SqlTest(StandardTest):
 
     def get_test_query(
         self,
-        adapter,
+        adapter,  # noqa: ARG002
         table_name: str | None = None,
         column_name: str | None = None,
         function_name: str | None = None,

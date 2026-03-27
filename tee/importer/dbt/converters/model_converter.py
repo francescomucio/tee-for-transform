@@ -339,7 +339,7 @@ class ModelConverter:
             )
             return {"is_python_model": False}
 
-    def _extract_model_name(self, sql_file: Path, rel_path: str) -> str:
+    def _extract_model_name(self, sql_file: Path, _rel_path: str) -> str:
         """Extract model name from file path."""
         # Model name is the file name without extension
         return sql_file.stem
@@ -384,7 +384,7 @@ class ModelConverter:
         return f"{schema}.{table_name}"
 
     def _write_sql_model(
-        self, table_name: str, sql_content: str, original_file: Path, rel_path: str
+        self, table_name: str, sql_content: str, _original_file: Path, rel_path: str
     ) -> None:
         """
         Write converted SQL model to target directory.
@@ -392,7 +392,7 @@ class ModelConverter:
         Args:
             table_name: Final table name (schema.table)
             sql_content: Converted SQL content
-            original_file: Original SQL file path
+            _original_file: Original SQL file path (reserved)
             rel_path: Relative path from dbt project root
         """
         target_file = get_target_file_path(
@@ -435,7 +435,7 @@ class ModelConverter:
             logger.info(f"Wrote metadata file: {target_file}")
 
     def _write_python_model(
-        self, table_name: str, python_code: str, original_file: Path, rel_path: str
+        self, table_name: str, python_code: str, _original_file: Path, rel_path: str
     ) -> None:
         """
         Write Python model file to target directory.
@@ -443,7 +443,7 @@ class ModelConverter:
         Args:
             table_name: Final table name (schema.table)
             python_code: Generated Python code
-            original_file: Original SQL file path
+            _original_file: Original SQL file path (reserved)
             rel_path: Relative path from dbt project root
         """
         target_file = get_target_file_path(

@@ -58,40 +58,42 @@ class DuckDBAdapter(DatabaseAdapter):
     def _extract_motherduck_path(self, db_path: str) -> str:
         """
         Extract MotherDuck path from potentially resolved absolute path.
-        
+
         Args:
             db_path: Database path (may be "md:db" or "/path/to/md:db")
-            
+
         Returns:
             Clean MotherDuck path (e.g., "md:db") or original path if not MotherDuck
         """
         # Check if this is a MotherDuck connection
         is_motherduck = (
-            db_path.startswith("md:") 
+            db_path.startswith("md:")
             or db_path.startswith("motherduck:")
-            or "/md:" in db_path 
+            or "/md:" in db_path
             or "/motherduck:" in db_path
         )
-        
+
         if not is_motherduck:
             return db_path
-        
+
         # Extract the md:database_name part if path was resolved to absolute
         if "/" in db_path and ("md:" in db_path or "motherduck:" in db_path):
             # Path was resolved, extract the md: part
             parts = db_path.split("/")
-            md_part = next((p for p in parts if p.startswith("md:") or p.startswith("motherduck:")), None)
+            md_part = next(
+                (p for p in parts if p.startswith("md:") or p.startswith("motherduck:")), None
+            )
             if md_part:
                 return md_part
-        
+
         return db_path
 
     def _is_motherduck_path(self, db_path: str) -> bool:
         """Check if path indicates a MotherDuck connection."""
         return (
-            db_path.startswith("md:") 
+            db_path.startswith("md:")
             or db_path.startswith("motherduck:")
-            or "/md:" in db_path 
+            or "/md:" in db_path
             or "/motherduck:" in db_path
         )
 
@@ -99,20 +101,17 @@ class DuckDBAdapter(DatabaseAdapter):
         """Establish connection to DuckDB database or MotherDuck."""
         db_path = self.config.path or ":memory:"
         db_path = self._extract_motherduck_path(db_path)
-        
+
         # Check if this is a MotherDuck connection
         if self._is_motherduck_path(db_path):
             # Extract database name from path (e.g., "md:my_db" -> "my_db")
             # Remove prefix and query parameters
             clean_path = db_path.split("?")[0]
-            if ":" in clean_path:
-                db_name = clean_path.split(":", 1)[1]
-            else:
-                db_name = None
-            
+            db_name = clean_path.split(":", 1)[1] if ":" in clean_path else None
+
             # Build connection string to MotherDuck service (without database name)
             service_connection_string = self._build_motherduck_connection_string("md:")
-            
+
             # Try to connect to MotherDuck service first
             # If it fails, try to install the extension
             try:
@@ -120,13 +119,12 @@ class DuckDBAdapter(DatabaseAdapter):
             except Exception as e:
                 error_msg = str(e).lower()
                 original_error = str(e)
-                
+
                 # Check if this is an extension-related error
                 is_extension_error = any(
-                    keyword in error_msg 
-                    for keyword in ["motherduck", "extension", "init", "load"]
+                    keyword in error_msg for keyword in ["motherduck", "extension", "init", "load"]
                 )
-                
+
                 if is_extension_error:
                     # Try to install the extension in a temporary connection
                     self.logger.info("Attempting to install MotherDuck extension...")
@@ -139,7 +137,7 @@ class DuckDBAdapter(DatabaseAdapter):
                             # Extension might already be installed, or installation might have failed
                             self.logger.debug(f"INSTALL command result: {install_cmd_error}")
                         temp_conn.close()
-                        
+
                         # Try connecting again - DuckDB should auto-load it now
                         self.connection = duckdb.connect(service_connection_string)
                         self.logger.info("MotherDuck extension installed and connection successful")
@@ -151,7 +149,7 @@ class DuckDBAdapter(DatabaseAdapter):
                             f"Original error: {original_error}\n"
                             f"Retry error: {error_details}\n\n"
                             "The extension may need to be installed manually. Try:\n"
-                            "  duckdb -c \"INSTALL motherduck;\"\n"
+                            '  duckdb -c "INSTALL motherduck;"\n'
                             "  python -c \"import duckdb; conn = duckdb.connect(); conn.execute('INSTALL motherduck;')\"\n\n"
                             "If the extension is already installed, check:\n"
                             "  - Your MOTHERDUCK_TOKEN is valid\n"
@@ -160,7 +158,7 @@ class DuckDBAdapter(DatabaseAdapter):
                 else:
                     # Not an extension error, re-raise the original exception
                     raise
-            
+
             # If a database name was specified, create it if needed and use it
             if db_name:
                 try:
@@ -173,11 +171,15 @@ class DuckDBAdapter(DatabaseAdapter):
                     # If database operations fail, try alternative: attach to the database
                     try:
                         # Try attaching which might work if database exists
-                        attach_conn_string = self._build_motherduck_connection_string(f"md:{db_name}")
+                        attach_conn_string = self._build_motherduck_connection_string(
+                            f"md:{db_name}"
+                        )
                         # Close current connection and try direct connection
                         self.connection.close()
                         self.connection = duckdb.connect(attach_conn_string)
-                        self.logger.info(f"Connected to MotherDuck database: {db_name} (via attach)")
+                        self.logger.info(
+                            f"Connected to MotherDuck database: {db_name} (via attach)"
+                        )
                     except Exception as attach_error:
                         raise RuntimeError(
                             f"Could not create or attach to MotherDuck database '{db_name}'.\n"
@@ -202,7 +204,7 @@ class DuckDBAdapter(DatabaseAdapter):
             self.connection = None
             db_path = self.config.path or ":memory:"
             db_path = self._extract_motherduck_path(db_path)
-            
+
             if self._is_motherduck_path(db_path):
                 safe_path = db_path.split("?")[0] if "?" in db_path else db_path
                 self.logger.info(f"Disconnected from MotherDuck database: {safe_path}")
@@ -245,13 +247,13 @@ class DuckDBAdapter(DatabaseAdapter):
                 schema_name, table_name_only = table_name.split(".", 1)
                 result = self.connection.execute(
                     "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?",
-                    [schema_name, table_name_only]
+                    [schema_name, table_name_only],
                 ).fetchone()
             else:
                 # No schema specified, check in default schema
                 result = self.connection.execute(
                     "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = ?",
-                    [table_name]
+                    [table_name],
                 ).fetchone()
             return result[0] > 0 if result else False
         except Exception:
@@ -433,7 +435,7 @@ class DuckDBAdapter(DatabaseAdapter):
             # Use provided columns
             column_list = ", ".join(columns)
             return f"""
-                SELECT COUNT(*) 
+                SELECT COUNT(*)
                 FROM (
                     SELECT {column_list}, COUNT(*) as row_count
                     FROM {table_name}
@@ -444,7 +446,7 @@ class DuckDBAdapter(DatabaseAdapter):
 
         # DuckDB supports GROUP BY * for grouping by all columns
         return f"""
-            SELECT COUNT(*) 
+            SELECT COUNT(*)
             FROM (
                 SELECT *, COUNT(*) as row_count
                 FROM {table_name}
@@ -456,35 +458,35 @@ class DuckDBAdapter(DatabaseAdapter):
     def _build_motherduck_connection_string(self, db_path: str) -> str:
         """
         Build MotherDuck connection string with authentication token.
-        
+
         Token can be provided via:
         1. Environment variable MOTHERDUCK_TOKEN (preferred)
         2. Config extra dict with key 'motherduck_token'
         3. Already in the connection string
-        
+
         Args:
             db_path: MotherDuck connection string (e.g., "md:database_name")
-            
+
         Returns:
             Complete connection string with token if needed
         """
         # Check if token is already in the connection string
         if "motherduck_token=" in db_path or "token=" in db_path:
             return db_path
-        
+
         # Try to get token from environment variable (preferred method)
         token = os.getenv("MOTHERDUCK_TOKEN")
-        
+
         # Fall back to config extra dict
         if not token and self.config.extra:
             token = self.config.extra.get("motherduck_token")
-        
+
         # Build connection string (check for both None and empty string)
         if token and token.strip():
             # Add token as query parameter
             separator = "?" if "?" not in db_path else "&"
             return f"{db_path}{separator}motherduck_token={token}"
-        
+
         # No token found - DuckDB will try to use default authentication
         # (e.g., from ~/.motherduck/config or other default locations)
         self.logger.warning(

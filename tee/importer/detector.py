@@ -56,14 +56,13 @@ def _is_valid_dbt_project(dbt_project_file: Path) -> bool:
 
         with dbt_project_file.open("r", encoding="utf-8") as f:
             content = yaml.safe_load(f)
-            
+
         # Check for required dbt project fields
         if not isinstance(content, dict):
             return False
-            
+
         # dbt projects typically have a 'name' field
         return "name" in content
     except Exception:
         # If we can't parse it, assume it's not valid
         return False
-

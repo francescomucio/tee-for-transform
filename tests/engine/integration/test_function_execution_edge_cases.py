@@ -9,9 +9,6 @@ These tests cover:
 """
 
 import pytest
-import tempfile
-from pathlib import Path
-from typing import Any
 
 from tee.engine.execution_engine import ExecutionEngine
 from tee.parser.core.orchestrator import ParserOrchestrator
@@ -32,7 +29,7 @@ class TestFunctionExecutionEdgeCases:
         function_sql1 = functions_dir / "calculate_percentage.sql"
         function_sql1.write_text("""
 CREATE OR REPLACE MACRO calculate_percentage(numerator, denominator) AS (
-    CASE 
+    CASE
         WHEN denominator = 0 OR denominator IS NULL THEN NULL
         ELSE (numerator / denominator) * 100.0
     END
@@ -99,11 +96,9 @@ schema = "my_schema"
             results = engine.execute_functions(parsed_functions, execution_order)
             assert len(results["executed_functions"]) == 1
             assert function_name in results["executed_functions"]
-            
+
             # Verify function works
-            result = engine.adapter.execute_query(
-                f"SELECT {function_name}(10.0, 20.0) as result"
-            )
+            result = engine.adapter.execute_query(f"SELECT {function_name}(10.0, 20.0) as result")
             assert result[0][0] == 50.0
 
         finally:
@@ -124,7 +119,7 @@ schema = "my_schema"
                 connection=duckdb_config,
             )
             parsed_functions = orchestrator.discover_and_parse_functions()
-            
+
             graph = orchestrator.build_dependency_graph()
             execution_order = graph["execution_order"]
 
@@ -133,23 +128,19 @@ schema = "my_schema"
             assert len(results["executed_functions"]) == 1
 
             function_name = "my_schema.calculate_percentage"
-            
+
             # Verify function works
-            result = engine.adapter.execute_query(
-                f"SELECT {function_name}(10.0, 20.0) as result"
-            )
+            result = engine.adapter.execute_query(f"SELECT {function_name}(10.0, 20.0) as result")
             assert result[0][0] == 50.0
-            
+
             # Execute again - CREATE OR REPLACE should handle replacement
             # No need to check existence, just replace
             results2 = engine.execute_functions(parsed_functions, execution_order)
             assert len(results2["executed_functions"]) == 1
             assert function_name in results2["executed_functions"]
-            
+
             # Function should still work after replacement
-            result2 = engine.adapter.execute_query(
-                f"SELECT {function_name}(10.0, 20.0) as result"
-            )
+            result2 = engine.adapter.execute_query(f"SELECT {function_name}(10.0, 20.0) as result")
             assert result2[0][0] == 50.0
 
         finally:
@@ -221,10 +212,12 @@ schema = "my_schema"
 
             # Valid function should succeed
             assert "my_schema.valid_function" in results["executed_functions"]
-            
+
             # Invalid function should fail
             assert len(results["failed_functions"]) == 1
-            assert any(f["function"] == "my_schema.invalid_function" for f in results["failed_functions"])
+            assert any(
+                f["function"] == "my_schema.invalid_function" for f in results["failed_functions"]
+            )
 
         finally:
             engine.disconnect()
@@ -304,7 +297,7 @@ schema = "my_schema"
             base_pos = executed.index("my_schema.base_func")
             middle_pos = executed.index("my_schema.middle_func")
             top_pos = executed.index("my_schema.top_func")
-            
+
             assert base_pos < middle_pos < top_pos
 
             # Verify the chain works by calling top_func
@@ -315,4 +308,3 @@ schema = "my_schema"
 
         finally:
             engine.disconnect()
-

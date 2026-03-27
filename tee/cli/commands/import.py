@@ -9,7 +9,6 @@ from typing import Literal
 
 import typer
 
-from tee.cli.context import CommandContext
 
 # Type alias for output format
 OutputFormat = Literal["t4t", "ots"]
@@ -59,10 +58,10 @@ def cmd_import(
 
     try:
         # Detect project type
-        from tee.importer.detector import detect_project_type, ProjectType
+        from tee.importer.detector import ProjectType, detect_project_type
 
         project_type = detect_project_type(source_path)
-        
+
         if project_type == ProjectType.UNKNOWN:
             error_msg = (
                 typer.style("Error: ", fg=typer.colors.RED, bold=True)
@@ -73,7 +72,7 @@ def cmd_import(
             raise typer.Exit(1)
 
         typer.echo(f"Detected project type: {project_type.value}")
-        
+
         if dry_run:
             typer.echo("\n🔍 DRY RUN MODE - No files will be created")
             typer.echo(f"Would import from: {source_path}")
@@ -88,7 +87,7 @@ def cmd_import(
 
             typer.echo(f"\n📦 Importing dbt project from: {source_path}")
             typer.echo(f"📁 Creating t4t project at: {target_path}")
-            
+
             import_dbt_project(
                 source_path=source_path,
                 target_path=target_path,
@@ -109,13 +108,10 @@ def cmd_import(
         typer.echo(f"   Check {target_path}/IMPORT_REPORT.md for details")
 
     except Exception as e:
-        error_msg = (
-            typer.style("Error: ", fg=typer.colors.RED, bold=True)
-            + f"Import failed: {e}"
-        )
+        error_msg = typer.style("Error: ", fg=typer.colors.RED, bold=True) + f"Import failed: {e}"
         typer.echo(error_msg, err=True)
         if verbose:
             import traceback
+
             typer.echo(traceback.format_exc(), err=True)
         raise typer.Exit(1) from e
-

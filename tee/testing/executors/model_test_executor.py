@@ -9,6 +9,7 @@ from typing import Any
 
 from tee.adapters.base import DatabaseAdapter
 from tee.testing.base import TestRegistry, TestResult, TestSeverity
+from tee.testing.default_tests import inject_default_tests
 from tee.testing.parsers import TestDefinitionParser
 from tee.typing.metadata import TestDefinition
 
@@ -18,14 +19,21 @@ logger = logging.getLogger(__name__)
 class ModelTestExecutor:
     """Executes tests for models (tables/views)."""
 
-    def __init__(self, adapter: DatabaseAdapter):
+    def __init__(
+        self,
+        adapter: DatabaseAdapter,
+        parsed_models: dict[str, Any] | None = None,
+    ):
         """
         Initialize model test executor.
 
         Args:
             adapter: Database adapter for executing test queries
+            parsed_models: Optional full parsed-models map so default-test injection can use
+                the same auto-built dimension registry as the parser/docs.
         """
         self.adapter = adapter
+        self.parsed_models = parsed_models
         self.logger = logger
         self._used_test_names: set[str] = set()
 
@@ -34,6 +42,8 @@ class ModelTestExecutor:
         table_name: str,
         metadata: dict[str, Any],
         severity_overrides: dict[str, TestSeverity] | None = None,
+        *,
+        parsed_models: dict[str, Any] | None = None,
     ) -> list[TestResult]:
         """
         Execute all tests for a given model based on its metadata.
@@ -42,16 +52,41 @@ class ModelTestExecutor:
             table_name: Fully qualified table name
             metadata: Model metadata containing test definitions
             severity_overrides: Optional dict to override test severities
+            parsed_models: When set, used for dimension registry during default test injection;
+                falls back to the executor's constructor value.
 
         Returns:
             List of TestResult objects
         """
-        results = []
+        results: list[TestResult] = []
 
         if not metadata:
             return results
 
         severity_overrides = severity_overrides or {}
+
+        models_for_injection = parsed_models if parsed_models is not None else self.parsed_models
+
+        # Inject default semantic tests (if enabled) and return WARNING results for any injection warnings.
+        metadata_copy, warnings = inject_default_tests(
+            table_name,
+            metadata,
+            parsed_models=models_for_injection,
+        )
+        for w in warnings:
+            results.append(
+                TestResult(
+                    test_name="default_tests_warning",
+                    table_name=table_name,
+                    column_name=None,
+                    passed=True,
+                    message=w,
+                    severity=TestSeverity.WARNING,
+                    error=None,
+                )
+            )
+
+        metadata = metadata_copy
 
         # Execute column-level tests
         if "schema" in metadata and metadata["schema"]:

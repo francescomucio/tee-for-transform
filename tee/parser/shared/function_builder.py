@@ -89,7 +89,9 @@ def build_function_from_file(
     language = metadata.get("language") or parsed_metadata.get("language", "sql")
     parameters = metadata.get("parameters") or parsed_metadata.get("parameters", [])
     return_type = metadata.get("return_type") or parsed_metadata.get("return_type")
-    return_table_schema = metadata.get("return_table_schema") or parsed_metadata.get("return_table_schema")
+    return_table_schema = metadata.get("return_table_schema") or parsed_metadata.get(
+        "return_table_schema"
+    )
     schema = metadata.get("schema") or parsed_metadata.get("schema")
     deterministic = metadata.get("deterministic")
     if deterministic is None:
@@ -152,4 +154,3 @@ def build_function_from_file(
     }
 
     return function
-

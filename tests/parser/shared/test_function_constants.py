@@ -20,4 +20,3 @@ class TestFunctionConstants:
         assert ".sql" in SUPPORTED_FUNCTION_OVERRIDE_EXTENSIONS
         assert ".js" in SUPPORTED_FUNCTION_OVERRIDE_EXTENSIONS
         assert len(SUPPORTED_FUNCTION_OVERRIDE_EXTENSIONS) == 2
-

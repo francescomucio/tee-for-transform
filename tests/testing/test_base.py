@@ -2,19 +2,19 @@
 Unit tests for testing framework base classes and utilities.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
-from tee.testing.base import TestResult, TestSeverity, StandardTest, TestRegistry
+import pytest
+
+from tee.testing.base import StandardTest, TestRegistry, TestResult, TestSeverity
 
 
 @pytest.fixture(autouse=True)
 def restore_test_registry():
     """Automatically restore test registry after each test."""
     # Save registered tests before test
-    from tee.testing import standard_tests
 
-    original_tests = TestRegistry.list_all()
+    TestRegistry.list_all()
 
     yield
 
@@ -22,10 +22,10 @@ def restore_test_registry():
     TestRegistry.clear()
     # Re-register standard tests
     from tee.testing.standard_tests import (
-        NOT_NULL,
-        UNIQUE,
-        ROW_COUNT_GT_0,
         ACCEPTED_VALUES,
+        NOT_NULL,
+        ROW_COUNT_GT_0,
+        UNIQUE,
     )
 
     TestRegistry.register(NOT_NULL)
@@ -37,12 +37,17 @@ def restore_test_registry():
 @pytest.fixture
 def test_impl_class():
     """Fixture to create a TestImpl class for testing StandardTest functionality."""
+
     class TestImpl(StandardTest):
-        def __init__(self, name="test", query="SELECT COUNT(*) FROM table", severity=TestSeverity.ERROR):
+        def __init__(
+            self, name="test", query="SELECT COUNT(*) FROM table", severity=TestSeverity.ERROR
+        ):
             super().__init__(name, severity)
             self._query = query
 
-        def get_test_query(self, adapter, table_name=None, column_name=None, function_name=None, params=None):
+        def get_test_query(
+            self, adapter, table_name=None, column_name=None, function_name=None, params=None
+        ):
             return self._query
 
         def validate_params(self, params=None, column_name=None):

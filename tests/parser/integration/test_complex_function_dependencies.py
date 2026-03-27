@@ -2,11 +2,7 @@
 Complex dependency scenario tests for functions.
 """
 
-import pytest
-from pathlib import Path
 from tee.parser.core.orchestrator import ParserOrchestrator
-from tee.parser.analysis.dependency_graph import DependencyGraphBuilder
-from tee.parser.analysis.table_resolver import TableResolver
 
 
 class TestComplexFunctionDependencies:
@@ -45,7 +41,7 @@ $$;
         # Create model that depends on func2
         model_sql = models_folder / "my_schema" / "result.sql"
         model_sql.write_text("""
-SELECT 
+SELECT
     id,
     advanced_calc(value) as calculated_value
 FROM source
@@ -56,8 +52,8 @@ FROM source
             connection={"type": "duckdb"},
         )
 
-        parsed_functions = orchestrator.discover_and_parse_functions()
-        parsed_models = orchestrator.discover_and_parse_models()
+        orchestrator.discover_and_parse_functions()
+        orchestrator.discover_and_parse_models()
 
         graph = orchestrator.build_dependency_graph()
 
@@ -88,7 +84,9 @@ FROM source
 
         # Create func2
         func2_sql = schema_folder / "multiply.sql"
-        func2_sql.write_text("CREATE FUNCTION multiply(x INT, y INT) RETURNS INT AS $$ SELECT x * y $$;")
+        func2_sql.write_text(
+            "CREATE FUNCTION multiply(x INT, y INT) RETURNS INT AS $$ SELECT x * y $$;"
+        )
 
         # Create func3 that depends on both func1 and func2
         func3_sql = schema_folder / "complex_calc.sql"
@@ -103,7 +101,7 @@ $$;
             connection={"type": "duckdb"},
         )
 
-        parsed_functions = orchestrator.discover_and_parse_functions()
+        orchestrator.discover_and_parse_functions()
         graph = orchestrator.build_dependency_graph()
 
         # Verify func3 depends on both func1 and func2
@@ -122,17 +120,21 @@ $$;
 
         # Create func1
         func1_sql = schema_folder / "format_name.sql"
-        func1_sql.write_text("CREATE FUNCTION format_name(n VARCHAR) RETURNS VARCHAR AS $$ SELECT UPPER(n) $$;")
+        func1_sql.write_text(
+            "CREATE FUNCTION format_name(n VARCHAR) RETURNS VARCHAR AS $$ SELECT UPPER(n) $$;"
+        )
 
         # Create func2
         func2_sql = schema_folder / "calculate_age.sql"
-        func2_sql.write_text("CREATE FUNCTION calculate_age(birth_date DATE) RETURNS INT AS $$ SELECT 25 $$;")
+        func2_sql.write_text(
+            "CREATE FUNCTION calculate_age(birth_date DATE) RETURNS INT AS $$ SELECT 25 $$;"
+        )
 
         # Create model that uses both functions
         model_sql = models_folder / "my_schema" / "result.sql"
         model_sql.parent.mkdir(parents=True, exist_ok=True)
         model_sql.write_text("""
-SELECT 
+SELECT
     format_name('john') as name,
     calculate_age('1990-01-01'::DATE) as age
 """)
@@ -142,8 +144,8 @@ SELECT
             connection={"type": "duckdb"},
         )
 
-        parsed_functions = orchestrator.discover_and_parse_functions()
-        parsed_models = orchestrator.discover_and_parse_models()
+        orchestrator.discover_and_parse_functions()
+        orchestrator.discover_and_parse_models()
 
         graph = orchestrator.build_dependency_graph()
 
@@ -189,7 +191,7 @@ $$;
         # Create final model that depends on intermediate, func2, and source
         final_sql = models_folder / "my_schema" / "final.sql"
         final_sql.write_text("""
-SELECT 
+SELECT
     i.id,
     processor(i.id) as processed,
     s.id as source_id
@@ -202,8 +204,8 @@ JOIN source s ON i.id = s.id
             connection={"type": "duckdb"},
         )
 
-        parsed_functions = orchestrator.discover_and_parse_functions()
-        parsed_models = orchestrator.discover_and_parse_models()
+        orchestrator.discover_and_parse_functions()
+        orchestrator.discover_and_parse_models()
 
         graph = orchestrator.build_dependency_graph()
 
@@ -240,4 +242,3 @@ JOIN source s ON i.id = s.id
         assert helper_pos < processor_pos
         assert intermediate_pos < final_pos
         assert processor_pos < final_pos
-

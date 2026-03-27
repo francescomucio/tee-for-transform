@@ -54,6 +54,8 @@ class SQLParser(BaseParser):
                                 "datatype": col.datatype,
                                 "description": col.description,
                                 "tests": col.tests,
+                                "fk_to": col.fk_to,
+                                "dimension": col.dimension,
                             }
                             for col in validated_metadata.schema
                         ]
@@ -63,6 +65,11 @@ class SQLParser(BaseParser):
                         materialization=validated_metadata.materialization,
                         tests=validated_metadata.tests or [],
                         incremental=validated_metadata.incremental,
+                        table_type=validated_metadata.table_type,
+                        data_model=validated_metadata.data_model,
+                        hierarchy=validated_metadata.hierarchy,
+                        conformed_dimension=validated_metadata.conformed_dimension,
+                        disable_default_tests=validated_metadata.disable_default_tests,
                     )
             except Exception as e:
                 logger.warning(f"Failed to parse metadata from {metadata_file}: {str(e)}")
@@ -94,6 +101,8 @@ class SQLParser(BaseParser):
                                 "datatype": col.datatype,
                                 "description": col.description,
                                 "tests": col.tests,
+                                "fk_to": col.fk_to,
+                                "dimension": col.dimension,
                             }
                             for col in validated_metadata.schema
                         ]
@@ -103,6 +112,11 @@ class SQLParser(BaseParser):
                         materialization=validated_metadata.materialization,
                         tests=validated_metadata.tests or [],
                         incremental=validated_metadata.incremental,
+                        table_type=validated_metadata.table_type,
+                        data_model=validated_metadata.data_model,
+                        hierarchy=validated_metadata.hierarchy,
+                        conformed_dimension=validated_metadata.conformed_dimension,
+                        disable_default_tests=validated_metadata.disable_default_tests,
                     )
             else:
                 logger.debug(f"No metadata found in SQL comments for {sql_file_path}")

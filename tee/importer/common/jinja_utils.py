@@ -80,21 +80,20 @@ def get_complex_jinja_reason(content: str) -> str:
     """
     if re.search(r"{%\s*for\s+", content, re.IGNORECASE):
         return "Contains Jinja loops ({% for %})"
-    
+
     if_pattern = r"{%\s*if\s+"
     else_pattern = r"{%\s*else\s*%}"
     elif_pattern = r"{%\s*elif\s+"
-    
+
     if_count = len(re.findall(if_pattern, content, re.IGNORECASE))
     else_count = len(re.findall(else_pattern, content, re.IGNORECASE))
     elif_count = len(re.findall(elif_pattern, content, re.IGNORECASE))
-    
+
     if else_count > 0:
         return "Contains Jinja conditionals with {% else %}"
     if elif_count > 0:
         return "Contains Jinja conditionals with {% elif %}"
     if if_count > 1:
         return f"Contains multiple Jinja conditionals ({if_count} if statements)"
-    
-    return "Contains complex Jinja patterns"
 
+    return "Contains complex Jinja patterns"

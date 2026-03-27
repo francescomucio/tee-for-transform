@@ -6,7 +6,6 @@ Discovers and organizes SQL model files from dbt project structure.
 
 import logging
 from pathlib import Path
-from typing import Any
 
 from tee.importer.dbt.constants import MODELS_DIR, SOURCES_FILE, YAML_ALT_EXTENSION, YAML_EXTENSION
 

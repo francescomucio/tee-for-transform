@@ -108,7 +108,9 @@ def sql(
 
             # If still not found, use get_caller_file_info
             if not caller_file:
-                caller_file, _ = get_caller_file_info(frames_up=3)  # decorator -> sql() -> @functions.sql() -> module
+                caller_file, _ = get_caller_file_info(
+                    frames_up=3
+                )  # decorator -> sql() -> @functions.sql() -> module
 
             # Ensure absolute path
             if caller_file:
@@ -277,7 +279,9 @@ def python(
 
             # If still not found, use get_caller_file_info
             if not caller_file:
-                caller_file, _ = get_caller_file_info(frames_up=3)  # decorator -> python() -> @functions.python() -> module
+                caller_file, _ = get_caller_file_info(
+                    frames_up=3
+                )  # decorator -> python() -> @functions.python() -> module
 
             # Ensure absolute path
             if caller_file:

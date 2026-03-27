@@ -2,8 +2,7 @@
 Tests for OTS function import functionality.
 """
 
-import pytest
-from tee.parser.input import OTSConverter, OTSConverterError
+from tee.parser.input import OTSConverter
 from tee.typing.metadata import OTSModule
 
 
@@ -269,4 +268,3 @@ class TestOTSFunctionImport:
         assert len(parsed_functions) == 1
         assert "test_schema.table1" in parsed_models
         assert "test_schema.func1" in parsed_functions
-

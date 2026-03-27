@@ -2,16 +2,17 @@
 Base test class and fixtures for incremental executor tests.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from tee.engine.materialization.incremental_executor import IncrementalExecutor
 from tee.engine.model_state import ModelStateManager
 from tee.typing.metadata import (
-    IncrementalConfig,
     IncrementalAppendConfig,
-    IncrementalMergeConfig,
+    IncrementalConfig,
     IncrementalDeleteInsertConfig,
+    IncrementalMergeConfig,
 )
 
 
@@ -66,4 +67,3 @@ class TestIncrementalExecutor:
                 "lookback": "7 days",
             },
         }
-

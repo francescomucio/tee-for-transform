@@ -177,7 +177,7 @@ class TestConverter:
         converted = re.sub(ref_pattern, replace_ref, sql_content, flags=re.IGNORECASE)
         return converted
 
-    def _convert_this(self, sql_content: str, test_path: str) -> str:
+    def _convert_this(self, sql_content: str, _test_path: str) -> str:
         """
         Convert {{ this }} to @table_name.
 
@@ -186,7 +186,7 @@ class TestConverter:
 
         Args:
             sql_content: SQL content
-            test_path: Path to test file
+            _test_path: Path to test file (reserved)
 
         Returns:
             SQL with {{ this }} converted to @table_name

@@ -80,13 +80,13 @@ class ConnectionManager:
             self.logger.error(f"Failed to get materializations: {e}")
             return []
 
-    def execute_models(self, parser: Any, save_analysis: bool = True) -> dict[str, Any]:
+    def execute_models(self, parser: Any, _save_analysis: bool = True) -> dict[str, Any]:
         """
         Execute SQL models.
 
         Args:
             parser: Parser instance with models and execution order
-            save_analysis: Whether to save analysis files
+            _save_analysis: Reserved for future analysis export (currently unused)
 
         Returns:
             Execution results

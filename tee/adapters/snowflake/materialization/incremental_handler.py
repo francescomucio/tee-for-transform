@@ -115,13 +115,13 @@ class IncrementalHandler:
     ) -> str:
         """Generate Snowflake MERGE SQL with tuple ON and optional dedup by latest filter_column."""
         qualified_table = self.adapter.utils.qualify_object_name(table_name)
-        
+
         # Check if source_sql already contains CTEs (e.g., from auto_incremental wrapper)
         # The auto_incremental wrapper returns queries like: "WITH ... SELECT DISTINCT ..."
         # When we have existing CTEs, we need to handle them differently to avoid nested CTE syntax errors
         source_sql_upper = source_sql.strip().upper()
         has_existing_ctes = source_sql_upper.startswith("WITH ")
-        
+
         if has_existing_ctes:
             # Source SQL already has CTEs from auto_incremental wrapper
             # In Snowflake, we can't nest CTEs like: WITH new AS (WITH old AS ... SELECT ...)
@@ -136,7 +136,7 @@ class IncrementalHandler:
         else:
             # Source SQL is a simple SELECT - use normal CTE-based deduplication
             source_for_cte = source_sql
-            
+
             # Deduplicate by unique key picking latest by filter_column if provided
             if filter_column:
                 partition_keys = ", ".join(unique_key)
@@ -159,7 +159,7 @@ class IncrementalHandler:
         )
         insert_cols = ", ".join(all_columns)
         insert_vals = ", ".join([f"s.{c}" for c in all_columns])
-        
+
         # Build MERGE statement
         if has_existing_ctes:
             # For queries with existing CTEs, use subquery directly in USING clause

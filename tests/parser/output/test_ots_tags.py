@@ -2,11 +2,7 @@
 Test cases for OTS transformer tag extraction and merging functionality.
 """
 
-import pytest
-from typing import Any
-
 from tee.parser.output.ots.taggers import TagManager
-from tee.parser.output.ots.transformers import ModelTransformer
 from tee.parser.output.ots.transformer import OTSTransformer
 from tee.typing import Model
 
@@ -120,7 +116,13 @@ class TestOTSTagExtraction:
                     "metadata": {},
                     "file_path": "models/table1.sql",
                 },
-                "code": {"sql": {"original_sql": "SELECT 1 as id", "resolved_sql": "SELECT 1 as id", "source_tables": []}},
+                "code": {
+                    "sql": {
+                        "original_sql": "SELECT 1 as id",
+                        "resolved_sql": "SELECT 1 as id",
+                        "source_tables": [],
+                    }
+                },
             }
         }
 
@@ -145,7 +147,13 @@ class TestOTSTagExtraction:
                     "metadata": {"tags": ["fct", "daily"]},
                     "file_path": "models/table1.sql",
                 },
-                "code": {"sql": {"original_sql": "SELECT 1 as id", "resolved_sql": "SELECT 1 as id", "source_tables": []}},
+                "code": {
+                    "sql": {
+                        "original_sql": "SELECT 1 as id",
+                        "resolved_sql": "SELECT 1 as id",
+                        "source_tables": [],
+                    }
+                },
             }
         }
 
@@ -175,7 +183,13 @@ class TestOTSTagExtraction:
                     "metadata": {"tags": ["fct", "daily"]},
                     "file_path": "models/table1.sql",
                 },
-                "code": {"sql": {"original_sql": "SELECT 1 as id", "resolved_sql": "SELECT 1 as id", "source_tables": []}},
+                "code": {
+                    "sql": {
+                        "original_sql": "SELECT 1 as id",
+                        "resolved_sql": "SELECT 1 as id",
+                        "source_tables": [],
+                    }
+                },
             }
         }
 
@@ -233,7 +247,7 @@ class TestOTSTagExtraction:
             "object_tags": {
                 "sensitivity_tag": "pii",
                 "classification": "public",
-                "data_owner": "analytics-team"
+                "data_owner": "analytics-team",
             }
         }
         object_tags = tag_manager.extract_object_tags(metadata)
@@ -265,11 +279,7 @@ class TestOTSTagExtraction:
 
         tag_manager = TagManager(project_config)
         metadata = {
-            "object_tags": {
-                "numeric_value": 123,
-                "boolean_value": True,
-                "string_value": "text"
-            }
+            "object_tags": {"numeric_value": 123, "boolean_value": True, "string_value": "text"}
         }
         object_tags = tag_manager.extract_object_tags(metadata)
         assert object_tags["numeric_value"] == "123"
@@ -288,14 +298,17 @@ class TestOTSTagExtraction:
             "schema.table1": {
                 "model_metadata": {
                     "metadata": {
-                        "object_tags": {
-                            "sensitivity_tag": "pii",
-                            "classification": "public"
-                        }
+                        "object_tags": {"sensitivity_tag": "pii", "classification": "public"}
                     },
                     "file_path": "models/table1.sql",
                 },
-                "code": {"sql": {"original_sql": "SELECT 1 as id", "resolved_sql": "SELECT 1 as id", "source_tables": []}},
+                "code": {
+                    "sql": {
+                        "original_sql": "SELECT 1 as id",
+                        "resolved_sql": "SELECT 1 as id",
+                        "source_tables": [],
+                    }
+                },
             }
         }
 
@@ -322,12 +335,18 @@ class TestOTSTagExtraction:
                         "tags": ["analytics", "production"],  # dbt-style
                         "object_tags": {  # database-style
                             "sensitivity_tag": "pii",
-                            "classification": "public"
-                        }
+                            "classification": "public",
+                        },
                     },
                     "file_path": "models/table1.sql",
                 },
-                "code": {"sql": {"original_sql": "SELECT 1 as id", "resolved_sql": "SELECT 1 as id", "source_tables": []}},
+                "code": {
+                    "sql": {
+                        "original_sql": "SELECT 1 as id",
+                        "resolved_sql": "SELECT 1 as id",
+                        "source_tables": [],
+                    }
+                },
             }
         }
 
@@ -340,4 +359,3 @@ class TestOTSTagExtraction:
         assert "object_tags" in transformation["metadata"]
         assert transformation["metadata"]["tags"] == ["analytics", "production"]
         assert transformation["metadata"]["object_tags"]["sensitivity_tag"] == "pii"
-

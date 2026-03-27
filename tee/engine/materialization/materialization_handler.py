@@ -142,7 +142,7 @@ class MaterializationHandler:
             # Wrap query with auto_incremental logic if needed (before schema change detection)
             # This ensures the wrapped query is used for schema comparison and execution
             from .auto_incremental_wrapper import AutoIncrementalWrapper
-            
+
             wrapper = AutoIncrementalWrapper(self.adapter)
             table_exists = self.adapter.table_exists(table_name)
             if metadata and wrapper.should_wrap(metadata):
@@ -196,7 +196,11 @@ class MaterializationHandler:
 
                 if differences["has_changes"]:
                     # Check if on_schema_change requires full refresh
-                    if on_schema_change in ["full_refresh", "full_incremental_refresh", "recreate_empty"]:
+                    if on_schema_change in [
+                        "full_refresh",
+                        "full_incremental_refresh",
+                        "recreate_empty",
+                    ]:
                         schema_change_requires_full_refresh = True
                         logger.info(
                             f"Schema changes detected for {table_name} with on_schema_change='{on_schema_change}'. "
@@ -209,7 +213,10 @@ class MaterializationHandler:
                             on_schema_change,
                             sql_query=sql_query,
                             full_incremental_refresh_config=full_incremental_refresh_config,
-                            incremental_config={"strategy": strategy, strategy: incremental_config.get(strategy)},
+                            incremental_config={
+                                "strategy": strategy,
+                                strategy: incremental_config.get(strategy),
+                            },
                             metadata=metadata,
                         )
                     elif on_schema_change in ["append_new_columns", "sync_all_columns"]:
@@ -226,7 +233,7 @@ class MaterializationHandler:
             # Also, for merge/delete_insert strategies, table must exist to run incrementally
             strategy = incremental_config.get("strategy") if incremental_config else None
             table_exists_for_incremental = self.adapter.table_exists(table_name)
-            
+
             # For merge and delete_insert, table must exist to run incrementally
             if strategy in ["merge", "delete_insert"] and not table_exists_for_incremental:
                 logger.info(
@@ -237,7 +244,9 @@ class MaterializationHandler:
             else:
                 should_run_incremental = (
                     not schema_change_requires_full_refresh
-                    and executor.should_run_incremental(table_name, original_sql_query, incremental_config)
+                    and executor.should_run_incremental(
+                        table_name, original_sql_query, incremental_config
+                    )
                 )
 
             if not should_run_incremental:
@@ -250,7 +259,7 @@ class MaterializationHandler:
                 config_hash = self.state_manager.compute_config_hash(incremental_config)
                 current_time = datetime.now(UTC).isoformat()
                 strategy = incremental_config.get("strategy") if incremental_config else None
-                
+
                 # Save state with proper hashes so next run can detect if model changed
                 self.state_manager.save_model_state(
                     model_name=table_name,

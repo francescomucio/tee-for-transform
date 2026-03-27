@@ -77,7 +77,9 @@ class JinjaConverter:
                 rendered_sql = self.jinja_renderer.render(sql_content, model_name)
                 result["sql"] = rendered_sql
                 if self.verbose:
-                    logger.info(f"Rendered model {model_name or 'unknown'} through Jinja2 with macros")
+                    logger.info(
+                        f"Rendered model {model_name or 'unknown'} through Jinja2 with macros"
+                    )
                 return result
             except Exception as e:
                 result["conversion_errors"].append(

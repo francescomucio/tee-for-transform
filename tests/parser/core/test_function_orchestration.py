@@ -2,11 +2,7 @@
 Unit tests for function orchestration and integration.
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
 from tee.parser.core.orchestrator import ParserOrchestrator
-from tee.typing import Function
 
 
 class TestFunctionOrchestration:
@@ -313,9 +309,8 @@ metadata: FunctionMetadata = {
 
         # Should not raise, but should log error and continue
         functions = orchestrator.discover_and_parse_functions()
-        
+
         # Should have parsed the valid function
         assert "my_schema.valid_func" in functions
         # Invalid function should not be in results
         assert "my_schema.invalid_func" not in functions
-

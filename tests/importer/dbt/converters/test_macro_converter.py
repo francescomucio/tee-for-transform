@@ -2,10 +2,8 @@
 Unit tests for MacroConverter.
 """
 
-import tempfile
 from pathlib import Path
 
-import pytest
 
 from tee.importer.dbt.converters import MacroConverter
 
@@ -111,10 +109,7 @@ class TestMacroConverter:
 
     def test_default_schema_configurable(self, tmp_path: Path) -> None:
         """Test that default schema can be configured."""
-        converter = MacroConverter(
-            target_path=tmp_path,
-            default_schema="custom_schema"
-        )
+        converter = MacroConverter(target_path=tmp_path, default_schema="custom_schema")
 
         macro_def = {
             "name": "test_macro",
@@ -134,10 +129,7 @@ class TestMacroConverter:
 
     def test_target_dialect_conversion(self, tmp_path: Path) -> None:
         """Test that SQL is converted to target dialect."""
-        converter = MacroConverter(
-            target_path=tmp_path,
-            target_dialect="snowflake"
-        )
+        converter = MacroConverter(target_path=tmp_path, target_dialect="snowflake")
 
         macro_def = {
             "name": "test_macro",
@@ -193,9 +185,7 @@ class TestMacroConverter:
         macro_file = tmp_path / "macros" / "test_macro.sql"
         macro_file.parent.mkdir(parents=True)
         macro_file.write_text(
-            "{% macro test_macro(param1) %}\n"
-            "SELECT {{ param1 }}\n"
-            "{% endmacro %}\n"
+            "{% macro test_macro(param1) %}\nSELECT {{ param1 }}\n{% endmacro %}\n"
         )
 
         macro_def = {
@@ -213,21 +203,14 @@ class TestMacroConverter:
 
     def test_normalize_dialect_postgresql_to_postgres(self, tmp_path: Path) -> None:
         """Test that dialect name is normalized correctly."""
-        converter = MacroConverter(
-            target_path=tmp_path,
-            target_dialect="postgresql"
-        )
+        converter = MacroConverter(target_path=tmp_path, target_dialect="postgresql")
 
         # Should normalize to "postgres" for SQLGlot
         assert converter.target_dialect == "postgres"
 
     def test_normalize_dialect_unknown(self, tmp_path: Path) -> None:
         """Test that unknown dialects are lowercased."""
-        converter = MacroConverter(
-            target_path=tmp_path,
-            target_dialect="CUSTOM_DIALECT"
-        )
+        converter = MacroConverter(target_path=tmp_path, target_dialect="CUSTOM_DIALECT")
 
         # Should lowercase unknown dialects
         assert converter.target_dialect == "custom_dialect"
-

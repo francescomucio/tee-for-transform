@@ -10,7 +10,6 @@ Tests verify that SqlModelMetadata correctly:
 
 import os
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -18,6 +17,8 @@ import pytest
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.parser.shared.registry import ModelRegistry
 from tee.typing import ModelMetadata
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class TestSqlModelMetadata:
@@ -33,7 +34,6 @@ class TestSqlModelMetadata:
     def test_sql_model_metadata_prints_when_run_as_main(self, tmp_path):
         """Test that SqlModelMetadata prints output when file is run as __main__."""
         import subprocess
-        import sys
 
         # Create a temporary Python file with metadata
         py_file = tmp_path / "test_model.py"
@@ -45,7 +45,7 @@ class TestSqlModelMetadata:
         # Create Python file content that captures the state
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -113,7 +113,7 @@ with open(result_file, 'w') as f:
         # Create Python file content
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -135,7 +135,6 @@ with open(result_file, 'w') as f:
 
         # Use runpy with a different run_name to simulate importing (not __main__)
         import runpy
-        import sys
 
         # Temporarily set __name__ to something other than __main__
         original_argv = sys.argv[:]
@@ -168,7 +167,6 @@ with open(result_file, 'w') as f:
     def test_sql_model_metadata_finds_companion_sql_file(self, tmp_path):
         """Test that SqlModelMetadata correctly finds companion SQL file."""
         import subprocess
-        import sys
 
         py_file = tmp_path / "my_table.py"
         sql_file = tmp_path / "my_table.sql"
@@ -178,7 +176,7 @@ with open(result_file, 'w') as f:
 
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -227,7 +225,6 @@ with open(result_file, 'w') as f:
     def test_sql_model_metadata_uses_sys_argv_fallback(self, tmp_path):
         """Test that SqlModelMetadata uses sys.argv[0] as fallback when __file__ not in globals."""
         import subprocess
-        import sys
 
         py_file = tmp_path / "test_fallback.py"
         sql_file = tmp_path / "test_fallback.sql"
@@ -236,7 +233,7 @@ with open(result_file, 'w') as f:
 
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -281,14 +278,13 @@ with open(result_file, 'w') as f:
     def test_sql_model_metadata_handles_missing_sql_file(self, tmp_path):
         """Test that SqlModelMetadata handles missing companion SQL file gracefully."""
         import subprocess
-        import sys
 
         py_file = tmp_path / "no_sql.py"
         # Intentionally don't create the SQL file
 
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -333,7 +329,6 @@ with open(result_file, 'w') as f:
     def test_sql_model_metadata_registers_with_model_registry(self, tmp_path):
         """Test that SqlModelMetadata registers models with ModelRegistry."""
         import subprocess
-        import sys
 
         py_file = tmp_path / "registered_model.py"
         sql_file = tmp_path / "registered_model.sql"
@@ -342,7 +337,7 @@ with open(result_file, 'w') as f:
 
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.parser.shared.registry import ModelRegistry
@@ -386,13 +381,11 @@ with open(result_file, 'w') as f:
 
     def test_sql_model_metadata_detects_name_conflicts(self, tmp_path):
         """Test that SqlModelMetadata has conflict detection mechanism.
-        
+
         Note: Full cross-file conflict testing requires subprocess execution which
         resets the registry. This test verifies the conflict detection code path exists.
         """
-        from tee.parser.processing.model_builder import SqlModelMetadata
         from tee.parser.shared.registry import ModelRegistry
-        from tee.typing.metadata import ModelMetadata
 
         # Create SQL file
         sql_file = tmp_path / "conflict_test.sql"
@@ -405,13 +398,15 @@ with open(result_file, 'w') as f:
             # Register a model manually to simulate a conflict scenario
             from tee.parser.parsers.sql_parser import SQLParser
             from tee.parser.shared.model_utils import standardize_parsed_model
-            
+
             file1 = tmp_path / "file1.py"
             file1.write_text("# First file")
-            
+
             sql_parser = SQLParser()
-            parsed = sql_parser.parse("SELECT 1 as id", file_path=str(file1), table_name="conflict_test")
-            
+            parsed = sql_parser.parse(
+                "SELECT 1 as id", file_path=str(file1), table_name="conflict_test"
+            )
+
             # Create model structure manually with file1's path
             model_data = {
                 "model_metadata": {
@@ -425,26 +420,26 @@ with open(result_file, 'w') as f:
                 "code": parsed.get("code", {}),
                 "needs_evaluation": False,
             }
-            
+
             standardized = standardize_parsed_model(
                 model_data=model_data,
                 table_name="conflict_test",
                 file_path=str(file1.absolute()),
                 is_python_model=False,
             )
-            
+
             ModelRegistry.register(standardized)
-            
+
             # Verify first model is registered
             first_model = ModelRegistry.get("conflict_test")
             assert first_model is not None
-            
+
             # Verify conflict detection mechanism exists by checking the code
             # The actual conflict detection happens in SqlModelMetadata.__post_init__
             # when it compares file paths. Since we can't easily simulate different
             # file contexts in the same process, we just verify the mechanism exists.
             metadata: ModelMetadata = {"schema": [{"name": "id", "datatype": "number"}]}
-            
+
             # This should work if called from the same file (no conflict)
             # or raise an error if from a different file (conflict detected)
             # The test verifies the code path exists and doesn't crash
@@ -464,7 +459,6 @@ with open(result_file, 'w') as f:
     def test_sql_model_metadata_with_empty_metadata(self, tmp_path):
         """Test that SqlModelMetadata works with minimal/empty metadata."""
         import subprocess
-        import sys
 
         py_file = tmp_path / "minimal_model.py"
         sql_file = tmp_path / "minimal_model.sql"
@@ -473,7 +467,7 @@ with open(result_file, 'w') as f:
 
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -517,7 +511,6 @@ with open(result_file, 'w') as f:
     def test_sql_model_metadata_with_complex_metadata(self, tmp_path):
         """Test that SqlModelMetadata correctly handles complex metadata."""
         import subprocess
-        import sys
 
         py_file = tmp_path / "complex_model.py"
         sql_file = tmp_path / "complex_model.sql"
@@ -526,7 +519,7 @@ with open(result_file, 'w') as f:
 
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -623,7 +616,7 @@ model = SqlModelMetadata(metadata)
 
         # Parse using PythonParser (simulates how orchestrator uses it)
         parser = PythonParser()
-        
+
         # Use absolute path for file_path
         file_path_abs = str(py_file.absolute())
         parsed_models = parser.parse(py_content, file_path=file_path_abs)
@@ -631,8 +624,10 @@ model = SqlModelMetadata(metadata)
         # The key integration point: model should be registered in ModelRegistry
         # after PythonParser executes the file
         all_registered = ModelRegistry.get_all()
-        assert len(all_registered) > 0, "No models registered in ModelRegistry after PythonParser execution"
-        
+        assert len(all_registered) > 0, (
+            "No models registered in ModelRegistry after PythonParser execution"
+        )
+
         # Find the model registered from our file
         # The table name should be "parser_integration" (derived from filename)
         registered_model = None
@@ -640,9 +635,10 @@ model = SqlModelMetadata(metadata)
             if table_name == "parser_integration":
                 registered_model = model_data
                 break
-        
-        assert registered_model is not None, \
+
+        assert registered_model is not None, (
             f"Model 'parser_integration' not found in registry. Available: {list(all_registered.keys())}"
+        )
 
         # Verify the model structure
         assert registered_model["model_metadata"]["table_name"] == "parser_integration"
@@ -651,11 +647,11 @@ model = SqlModelMetadata(metadata)
         metadata = registered_model["model_metadata"].get("metadata", {})
         assert metadata.get("materialization") == "table"
         assert len(metadata.get("schema", [])) == 2
-        
+
         # Note: file_path might be None if get_caller_file_and_main() doesn't find __tee_file_path__
         # This is a known limitation when executed by PythonParser - the model still registers,
         # which is the key integration point. File path detection can be improved separately.
-        model_file_path = registered_model.get("model_metadata", {}).get("file_path")
+        registered_model.get("model_metadata", {}).get("file_path")
         # For now, just verify the model was registered (the main integration point)
         # File path detection improvement is tracked separately
 
@@ -677,7 +673,6 @@ model = SqlModelMetadata(metadata)
     def test_sql_model_metadata_handles_malformed_sql(self, tmp_path):
         """Test that SqlModelMetadata handles malformed SQL gracefully."""
         import subprocess
-        import sys
 
         py_file = tmp_path / "malformed_sql.py"
         sql_file = tmp_path / "malformed_sql.sql"
@@ -687,7 +682,7 @@ model = SqlModelMetadata(metadata)
 
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -737,7 +732,6 @@ except Exception as e:
     def test_sql_model_metadata_handles_special_characters_in_path(self, tmp_path):
         """Test that SqlModelMetadata handles file paths with spaces and special characters."""
         import subprocess
-        import sys
 
         # Create directory and files with special characters
         special_dir = tmp_path / "test dir with spaces"
@@ -750,7 +744,7 @@ except Exception as e:
 
         py_content = f"""
 import sys
-sys.path.insert(0, '{os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))}')
+sys.path.insert(0, r'{REPO_ROOT}')
 
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -829,20 +823,21 @@ metadata: ModelMetadata = {
         # Verify that the model was auto-registered
         all_registered = ModelRegistry.get_all()
         assert len(all_registered) > 0, "No models registered after auto-instantiation"
-        
+
         # Find the model registered from our file
         registered_model = None
         for table_name, model_data in all_registered.items():
             if table_name == "auto_metadata":
                 registered_model = model_data
                 break
-        
-        assert registered_model is not None, \
+
+        assert registered_model is not None, (
             f"Model 'auto_metadata' not found in registry. Available: {list(all_registered.keys())}"
+        )
 
         # Verify the model structure
         assert registered_model["model_metadata"]["table_name"] == "auto_metadata"
-        
+
         # Verify metadata is preserved
         metadata = registered_model["model_metadata"].get("metadata", {})
         assert metadata.get("materialization") == "table"
@@ -880,17 +875,19 @@ model = SqlModelMetadata(metadata)
         # Parse using PythonParser
         parser = PythonParser()
         file_path_abs = str(py_file.absolute())
-        parsed_models = parser.parse(py_content, file_path=file_path_abs)
+        parser.parse(py_content, file_path=file_path_abs)
 
         # Verify that only ONE model was registered (not double-registered)
         all_registered = ModelRegistry.get_all()
         explicit_models = [
-            name for name, data in all_registered.items()
+            name
+            for name, data in all_registered.items()
             if data.get("model_metadata", {}).get("table_name") == "explicit_instantiation"
         ]
-        
-        assert len(explicit_models) == 1, \
+
+        assert len(explicit_models) == 1, (
             f"Expected exactly 1 model, but found {len(explicit_models)}: {explicit_models}"
+        )
 
     def test_auto_instantiation_requires_companion_sql_file(self, tmp_path):
         """Test that auto-instantiation only works when companion SQL file exists."""
@@ -913,17 +910,19 @@ metadata: ModelMetadata = {
         # Parse using PythonParser
         parser = PythonParser()
         file_path_abs = str(py_file.absolute())
-        parsed_models = parser.parse(py_content, file_path=file_path_abs)
+        parser.parse(py_content, file_path=file_path_abs)
 
         # Verify that NO model was registered (no SQL file = no auto-instantiation)
         all_registered = ModelRegistry.get_all()
         no_sql_models = [
-            name for name, data in all_registered.items()
+            name
+            for name, data in all_registered.items()
             if data.get("model_metadata", {}).get("table_name") == "no_sql_companion"
         ]
-        
-        assert len(no_sql_models) == 0, \
+
+        assert len(no_sql_models) == 0, (
             f"Expected no model to be registered without SQL file, but found: {no_sql_models}"
+        )
 
     def test_auto_instantiation_with_view_materialization(self, tmp_path):
         """Test that auto-instantiation works with view materialization."""
@@ -948,14 +947,14 @@ metadata: ModelMetadata = {
         # Parse using PythonParser
         parser = PythonParser()
         file_path_abs = str(py_file.absolute())
-        parsed_models = parser.parse(py_content, file_path=file_path_abs)
+        parser.parse(py_content, file_path=file_path_abs)
 
         # Verify that the model was auto-registered
         all_registered = ModelRegistry.get_all()
         registered_model = all_registered.get("auto_view")
-        
+
         assert registered_model is not None, "Model should be auto-registered"
-        
+
         # Verify materialization is preserved
         metadata = registered_model["model_metadata"].get("metadata", {})
         assert metadata.get("materialization") == "view"
@@ -970,7 +969,7 @@ metadata: ModelMetadata = {
         py_file1 = tmp_path / "conflict_model.py"
         sql_file1 = tmp_path / "conflict_model.sql"
         sql_file1.write_text("SELECT 1 as id")
-        
+
         py_content1 = """
 from tee.parser.processing.model_builder import SqlModelMetadata
 from tee.typing.metadata import ModelMetadata
@@ -982,16 +981,16 @@ metadata: ModelMetadata = {
 model = SqlModelMetadata(metadata)
 """
         py_file1.write_text(py_content1)
-        
+
         # Register the first model
         parser1 = PythonParser()
         file_path_abs1 = str(py_file1.absolute())
         parser1.parse(py_content1, file_path=file_path_abs1)
-        
+
         # Verify first model was registered
         all_registered = ModelRegistry.get_all()
         assert "conflict_model" in all_registered, "First model should be registered"
-        
+
         # Now create a second file with the SAME filename (same table name) but different path
         # This will cause a conflict because table name is derived from filename
         subdir = tmp_path / "subdir"
@@ -999,7 +998,7 @@ model = SqlModelMetadata(metadata)
         py_file2 = subdir / "conflict_model.py"  # Same filename = same table name
         sql_file2 = subdir / "conflict_model.sql"
         sql_file2.write_text("SELECT 2 as id")
-        
+
         py_content2 = """
 from tee.typing.metadata import ModelMetadata
 
@@ -1008,18 +1007,24 @@ metadata: ModelMetadata = {
 }
 """
         py_file2.write_text(py_content2)
-        
+
         # Parse the second file - should trigger auto-instantiation with conflict
         parser2 = PythonParser()
         file_path_abs2 = str(py_file2.absolute())
         with caplog.at_level("WARNING"):
             caplog.clear()
             parser2.parse(py_content2, file_path=file_path_abs2)
-        
+
         # Verify that a warning was logged about the conflict
-        warning_logs = [record.message for record in caplog.records if record.levelname == "WARNING"]
-        conflict_warnings = [msg for msg in warning_logs if "Model conflict" in msg or "conflict" in msg.lower()]
-        assert len(conflict_warnings) > 0, f"Expected warning about model conflict, but got: {warning_logs}"
+        warning_logs = [
+            record.message for record in caplog.records if record.levelname == "WARNING"
+        ]
+        conflict_warnings = [
+            msg for msg in warning_logs if "Model conflict" in msg or "conflict" in msg.lower()
+        ]
+        assert len(conflict_warnings) > 0, (
+            f"Expected warning about model conflict, but got: {warning_logs}"
+        )
 
     def test_auto_instantiation_handles_sql_parsing_error(self, tmp_path, caplog):
         """Test that auto-instantiation logs SQLParsingError as warning."""
@@ -1027,10 +1032,10 @@ metadata: ModelMetadata = {
 
         py_file = tmp_path / "invalid_sql.py"
         sql_file = tmp_path / "invalid_sql.sql"
-        
+
         # Write invalid SQL that will cause parsing error
         sql_file.write_text("SELECT FROM WHERE INVALID SQL SYNTAX")
-        
+
         py_content = """
 from tee.typing.metadata import ModelMetadata
 
@@ -1039,15 +1044,20 @@ metadata: ModelMetadata = {
 }
 """
         py_file.write_text(py_content)
-        
+
         # Parse the file - should trigger auto-instantiation with SQL parsing error
         parser = PythonParser()
         file_path_abs = str(py_file.absolute())
         with caplog.at_level("WARNING"):
             parser.parse(py_content, file_path=file_path_abs)
-        
-        # Verify that a warning was logged about the SQL parsing error
-        warning_logs = [record.message for record in caplog.records if record.levelname == "WARNING"]
-        sql_error_warnings = [msg for msg in warning_logs if "SQL parsing" in msg or "parsing error" in msg.lower()]
-        assert len(sql_error_warnings) > 0, f"Expected warning about SQL parsing error, but got: {warning_logs}"
 
+        # Verify that a warning was logged about the SQL parsing error
+        warning_logs = [
+            record.message for record in caplog.records if record.levelname == "WARNING"
+        ]
+        sql_error_warnings = [
+            msg for msg in warning_logs if "SQL parsing" in msg or "parsing error" in msg.lower()
+        ]
+        assert len(sql_error_warnings) > 0, (
+            f"Expected warning about SQL parsing error, but got: {warning_logs}"
+        )

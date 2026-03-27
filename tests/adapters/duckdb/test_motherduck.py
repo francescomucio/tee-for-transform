@@ -46,7 +46,9 @@ def _load_motherduck_config() -> dict:
                 "type": "duckdb",
                 "path": f"md:{file_config.get('database', 'test_db')}",
                 "schema": file_config.get("schema", "test_schema"),
-                "extra": {"motherduck_token": file_config.get("token")} if file_config.get("token") else None,
+                "extra": {"motherduck_token": file_config.get("token")}
+                if file_config.get("token")
+                else None,
             }
         except Exception as e:
             pytest.skip(f"Could not load MotherDuck config from {config_file}: {e}")
@@ -185,7 +187,9 @@ class TestMotherDuckConnection:
         adapter_motherduck = DuckDBAdapter({"type": "duckdb", "path": "motherduck:test_db"})
 
         connection_md = adapter_md._build_motherduck_connection_string("md:test_db")
-        connection_motherduck = adapter_motherduck._build_motherduck_connection_string("motherduck:test_db")
+        connection_motherduck = adapter_motherduck._build_motherduck_connection_string(
+            "motherduck:test_db"
+        )
 
         assert connection_md.startswith("md:")
         assert connection_motherduck.startswith("motherduck:")
@@ -273,4 +277,3 @@ class TestMotherDuckPathExtraction:
         """Test that absolute file paths return False."""
         adapter = DuckDBAdapter({"type": "duckdb", "path": "/home/user/data.db"})
         assert adapter._is_motherduck_path("/home/user/data.db") is False
-

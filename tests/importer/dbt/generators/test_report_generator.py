@@ -4,7 +4,6 @@ Unit tests for ReportGenerator.
 
 from pathlib import Path
 
-import pytest
 
 from tee.importer.dbt.generators import ReportGenerator
 
@@ -110,4 +109,3 @@ class TestReportGenerator:
 
         assert "## Variables" in content
         assert "env" in content
-

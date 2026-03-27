@@ -136,6 +136,9 @@ class ProjectParser:
             # Use orchestrator's JSON exporter
             if output_file is None:
                 self.orchestrator.json_exporter.export_parsed_models(result)
+                self.orchestrator.json_exporter.export_dimension_registry(
+                    self.orchestrator.dimension_registry
+                )
                 # Note: OTS modules and test library export is handled by the compiler
                 # We don't export them here to avoid duplicate files
             else:

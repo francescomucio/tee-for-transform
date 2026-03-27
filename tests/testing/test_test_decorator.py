@@ -3,14 +3,11 @@ Unit tests for test decorator and create_test function.
 """
 
 import pytest
-import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch
 
-from tee.testing.test_decorator import TestDecoratorError, create_test
-from tee.testing.test_decorator import test as test_decorator  # Rename to avoid pytest collection
 from tee.testing.base import TestRegistry, TestSeverity
 from tee.testing.python_test import PythonTest
+from tee.testing.test_decorator import TestDecoratorError, create_test
+from tee.testing.test_decorator import test as test_decorator  # Rename to avoid pytest collection
 
 
 class TestTestDecorator:
@@ -25,6 +22,7 @@ class TestTestDecorator:
 
     def test_test_decorator_basic(self):
         """Test @test decorator with basic usage."""
+
         @test_decorator(name="my_test", severity="error")
         def my_test():
             return "SELECT 1 FROM @table_name WHERE id IS NULL"
@@ -39,6 +37,7 @@ class TestTestDecorator:
 
     def test_test_decorator_with_description(self):
         """Test @test decorator with description."""
+
         @test_decorator(name="my_test", severity="error", description="Test description")
         def my_test():
             return "SELECT 1"
@@ -48,6 +47,7 @@ class TestTestDecorator:
 
     def test_test_decorator_with_tags(self):
         """Test @test decorator with tags."""
+
         @test_decorator(name="my_test", severity="error", tags=["data-quality", "validation"])
         def my_test():
             return "SELECT 1"
@@ -57,6 +57,7 @@ class TestTestDecorator:
 
     def test_test_decorator_severity_warning(self):
         """Test @test decorator with warning severity."""
+
         @test_decorator(name="my_test", severity="warning")
         def my_test():
             return "SELECT 1"
@@ -66,6 +67,7 @@ class TestTestDecorator:
 
     def test_test_decorator_without_name_derives_from_function(self, tmp_path):
         """Test @test decorator without explicit name (should derive from function)."""
+
         # The decorator uses inspect to get caller file, which is tricky to mock
         # Instead, test that it requires explicit name when file path can't be determined
         # Or test with explicit name (which is the recommended approach)
@@ -81,6 +83,7 @@ class TestTestDecorator:
     def test_test_decorator_empty_sql_raises_error(self):
         """Test that @test decorator raises error for empty SQL."""
         with pytest.raises(TestDecoratorError, match="empty SQL string"):
+
             @test_decorator(name="my_test")
             def my_test():
                 return ""
@@ -88,18 +91,21 @@ class TestTestDecorator:
     def test_test_decorator_non_string_return_raises_error(self):
         """Test that @test decorator raises error for non-string return."""
         with pytest.raises(TestDecoratorError, match="must return a SQL string"):
+
             @test_decorator(name="my_test")
             def my_test():
                 return 123
 
     def test_test_decorator_name_conflict_raises_error(self):
         """Test that @test decorator raises error on name conflict."""
+
         @test_decorator(name="duplicate_test")
         def test1():
             return "SELECT 1"
 
         # Try to register another test with same name
         with pytest.raises(TestDecoratorError, match="Test name conflict"):
+
             @test_decorator(name="duplicate_test")
             def test2():
                 return "SELECT 2"
@@ -195,4 +201,3 @@ class TestCreateTest:
         assert TestRegistry.get("check_users_not_empty") is not None
         assert TestRegistry.get("check_orders_not_empty") is not None
         assert TestRegistry.get("check_products_not_empty") is not None
-

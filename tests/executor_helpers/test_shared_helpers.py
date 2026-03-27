@@ -3,6 +3,7 @@ Unit tests for shared_helpers module.
 """
 
 import pytest
+
 from tee.executor_helpers.shared_helpers import (
     create_empty_build_results,
     create_empty_execution_results,
@@ -127,5 +128,3 @@ class TestCreateEmptyBuildResults:
         assert results["test_results"]["test_results"] == []
         assert results["analysis"]["total_models"] == 0
         assert results["analysis"]["dependency_graph"] == graph
-
-

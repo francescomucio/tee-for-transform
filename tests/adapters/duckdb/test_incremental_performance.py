@@ -6,10 +6,11 @@ with larger datasets. They are marked as slow tests and may be excluded
 from regular test runs.
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 import time
+
+import pytest
 
 from tee.adapters.duckdb.adapter import DuckDBAdapter
 
@@ -49,11 +50,11 @@ class TestDuckDBIncrementalPerformance:
         """Test append performance with large dataset."""
         # Create schema first
         duckdb_adapter.execute_query("CREATE SCHEMA IF NOT EXISTS test_schema")
-        
+
         # Create source table with many rows
         create_sql = """
         CREATE TABLE test_schema.source_table AS
-        SELECT 
+        SELECT
             row_number() OVER () as id,
             'User ' || row_number() OVER () as name,
             '2024-01-01'::timestamp + (row_number() OVER () * interval '1 hour') as created_at,
@@ -94,11 +95,11 @@ class TestDuckDBIncrementalPerformance:
         """Test merge performance with large dataset."""
         # Create schema first
         duckdb_adapter.execute_query("CREATE SCHEMA IF NOT EXISTS test_schema")
-        
+
         # Create source table with many rows
         create_sql = """
         CREATE TABLE test_schema.source_table AS
-        SELECT 
+        SELECT
             row_number() OVER () as id,
             'User ' || row_number() OVER () as name,
             '2024-01-01'::timestamp + (row_number() OVER () * interval '1 hour') as created_at,
@@ -141,4 +142,3 @@ class TestDuckDBIncrementalPerformance:
         # Performance should be reasonable
         execution_time = end_time - start_time
         assert execution_time < 2.0, f"Execution took {execution_time:.2f} seconds, expected < 2.0"
-

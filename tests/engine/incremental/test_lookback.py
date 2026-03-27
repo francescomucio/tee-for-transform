@@ -76,4 +76,3 @@ class TestLookbackApplication(TestIncrementalExecutor):
         result = executor._apply_lookback_to_time_filter(time_filter, config)
 
         assert result == "created_at >= '2024-01-01'"
-

@@ -8,6 +8,7 @@ This module provides BigQuery-specific functionality including:
 - Materialization support including external tables
 """
 
+import importlib.util
 from typing import Any
 
 from tee.adapters.base import AdapterConfig, DatabaseAdapter, MaterializationType
@@ -18,9 +19,7 @@ class BigQueryAdapter(DatabaseAdapter):
     """BigQuery database adapter with SQLglot integration."""
 
     def __init__(self, config: AdapterConfig) -> None:
-        try:
-            from google.cloud import bigquery
-        except ImportError:
+        if importlib.util.find_spec("google.cloud.bigquery") is None:
             raise ImportError(
                 "google-cloud-bigquery is not installed. Install it with: uv add google-cloud-bigquery"
             ) from None
@@ -103,7 +102,10 @@ class BigQueryAdapter(DatabaseAdapter):
             raise
 
     def create_table(
-        self, table_name: str, query: str, metadata: dict[str, Any] | None = None
+        self,
+        table_name: str,
+        query: str,
+        metadata: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> None:
         """Create a table from a qualified SQL query."""
         if not self.client:
@@ -366,7 +368,11 @@ class BigQueryAdapter(DatabaseAdapter):
                 f"Failed to create function {full_function_name}: {e}"
             ) from e
 
-    def function_exists(self, function_name: str, signature: str | None = None) -> bool:
+    def function_exists(
+        self,
+        function_name: str,
+        signature: str | None = None,  # noqa: ARG002
+    ) -> bool:
         """Check if a function exists in the database."""
         if not self.client:
             raise RuntimeError("Not connected to database. Call connect() first.")
@@ -392,7 +398,7 @@ class BigQueryAdapter(DatabaseAdapter):
 
             # Query INFORMATION_SCHEMA.ROUTINES for functions
             query = f"""
-                SELECT COUNT(*) 
+                SELECT COUNT(*)
                 FROM `{self.config.project}.{dataset_name}.INFORMATION_SCHEMA.ROUTINES`
                 WHERE routine_name = '{func_name}' AND routine_type = 'FUNCTION'
             """

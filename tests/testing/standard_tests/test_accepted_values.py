@@ -2,8 +2,9 @@
 Unit tests for AcceptedValuesTest.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from tee.testing.standard_tests import AcceptedValuesTest
 
@@ -52,7 +53,7 @@ class TestAcceptedValuesTest:
         mock_adapter = Mock()
         mock_adapter.generate_accepted_values_test_query.return_value = "SELECT COUNT(*) FROM ..."
 
-        query = test.get_test_query(
+        test.get_test_query(
             mock_adapter,
             "my_table",
             column_name="status",
@@ -96,4 +97,3 @@ class TestAcceptedValuesTest:
 
         assert result.passed is False
         assert result.rows_returned == 2
-

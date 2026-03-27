@@ -22,7 +22,7 @@ class TestTimeFilterCondition(TestIncrementalExecutor):
     def test_auto_start_value_with_table_name(self, executor):
         """Test auto start_value with table name."""
         from unittest.mock import Mock
-        
+
         config = {"filter_column": "updated_at", "start_value": "auto"}
         mock_adapter = Mock()
         # Adapter returns a mapping of column_name -> datatype in production
@@ -39,7 +39,7 @@ class TestTimeFilterCondition(TestIncrementalExecutor):
     def test_auto_start_value_with_lookback(self, executor):
         """Test auto start_value with lookback."""
         from unittest.mock import Mock
-        
+
         config = {"filter_column": "updated_at", "start_value": "auto", "lookback": "3 hours"}
         mock_adapter = Mock()
         mock_adapter.get_table_columns = Mock(
@@ -49,7 +49,9 @@ class TestTimeFilterCondition(TestIncrementalExecutor):
             config, table_name="my_schema.test_table", table_exists=True, adapter=mock_adapter
         )
 
-        expected = "updated_at > (SELECT MAX(updated_at) - INTERVAL '3 hours' FROM my_schema.test_table)"
+        expected = (
+            "updated_at > (SELECT MAX(updated_at) - INTERVAL '3 hours' FROM my_schema.test_table)"
+        )
         assert result == expected
 
     def test_current_date_start_value(self, executor, sample_append_config):
@@ -134,4 +136,3 @@ class TestTimeFilterCondition(TestIncrementalExecutor):
             executor.get_time_filter_condition(
                 config, table_name="my_schema.dim_brand", table_exists=True, adapter=mock_adapter
             )
-

@@ -5,7 +5,6 @@ These tests verify that functions are correctly created and executed in DuckDB.
 """
 
 import pytest
-from pathlib import Path
 
 from tee.engine.execution_engine import ExecutionEngine
 from tee.parser.core.orchestrator import ParserOrchestrator
@@ -26,7 +25,7 @@ class TestFunctionExecutionDuckDB:
         function_sql = functions_dir / "calculate_percentage.sql"
         function_sql.write_text("""
 CREATE OR REPLACE MACRO calculate_percentage(numerator, denominator) AS (
-    CASE 
+    CASE
         WHEN denominator = 0 OR denominator IS NULL THEN NULL
         ELSE (numerator / denominator) * 100.0
     END
@@ -56,7 +55,7 @@ metadata = {
         models_dir.mkdir(parents=True, exist_ok=True)
         model_sql = models_dir / "test_results.sql"
         model_sql.write_text("""
-SELECT 
+SELECT
     10.0 as numerator,
     20.0 as denominator,
     my_schema.calculate_percentage(10.0, 20.0) as percentage
@@ -158,9 +157,7 @@ schema = "my_schema"
             assert "my_schema.test_results" in model_results["executed_tables"]
 
             # Verify model was created and contains correct data
-            result = engine.adapter.execute_query(
-                "SELECT percentage FROM my_schema.test_results"
-            )
+            result = engine.adapter.execute_query("SELECT percentage FROM my_schema.test_results")
             assert result[0][0] == 50.0
 
         finally:
@@ -348,7 +345,7 @@ class TestFunctionExecutionFullWorkflow:
         function_sql = functions_dir / "calculate_percentage.sql"
         function_sql.write_text("""
 CREATE OR REPLACE MACRO calculate_percentage(numerator, denominator) AS (
-    CASE 
+    CASE
         WHEN denominator = 0 OR denominator IS NULL THEN NULL
         ELSE (numerator / denominator) * 100.0
     END
@@ -360,7 +357,7 @@ CREATE OR REPLACE MACRO calculate_percentage(numerator, denominator) AS (
         models_dir.mkdir(parents=True, exist_ok=True)
         model_sql = models_dir / "results.sql"
         model_sql.write_text("""
-SELECT 
+SELECT
     id,
     name,
     value,
@@ -413,9 +410,7 @@ schema = "my_schema"
             assert result[0][0] == 50.0
 
             # Verify model was created and contains correct data
-            result = engine.adapter.execute_query(
-                "SELECT COUNT(*) FROM my_schema.results"
-            )
+            result = engine.adapter.execute_query("SELECT COUNT(*) FROM my_schema.results")
             assert result[0][0] == 3
 
             # Verify function was used correctly
@@ -426,5 +421,3 @@ schema = "my_schema"
 
         finally:
             engine.disconnect()
-
-

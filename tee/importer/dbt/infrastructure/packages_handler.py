@@ -13,7 +13,6 @@ from typing import Any
 import yaml
 
 from tee.importer.dbt.constants import PACKAGES_FILE
-from tee.importer.dbt.exceptions import DbtImporterError
 
 logger = logging.getLogger(__name__)
 
@@ -130,9 +129,7 @@ class PackagesHandler:
 
         return "\n".join(lines)
 
-    def clone_packages(
-        self, project_path: Path, packages_info: dict[str, Any]
-    ) -> dict[str, Path]:
+    def clone_packages(self, project_path: Path, packages_info: dict[str, Any]) -> dict[str, Path]:
         """
         Clone dbt packages to .packages/<name>@<ref>/ directory.
 
@@ -266,9 +263,7 @@ class PackagesHandler:
                     if dbt_pkg_path and dbt_pkg_path.exists():
                         # Use existing dbt_packages installation
                         if self.verbose:
-                            logger.info(
-                                f"Using existing package from dbt_packages: {dbt_pkg_path}"
-                            )
+                            logger.info(f"Using existing package from dbt_packages: {dbt_pkg_path}")
                         # Create symlink to dbt_packages version
                         try:
                             if not pkg_target.exists():
@@ -288,7 +283,7 @@ class PackagesHandler:
 
                         # Check if pkg_ref is a branch (main/master) or a tag (version)
                         is_branch = pkg_ref in ["main", "master", "develop"]
-                        
+
                         if is_branch:
                             # Clone specific branch with shallow clone
                             subprocess.run(
@@ -313,7 +308,7 @@ class PackagesHandler:
                                 check=True,
                                 capture_output=not self.verbose,
                             )
-                            
+
                             # Checkout the tag (version as-is, e.g., "1.1.1")
                             subprocess.run(
                                 ["git", "checkout", pkg_ref],
@@ -378,7 +373,7 @@ class PackagesHandler:
     def _extract_package_name_from_git_url(self, git_url: str) -> str:
         """
         Extract package name from Git URL.
-        
+
         In dbt, package namespaces are typically the package name from the repo.
         For example: https://github.com/dbt-labs/dbt_utils.git -> dbt_utils
         """

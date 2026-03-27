@@ -42,4 +42,3 @@ class TestDateCasting(TestIncrementalExecutor):
         result = executor._add_date_casting(where_condition)
 
         assert result == "status = 'active'"
-

@@ -2,9 +2,9 @@
 Test cases for AutoIncrementalWrapper.
 """
 
-import pytest
 from unittest.mock import Mock
 
+import pytest
 import sqlglot
 from sqlglot import expressions as exp
 
@@ -421,7 +421,7 @@ class TestAutoIncrementalWrapper:
     def test_extract_query_columns_complex_query(self, wrapper):
         """Test _extract_query_columns with complex query."""
         sql = """
-        SELECT 
+        SELECT
             ROW_NUMBER() OVER (ORDER BY brand) AS brand_id,
             brand AS brand_name,
             category,
@@ -434,4 +434,3 @@ class TestAutoIncrementalWrapper:
         assert "brand_name" in columns
         assert "category" in columns
         assert "total" in columns
-

@@ -1,1487 +1,1557 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}t4t Documentation{% endblock %}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
-    <script src="https://unpkg.com/dagre-d3@0.6.4/dist/dagre-d3.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            font-size: 16px;
-            font-weight: 400;
-            line-height: 1.6;
-            color: #1f2937;
-            background: #f8f9fa;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            background: #1e293b;
-            border-right: 1px solid #e5e7eb;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: width 0.3s ease;
-            min-width: 0;
-        }
-
-        .sidebar.collapsed {
-            width: 40px !important;
-            border-right: 1px solid #e5e7eb;
-        }
-
-        .sidebar.collapsed .sidebar-header {
-            padding: 10px;
-            justify-content: center;
-        }
-
-        .sidebar.collapsed .sidebar-header-content {
-            display: none;
-        }
-
-        .sidebar.collapsed .tree-container {
-            display: none;
-        }
-
-        .sidebar.collapsed .sidebar-toggle {
-            margin: 0;
-            padding: 8px;
-        }
-
-        .sidebar-header {
-            padding: 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            min-width: 0;
-        }
-
-        .sidebar-toggle {
-            background: none;
-            border: none;
-            color: #64748b;
-            cursor: pointer;
-            font-size: 18px;
-            padding: 8px;
-            border-radius: 6px;
-            transition: background 0.2s;
-            flex-shrink: 0;
-            display: block;
-        }
-
-        .sidebar-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-        }
-
-        .sidebar-toggle:focus {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-        }
-
-        .sidebar-header-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .sidebar-header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 16px;
-        }
-
-        .tree-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-        }
-
-        .tree-node {
-            padding: 8px 12px;
-            cursor: pointer;
-            user-select: none;
-            border-radius: 6px;
-            margin: 2px 0;
-            color: #ffffff;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            transition: background 0.2s;
-        }
-
-        .tree-node:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .tree-node.selected {
-            background: #3b82f6;
-            font-weight: 500;
-            color: #ffffff;
-        }
-
-        .tree-node:focus {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-        }
-
-        .tree-node-icon {
-            display: inline-block;
-            width: 16px;
-            margin-right: 8px;
-            flex-shrink: 0;
-        }
-
-        .tree-node-text {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .tree-node-toggle {
-            display: inline-block;
-            width: 16px;
-            margin-right: 4px;
-            cursor: pointer;
-            text-align: center;
-            user-select: none;
-            flex-shrink: 0;
-        }
-
-        .tree-node-toggle::before {
-            content: '▶';
-            font-size: 10px;
-            color: #64748b;
-        }
-
-        .tree-node.expanded > .tree-node-toggle::before {
-            content: '▼';
-        }
-
-        .tree-children {
-            margin-left: 20px;
-            display: none;
-        }
-
-        .tree-node.expanded ~ .tree-children,
-        .tree-node.expanded[data-children-id] + .tree-children {
-            display: block;
-        }
-
-        /* Main content */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .toolbar {
-            padding: 16px 24px;
-            background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .filter-input {
-            flex: 1;
-            padding: 8px 16px;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            font-size: 16px;
-            font-family: 'Inter', sans-serif;
-            background: #ffffff;
-            color: #1f2937;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .filter-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .filter-input::placeholder {
-            color: #6b7280;
-        }
-
-        .graph-container {
-            flex: 1;
-            background: #f8f9fa;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #graph-svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .node {
-            cursor: pointer;
-        }
-
-        .node rect {
-            stroke-width: 2px;
-            rx: 4;
-            ry: 4;
-        }
-
-        .node.table rect {
-            fill: #3b82f6;
-            stroke: #2563eb;
-        }
-
-        .node.view rect {
-            fill: #93c5fd;
-            stroke: #60a5fa;
-        }
-
-        .node.function rect {
-            fill: #64748b;
-            stroke: #475569;
-        }
-
-        .node.test rect {
-            fill: #f59e0b;
-            stroke: #d97706;
-        }
-
-        .node.selected rect {
-            stroke-width: 4px;
-            stroke: #3b82f6;
-            filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
-        }
-
-        .node.highlighted rect {
-            stroke-width: 3px;
-            stroke: #3b82f6;
-            filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.3));
-        }
-
-        .node.hidden {
-            opacity: 0;
-            pointer-events: none;
-            visibility: hidden;
-        }
-
-        .edgePath {
-            fill: none;
-            stroke: #64748b;
-            stroke-width: 2px;
-            opacity: 0.6;
-        }
-
-        .edgePath.hidden {
-            opacity: 0.15;
-        }
-
-        .edgePath.highlighted {
-            stroke: #3b82f6;
-            stroke-width: 3px;
-            opacity: 1;
-        }
-
-        .edgeLabel {
-            background-color: #f8f9fa;
-            padding: 4px 8px;
-            border-radius: 6px;
-            color: #1f2937;
-            border: 1px solid #e5e7eb;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-        }
-
-        .node-label {
-            font-size: 14px;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            pointer-events: none;
-            text-anchor: middle;
-            fill: #ffffff;
-            font-weight: 500;
-        }
-
-        .node-label.hidden {
-            opacity: 0.2;
-        }
-
-        /* Ensure foreignObject labels (used by dagre-d3) show full text */
-        .node foreignObject {
-            overflow: visible;
-        }
-
-        .node foreignObject div {
-            white-space: nowrap;
-            overflow: visible;
-            text-overflow: clip;
-            width: auto !important;
-            max-width: none !important;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 40px;
-            min-height: 40px;
-            line-height: 40px;
-            margin: 0;
-            padding: 0;
-        }
-
-        .node-icon {
-            font-size: 14px;
-            text-anchor: middle;
-            dominant-baseline: central;
-        }
-
-        .legend {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 16px;
-            border-left: 1px solid #e5e7eb;
-            border-right: 1px solid #e5e7eb;
-        }
-
-        .legend-title {
-            font-size: 14px;
-            font-weight: 500;
-            color: #1f2937;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-            user-select: none;
-        }
-
-        .legend-item:hover {
-            background-color: #f1f5f9;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            flex-shrink: 0;
-            transition: opacity 0.2s;
-        }
-
-        .legend-label {
-            font-size: 13px;
-            color: #64748b;
-            white-space: nowrap;
-            transition: text-decoration 0.2s, opacity 0.2s;
-        }
-
-        .legend-item[data-enabled="false"] .legend-label {
-            text-decoration: line-through;
-            opacity: 0.5;
-        }
-
-        .legend-item[data-enabled="false"] .legend-color {
-            opacity: 0.4;
-        }
-
-        .stats {
-            display: flex;
-            gap: 16px;
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        .sidebar .stats {
-            color: #64748b;
-        }
-
-        .stat-item {
-            display: flex;
-            gap: 4px;
-        }
-
-        .stat-label {
-            color: #6b7280;
-        }
-
-        .sidebar .stat-label {
-            color: #94a3b8;
-        }
-
-        .stat-value {
-            font-weight: 600;
-            color: #3b82f6;
-        }
-
-        .sidebar .stat-value {
-            color: #ffffff;
-        }
-    </style>
-    {% block extra_head %}{% endblock %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}t4t Documentation{% endblock %}</title>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; overflow: hidden; color: #c9d1d9; }
+    svg { width: 100vw; height: 100vh; display: block; }
+    .controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; background: rgba(22, 27, 34, 0.92); border: 1px solid #30363d; border-radius: 28px; padding: 8px 22px; backdrop-filter: blur(10px); z-index: 50; box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5); }
+    .view-label { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #8b949e; transition: color 0.3s; white-space: nowrap; }
+    .view-label.active { color: #e6edf3; }
+    .latch { position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer; }
+    .latch input { opacity: 0; width: 0; height: 0; }
+    .latch-slider { position: absolute; inset: 0; background: #2d6a9f; border-radius: 28px; transition: background 0.35s; }
+    .latch input:checked + .latch-slider { background: #b45309; }
+    .latch-slider::before { content: ""; position: absolute; height: 20px; width: 20px; left: 4px; bottom: 4px; background: #e6edf3; border-radius: 50%; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+    .latch input:checked + .latch-slider::before { transform: translateX(24px); }
+    .latch-slider-cols { background: #484f58; }
+    .latch input:checked + .latch-slider-cols { background: #2ea043; }
+    .controls-sep { width: 1px; height: 20px; background: #30363d; flex-shrink: 0; }
+    .filter-bar { position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: rgba(22, 27, 34, 0.92); border: 1px solid #30363d; border-radius: 22px; padding: 6px 14px; backdrop-filter: blur(10px); z-index: 50; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+    .filter-icon { color: #8b949e; font-size: 15px; flex-shrink: 0; user-select: none; }
+    #filterInput { background: transparent; border: none; outline: none; color: #e6edf3; font-size: 13px; font-family: "Cascadia Code", "Fira Code", "Consolas", monospace; width: 260px; caret-color: #58a6ff; }
+    #filterInput::placeholder { color: #484f58; }
+    .filter-hint { font-size: 11px; color: #484f58; white-space: nowrap; }
+    .filter-hint code { font-family: "Cascadia Code", "Fira Code", monospace; background: #21262d; padding: 1px 4px; border-radius: 3px; color: #8b949e; }
+    .filter-clear { background: none; border: none; cursor: pointer; color: #484f58; font-size: 16px; line-height: 1; padding: 0 2px; transition: color 0.2s; display: none; }
+    .filter-clear:hover { color: #c9d1d9; }
+    .filter-clear.visible { display: block; }
+    #tooltip { position: fixed; display: none; pointer-events: none; background: rgba(13, 17, 23, 0.95); border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; color: #c9d1d9; font-size: 13px; max-width: 300px; z-index: 100; backdrop-filter: blur(6px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); }
+    #tooltip strong { display: block; color: #e6edf3; font-size: 14px; margin-bottom: 4px; }
+    #tooltip .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
+    #tooltip p { color: #8b949e; font-size: 12px; line-height: 1.5; margin-bottom: 6px; }
+    #tooltip .col-list { list-style: none; margin-top: 4px; max-height: 160px; overflow: auto; }
+    #tooltip .col-list li { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: "Cascadia Code", "Fira Code", monospace; color: #8b949e; padding: 1px 0; }
+    #tooltip .col-list .tag { font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 700; letter-spacing: 0.05em; flex-shrink: 0; }
+    #tooltip .col-list .tag.pk { background: #2d1a00; color: #d29922; }
+    #tooltip .col-list .tag.fk { background: #0d2340; color: #58a6ff; }
+    .badge.raw { background: #21262d; color: #8b949e; }
+    .badge.staging { background: #0d2340; color: #58a6ff; }
+    .badge.dim { background: #0d2b1d; color: #3fb950; }
+    .badge.fact { background: #2d1a00; color: #d29922; }
+    .legend { position: fixed; bottom: 20px; right: 20px; background: rgba(22, 27, 34, 0.92); border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; z-index: 50; backdrop-filter: blur(10px); font-size: 12px; }
+    .legend-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #8b949e; margin-bottom: 8px; text-transform: uppercase; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; color: #c9d1d9; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .legend-sep { border: none; border-top: 1px solid #21262d; margin: 8px 0; }
+    .legend-col-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 11px; color: #8b949e; }
+    .legend-col-dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+    .zoom-controls { position: fixed; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 4px; z-index: 50; }
+    .zoom-btn { width: 32px; height: 32px; background: rgba(22, 27, 34, 0.92); border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 16px; line-height: 1; cursor: pointer; backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; user-select: none; }
+    .zoom-btn:hover { background: rgba(48, 54, 61, 0.95); color: #e6edf3; }
+    .zoom-btn.reset { font-size: 13px; }
+    .col-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; fill: #484f58; }
+    .node-group { cursor: grab; }
+    .node-group:active { cursor: grabbing; }
+    .node-header { font-size: 12px; font-weight: 700; pointer-events: none; dominant-baseline: middle; text-anchor: middle; }
+    .node-header.test-header { font-size: 9px !important; font-weight: 600; letter-spacing: 0.01em; }
+    .node-col-name { font-size: 10px; pointer-events: none; dominant-baseline: middle; font-family: "Cascadia Code", "Fira Code", monospace; }
+    .node-overflow { font-size: 9px; pointer-events: none; dominant-baseline: middle; fill: #484f58; font-style: italic; }
+    .edge-path { fill: none; stroke-width: 1.5; }
+  </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-header-content">
-                <h1>t4t Docs</h1>
-                <div class="stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Models:</span>
-                        <span class="stat-value" id="model-count">{{ models_count }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Nodes:</span>
-                        <span class="stat-value" id="node-count">{{ nodes_count }}</span>
-                    </div>
-                </div>
-            </div>
-            <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">◀</button>
-        </div>
-        <div class="tree-container" id="tree-container"></div>
-    </div>
+<div id="tooltip"></div>
+<div class="controls">
+  <span class="view-label active" id="lbl-dbt">Data Flow</span>
+  <label class="latch"><input type="checkbox" id="viewToggle"><span class="latch-slider"></span></label>
+  <span class="view-label" id="lbl-star">Data Model</span>
+  <div class="controls-sep"></div>
+  <label class="latch latch-tests" id="testsLatch" title="Show/hide tests">
+    <input type="checkbox" id="testsToggle" checked><span class="latch-slider latch-slider-cols"></span>
+  </label>
+  <span class="view-label active" id="lbl-tests">Tests</span>
+  <div class="controls-sep" id="testsSep"></div>
+  <label class="latch latch-cols"><input type="checkbox" id="colsToggle" checked><span class="latch-slider latch-slider-cols"></span></label>
+  <span class="view-label active" id="lbl-cols">Columns</span>
+</div>
+<div class="filter-bar">
+  <span class="filter-icon">⌕</span>
+  <input type="text" id="filterInput" placeholder="2+fct_sales+1, *fct_sales, -dim_shop+, -facts" autocomplete="off" spellcheck="false">
+  <span class="filter-hint"><code>2+node+1</code> · <code>+node</code> · <code>node+</code> · <code>*node</code> dimensional set · <code>-node+</code> · <code>facts</code>/<code>dims</code>/<code>staging</code>/<code>raw</code></span>
+  <button class="filter-clear" id="filterClear" title="Clear filter">✕</button>
+</div>
+<div class="zoom-controls">
+  <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+  <button class="zoom-btn reset" id="zoom-reset" title="Reset zoom">1:1</button>
+  <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+</div>
+<div class="legend">
+  <div class="legend-title">Layers</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4a5568;border:1px solid #718096"></div> Raw</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a365d;border:1px solid #4299e1"></div> Staging</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#1a3a2a;border:1px solid #48bb78"></div> Dimension</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4a2a00;border:1px solid #ed8936;border-radius:50%"></div> Fact</div>
+  <hr class="legend-sep">
+  <div class="legend-col-item"><div class="legend-col-dot" style="background:#d29922"></div> Primary key</div>
+  <div class="legend-col-item"><div class="legend-col-dot" style="background:#58a6ff"></div> Foreign key</div>
+  <div class="legend-col-item"><div class="legend-col-dot" style="background:#484f58"></div> Column</div>
+</div>
+<script>
+const graphData = {{ graph_data_json | safe }};
+const modelsData = {{ models_data_json | safe }};
+const modelIdSet = new Set(Object.keys(modelsData));
+const COL_ROW_H = 15;
+const HDR_H = 26;
+const TEST_HDR_H = 18;
+const DIVIDER_H = 1;
+const PAD_V = 10;
+const MAX_COLS = { raw: 3, staging: 3, dim: 4, lookup: 4, fact: 5, test: 0 };
+const LAYER_W = { raw: 140, staging: 140, dim: 150, lookup: 150, fact: 170, test: 132 };
+const STAR_SCALE = { raw: 0.38, staging: 0.58, dim: 1.0, lookup: 1.0, fact: 1.0, test: 0.9 };
+const LAYER_RX = { raw: 5, staging: 5, dim: 8, lookup: 8, fact: 12, test: 10 };
+const COL_TYPE_COLOR = { pk: "#d29922", fk: "#58a6ff", col: "#484f58" };
+const LAYER_STYLE = {
+  raw: { fill: "#21262d", stroke: "#4a5568", text: "#8b949e" },
+  staging: { fill: "#0d2340", stroke: "#2d6a9f", text: "#58a6ff" },
+  dim: { fill: "#1a3a2a", stroke: "#2ea043", text: "#3fb950" },
+  lookup: { fill: "#123040", stroke: "#2dd4bf", text: "#5eead4" },
+  fact: { fill: "#4a2a00", stroke: "#d29922", text: "#e3b341" },
+  test: { fill: "#2a1840", stroke: "#a371f7", text: "#c297ff" }
+};
+const H_COLLAPSED = PAD_V + HDR_H + PAD_V;
+const MODEL = { nodes: [], edges: [] };
+const START_WITH_TESTS_HIDDEN = true;
+const START_WITH_COLUMNS_HIDDEN = true;
+let currentView = "dbt";
+let colsVisible = true;
+let testsVisible = true;
+let activeFilter = null;
+let selectedNodeId = null;
+let nodeGroups;
+let linkPaths;
+let colLabels;
+let edges;
+let zoomBehavior;
+let dbtColumns = [];
+let isViewTransitioning = false;
+let hierBoxExpanded = {};
 
-    <div class="main-content">
-        <div class="toolbar">
-            <input 
-                type="text" 
-                class="filter-input" 
-                id="filter-input" 
-                placeholder="Filter objects (e.g., +my_schema.users_summary, schema.*, *table*)"
-            >
-            <div class="legend" id="legend">
-                <div class="legend-title">Legend:</div>
-                <div class="legend-item" data-type="table" data-enabled="true">
-                    <span class="legend-color" style="background: #3b82f6; border: 2px solid #2563eb;"></span>
-                    <span class="legend-label">Tables</span>
-                </div>
-                <div class="legend-item" data-type="view" data-enabled="true">
-                    <span class="legend-color" style="background: #60a5fa; border: 2px solid #3b82f6;"></span>
-                    <span class="legend-label">Views</span>
-                </div>
-                <div class="legend-item" data-type="function" data-enabled="true">
-                    <span class="legend-color" style="background: #64748b; border: 2px solid #475569;"></span>
-                    <span class="legend-label">Functions</span>
-                </div>
-                <div class="legend-item" data-type="test" data-enabled="true">
-                    <span class="legend-color" style="background: #f59e0b; border: 2px solid #d97706;"></span>
-                    <span class="legend-label">Tests</span>
-                </div>
-            </div>
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-label">Visible:</span>
-                    <span class="stat-value" id="visible-count">{{ nodes_count }}</span>
-                </div>
-            </div>
-        </div>
-        <div class="graph-container">
-            <svg id="graph-svg"></svg>
-        </div>
-    </div>
+function safeName(name) {
+  return name.replace(/[./\\:*?"<>|]/g, "_");
+}
 
-    <script>
-        // Graph data from JSON
-        const graphData = {{ graph_data_json | safe }};
-        const modelsData = {{ models_data_json | safe }};
-        
-        // Initialize the interactive graph
-        let selectedNode = null;
-        let highlightedNodes = new Set();
-        
-        // Parse filter string (dbt-style selector)
-        function parseFilter(filterText) {
-            if (!filterText.trim()) return null;
-            
-            const patterns = filterText.split(',').map(s => s.trim()).filter(s => s);
-            return patterns.map(pattern => {
-                // Handle +pattern+ (exact match)
-                if (pattern.startsWith('+') && pattern.endsWith('+')) {
-                    return { type: 'exact', value: pattern.slice(1, -1) };
-                }
-                // Handle *pattern* (contains)
-                if (pattern.includes('*')) {
-                    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
-                    return { type: 'regex', value: regex };
-                }
-                // Handle pattern (starts with)
-                return { type: 'prefix', value: pattern };
-            });
-        }
-        
-        // Check if node matches filter
-        function nodeMatchesFilter(nodeName, filters) {
-            if (!filters) return true;
-            
-            return filters.some(filter => {
-                if (filter.type === 'exact') {
-                    return nodeName === filter.value;
-                } else if (filter.type === 'regex') {
-                    return filter.value.test(nodeName);
-                } else if (filter.type === 'prefix') {
-                    return nodeName.startsWith(filter.value);
-                }
-                return false;
-            });
-        }
-        
-        // Get node type
-        function getNodeType(nodeName) {
-            if (nodeName.startsWith('test:')) return 'test';
-            // Check if it's a function first
-            const functionNames = new Set(Object.keys(graphData.functions || {}));
-            if (functionNames.has(nodeName)) return 'function';
-            // For models, check materialization
-            if (modelsData[nodeName]) {
-                const materialization = modelsData[nodeName].materialization || 'table';
-                // Treat table, incremental, scd2 as 'table', everything else as 'view'
-                if (materialization === 'table' || materialization === 'incremental' || materialization === 'scd2') {
-                    return 'table';
-                }
-                return 'view';
-            }
-            // Default: if it's in the graph and not a test/function, treat as table
-            // But log a warning if we can't find it in modelsData (only for non-test nodes)
-            if (!nodeName.startsWith('test:')) {
-                console.warn(`Node ${nodeName} not found in modelsData, defaulting to 'table'`);
-            }
-            return 'table';
-        }
-        
-        // Build tree structure
-        function buildTree() {
-            const tree = { name: 'data', children: {} };
-            
-            graphData.nodes.forEach(nodeName => {
-                if (nodeName.startsWith('test:')) {
-                    // Tests go under their parent table
-                    const parts = nodeName.replace('test:', '').split('.');
-                    if (parts.length >= 2) {
-                        const schema = parts[0];
-                        const table = parts.slice(0, 2).join('.');
-                        if (!tree.children[schema]) {
-                            tree.children[schema] = { name: schema, type: 'schema', children: {} };
-                        }
-                        // Ensure models group exists
-                        if (!tree.children[schema].children._models) {
-                            tree.children[schema].children._models = { 
-                                name: 'models', 
-                                type: 'model-group', 
-                                children: {} 
-                            };
-                        }
-                        // Get the correct node type using the full nodeName (for tests, the table name is in the test name)
-                        // Extract table name from test name: "test:my_schema.my_first_table.id.unique" -> "my_schema.my_first_table"
-                        let tableFullName = nodeName.replace(/^test:/, '');
-                        const testTableParts = tableFullName.split('.');
-                        if (testTableParts.length >= 2) {
-                            // Reconstruct table name: schema.table
-                            tableFullName = testTableParts[0] + '.' + testTableParts[1];
-                        }
-                        const correctTableType = getNodeType(tableFullName);
-                        if (!tree.children[schema].children._models.children[table]) {
-                            tree.children[schema].children._models.children[table] = { 
-                                name: table, 
-                                type: correctTableType,
-                                fullName: tableFullName,
-                                children: {}
-                            };
-                        } else {
-                            // Update type if it was set incorrectly
-                            tree.children[schema].children._models.children[table].type = correctTableType;
-                            if (!tree.children[schema].children._models.children[table].fullName) {
-                                tree.children[schema].children._models.children[table].fullName = tableFullName;
-                            }
-                        }
-                        // Ensure children exists
-                        if (!tree.children[schema].children._models.children[table].children) {
-                            tree.children[schema].children._models.children[table].children = {};
-                        }
-                        if (!tree.children[schema].children._models.children[table].children.tests) {
-                            tree.children[schema].children._models.children[table].children.tests = {
-                                name: 'tests',
-                                type: 'test-group',
-                                children: {}
-                            };
-                        }
-                        // Extract test name without "test:" prefix and schema
-                        let testDisplayName = nodeName.replace(/^test:/, '');
-                        const testParts = testDisplayName.split('.');
-                        if (testParts.length > 1) {
-                            testDisplayName = testParts.slice(1).join('.');
-                        }
-                        tree.children[schema].children._models.children[table].children.tests.children[nodeName] = {
-                            name: testDisplayName,
-                            type: 'test',
-                            fullName: nodeName
-                        };
-                    }
-                } else {
-                    const parts = nodeName.split('.');
-                    if (parts.length >= 2) {
-                        const schema = parts[0];
-                        const table = nodeName;
-                        const nodeType = getNodeType(nodeName);
-                        
-                        if (!tree.children[schema]) {
-                            tree.children[schema] = { name: schema, type: 'schema', children: {} };
-                        }
-                        
-                        // Separate functions and models into different groups
-                        if (nodeType === 'function') {
-                            // Functions go into _functions group
-                            if (!tree.children[schema].children._functions) {
-                                tree.children[schema].children._functions = { 
-                                    name: 'functions', 
-                                    type: 'function-group', 
-                                    children: {} 
-                                };
-                            }
-                            // Extract function name without schema prefix
-                            const funcParts = nodeName.split('.');
-                            const funcDisplayName = funcParts.length > 1 ? funcParts.slice(1).join('.') : nodeName;
-                            if (!tree.children[schema].children._functions.children[table]) {
-                                tree.children[schema].children._functions.children[table] = {
-                                    name: funcDisplayName,
-                                    type: 'function',
-                                    fullName: nodeName,
-                                    children: {}
-                                };
-                            }
-                        } else {
-                            // Models (tables/views) go into _models group
-                            if (!tree.children[schema].children._models) {
-                                tree.children[schema].children._models = { 
-                                    name: 'models', 
-                                    type: 'model-group', 
-                                    children: {} 
-                                };
-                            }
-                            // Extract model name without schema prefix
-                            const modelParts = nodeName.split('.');
-                            const modelDisplayName = modelParts.length > 1 ? modelParts.slice(1).join('.') : nodeName;
-                            // Get the correct node type using the full nodeName (not just table)
-                            const correctNodeType = getNodeType(nodeName);
-                            // Only create if it doesn't exist, or ensure it has children if it does
-                            if (!tree.children[schema].children._models.children[table]) {
-                                tree.children[schema].children._models.children[table] = {
-                                    name: modelDisplayName,
-                                    type: correctNodeType,
-                                    fullName: nodeName,
-                                    children: {}
-                                };
-                            } else {
-                                // If it exists (maybe created for a test), ensure it has fullName, type, and children
-                                if (!tree.children[schema].children._models.children[table].fullName) {
-                                    tree.children[schema].children._models.children[table].fullName = nodeName;
-                                }
-                                // Always update type to ensure it's correct (in case it was set incorrectly before)
-                                tree.children[schema].children._models.children[table].type = correctNodeType;
-                                if (!tree.children[schema].children._models.children[table].children) {
-                                    tree.children[schema].children._models.children[table].children = {};
-                                }
-                                // Update display name if it wasn't set correctly
-                                if (tree.children[schema].children._models.children[table].name === table || 
-                                    tree.children[schema].children._models.children[table].name.includes('.')) {
-                                    tree.children[schema].children._models.children[table].name = modelDisplayName;
-                                }
-                            }
-                        }
-                    } else {
-                        // Root-level function (no schema)
-                        if (!tree.children._functions) {
-                            tree.children._functions = { name: 'functions', type: 'function-group', children: {} };
-                        }
-                        tree.children._functions.children[nodeName] = {
-                            name: nodeName,
-                            type: 'function',
-                            fullName: nodeName
-                        };
-                    }
-                }
-            });
-            
-            return tree;
-        }
-        
-        // Render tree
-        function renderTree(tree, container, level = 0) {
-            let keys = Object.keys(tree.children || {});
-            
-            // Sort keys with special handling for group folders
-            keys = keys.sort((a, b) => {
-                // Special groups should come first (models, then functions)
-                const groupOrder = { '_models': 1, '_functions': 2 };
-                const aOrder = groupOrder[a] || 3;
-                const bOrder = groupOrder[b] || 3;
-                if (aOrder !== bOrder) return aOrder - bOrder;
-                // Otherwise alphabetical
-                return a.localeCompare(b);
-            });
-            
-            keys.forEach(key => {
-                const node = tree.children[key];
-                const hasChildren = node.children && Object.keys(node.children).length > 0;
-                
-                const div = document.createElement('div');
-                div.className = 'tree-node';
-                div.dataset.nodeName = node.fullName || node.name;
-                div.dataset.nodeType = node.type;
-                
-                // Consistent icons for each type
-                // For model nodes, check the actual type from fullName if available
-                let actualType = node.type;
-                if ((node.type === 'table' || node.type === 'view' || !node.type) && node.fullName) {
-                    // Re-check the type using the full name to ensure accuracy
-                    const recalculatedType = getNodeType(node.fullName);
-                    if (recalculatedType !== actualType) {
-                        console.log(`Sidebar icon: ${node.name} - stored type: ${actualType}, recalculated: ${recalculatedType}, using: ${recalculatedType}`);
-                        actualType = recalculatedType;
-                    }
-                }
-                
-                const icon = actualType === 'schema' ? '🗃️' : 
-                           actualType === 'table' ? '📅' :
-                           actualType === 'view' ? '🏞️' :
-                           actualType === 'function' ? '🧩' :
-                           actualType === 'test' ? '🧪' :
-                           node.type === 'test-group' ? '🧪' :
-                           node.type === 'model-group' ? '📅' :
-                           node.type === 'function-group' ? '🧩' : '📂';
-                
-                // Extract display name: remove schema prefix and "test:" prefix
-                let displayName = node.name;
-                if (node.fullName) {
-                    // For nodes with fullName, extract just the name part
-                    const fullName = node.fullName;
-                    if (fullName.startsWith('test:')) {
-                        // Remove "test:" prefix
-                        displayName = fullName.replace(/^test:/, '');
-                        // Remove schema prefix (e.g., "my_schema.my_first_table" -> "my_first_table")
-                        const parts = displayName.split('.');
-                        if (parts.length > 1) {
-                            displayName = parts.slice(1).join('.');
-                        }
-                    } else {
-                        // Remove schema prefix for regular nodes
-                        const parts = fullName.split('.');
-                        if (parts.length > 1) {
-                            displayName = parts.slice(1).join('.');
-                        } else {
-                            displayName = fullName;
-                        }
-                    }
-                } else {
-                    // For schema and group nodes, use name as-is
-                    displayName = node.name;
-                }
-                
-                // Add toggle button if has children
-                const toggleHtml = hasChildren ? '<span class="tree-node-toggle"></span>' : '<span class="tree-node-toggle" style="visibility: hidden;"></span>';
-                div.innerHTML = `${toggleHtml}<span class="tree-node-icon">${icon}</span><span class="tree-node-text">${displayName}</span>`;
-                
-                container.appendChild(div);
-                
-                if (hasChildren) {
-                    const childrenDiv = document.createElement('div');
-                    childrenDiv.className = 'tree-children';
-                    // Store reference to children div on the parent node
-                    const childrenId = `children-${Date.now()}-${Math.random()}`;
-                    div.dataset.childrenId = childrenId;
-                    childrenDiv.id = childrenId;
-                    container.appendChild(childrenDiv);
-                    renderTree(node, childrenDiv, level + 1);
-                    // Initially collapsed - hide children
-                    childrenDiv.style.display = 'none';
-                    
-                    // Toggle expand/collapse
-                    const toggle = div.querySelector('.tree-node-toggle');
-                    toggle.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        div.classList.toggle('expanded');
-                        // Manually toggle children visibility
-                        childrenDiv.style.display = div.classList.contains('expanded') ? 'block' : 'none';
-                    });
-                }
-                
-                // Click on node itself
-                div.addEventListener('click', (e) => {
-                    // Don't trigger if clicking toggle
-                    if (e.target.classList.contains('tree-node-toggle')) return;
-                    e.stopPropagation();
-                    if (node.fullName) {
-                        selectNode(node.fullName);
-                        updateFilter(`+${node.fullName}+`);
-                    }
-                });
-                
-                // Double-click to navigate to detail page
-                div.addEventListener('dblclick', (e) => {
-                    e.stopPropagation();
-                    if (node.fullName) {
-                        const safeName = node.fullName.replace(/[^a-zA-Z0-9_]/g, '_');
-                        window.location.href = `model_${safeName}.html`;
-                    }
-                });
-            });
-        }
-        
-        // Initialize Dagre hierarchical graph (like dbt docs)
-        function initGraph() {
-            console.log('initGraph() called');
-            const width = document.querySelector('.graph-container').clientWidth;
-            const height = document.querySelector('.graph-container').clientHeight;
-            
-            const svg = d3.select('#graph-svg')
-                .attr('width', width)
-                .attr('height', height);
-            
-            // Clear previous content completely
-            svg.selectAll('*').remove();
-            // Also clear any zoom transforms
-            svg.on('.zoom', null);
-            
-            // Create a new directed graph
-            const g = new dagre.graphlib.Graph()
-                .setDefaultEdgeLabel(() => ({}))
-                .setGraph({ 
-                    rankdir: 'LR',  // Left to right layout (like dbt docs)
-                    nodesep: 50,
-                    ranksep: 80,
-                    marginx: 50,
-                    marginy: 50
-                });
-            
-            // Define consistent colors and icons for each type
-            const typeConfig = {
-                'table': { 
-                    fill: '#3b82f6', 
-                    stroke: '#2563eb', 
-                    icon: '📊' 
-                },
-                'view': { 
-                    fill: '#93c5fd', 
-                    stroke: '#60a5fa', 
-                    icon: '👁️' 
-                },
-                'function': { 
-                    fill: '#64748b', 
-                    stroke: '#475569', 
-                    icon: '⚙️' 
-                },
-                'test': { 
-                    fill: '#f59e0b', 
-                    stroke: '#d97706', 
-                    icon: '✓' 
-                }
-            };
-            
-            // Filter nodes based on type toggles and text filter
-            const filterText = document.getElementById('filter-input')?.value || '';
-            const filters = parseFilter(filterText);
-            const visibleNodeIds = new Set();
-            
-            // First, filter by type toggles and text filter
-            graphData.nodes.forEach(nodeId => {
-                const nodeType = getNodeType(nodeId);
-                const typeEnabled = isTypeEnabled(nodeType);
-                const matchesFilter = nodeMatchesFilter(nodeId, filters);
-                
-                if (typeEnabled && matchesFilter) {
-                    visibleNodeIds.add(nodeId);
-                }
-            });
-            
-            // Debug: log filtering results
-            console.log('Graph filtering:', {
-                totalNodes: graphData.nodes.length,
-                visibleNodes: visibleNodeIds.size,
-                testEnabled: isTypeEnabled('test'),
-                functionEnabled: isTypeEnabled('function'),
-                tableEnabled: isTypeEnabled('table'),
-                viewEnabled: isTypeEnabled('view')
-            });
-            
-            // Add only visible nodes
-            graphData.nodes.forEach(nodeId => {
-                if (!visibleNodeIds.has(nodeId)) return;
-                
-                const nodeType = getNodeType(nodeId);
-                const parts = nodeId.split('.');
-                const displayName = parts[parts.length - 1];
-                
-                // Get consistent config for this type
-                const config = typeConfig[nodeType] || { 
-                    fill: '#6a737d', 
-                    stroke: '#586069', 
-                    icon: '📄' 
-                };
-                
-                // Calculate width based on full node name to prevent truncation
-                // Use a more generous estimate: ~9-10px per character for 14px Inter font
-                // Account for variable-width characters (dots, underscores are narrower)
-                const charWidth = 9.5; // Adjusted for larger font
-                const textWidth = nodeId.length * charWidth;
-                
-                // Add generous padding: 32px on each side (total 64px)
-                // Ensure minimum width but allow for very long names
-                const nodeWidth = Math.max(textWidth + 64, 150);
-                
-                // Create display name for label - remove "test:" prefix if present
-                let labelText = nodeId;
-                if (nodeId.startsWith('test:')) {
-                    labelText = nodeId.replace(/^test:/, '');
-                }
-                
-                // Create HTML label with proper styling - bigger font, centered vertically
-                const labelHtml = `<div style="white-space: nowrap; overflow: visible; text-overflow: clip; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 500; color: #ffffff; padding: 0; margin: 0; line-height: 40px; display: flex; align-items: center; justify-content: center; height: 40px; min-height: 40px;">${labelText}</div>`;
-                
-                g.setNode(nodeId, {
-                    label: labelHtml,
-                    labelType: 'html',
-                    style: `fill: ${config.fill}; stroke: ${config.stroke}; stroke-width: 2px;`,
-                    class: `node ${nodeType}`,
-                    width: nodeWidth,
-                    height: 40,
-                    labelStyle: 'white-space: nowrap; overflow: visible;'
-                });
-            });
-            
-            // Add edges - only for visible nodes
-            // Double-check: ensure no edges connect to/from hidden nodes
-            let edgesAdded = 0;
-            let edgesSkipped = 0;
-            graphData.edges.forEach(edge => {
-                const source = Array.isArray(edge) ? edge[0] : edge.source;
-                const target = Array.isArray(edge) ? edge[1] : edge.target;
-                
-                // Only add edge if both source and target are visible
-                const sourceVisible = visibleNodeIds.has(source);
-                const targetVisible = visibleNodeIds.has(target);
-                
-                if (sourceVisible && targetVisible) {
-                    // Additional safety check: verify node types are enabled
-                    const sourceType = getNodeType(source);
-                    const targetType = getNodeType(target);
-                    const sourceTypeEnabled = isTypeEnabled(sourceType);
-                    const targetTypeEnabled = isTypeEnabled(targetType);
-                    
-                    if (sourceTypeEnabled && targetTypeEnabled) {
-                        g.setEdge(source, target, {
-                            arrowhead: 'vee',
-                            style: 'stroke: #999; stroke-width: 2px; fill: none;',
-                            class: 'edge'
-                        });
-                        edgesAdded++;
-                    } else {
-                        edgesSkipped++;
-                        console.log(`Skipped edge ${source} -> ${target}: sourceType=${sourceType}(${sourceTypeEnabled}), targetType=${targetType}(${targetTypeEnabled})`);
-                    }
-                } else {
-                    edgesSkipped++;
-                    if (source.startsWith('test:') || target.startsWith('test:')) {
-                        console.log(`Skipped test edge: ${source} -> ${target}`);
-                    }
-                }
-            });
-            console.log(`Edges: ${edgesAdded} added, ${edgesSkipped} skipped (total: ${graphData.edges.length})`);
-            
-            // Calculate layout
-            dagre.layout(g);
-            
-            // Debug: verify graph state before rendering
-            const graphNodes = g.nodes();
-            const graphEdges = g.edges();
-            console.log(`Graph before render: ${graphNodes.length} nodes, ${graphEdges.length} edges`);
-            if (!isTypeEnabled('test')) {
-                const testNodesInGraph = graphNodes.filter(n => n && n.startsWith && n.startsWith('test:'));
-                if (testNodesInGraph.length > 0) {
-                    console.error(`ERROR: ${testNodesInGraph.length} test nodes still in graph!`, testNodesInGraph);
-                }
-                const testEdgesInGraph = graphEdges.filter(e => {
-                    const source = e.v;
-                    const target = e.w;
-                    return (source && source.startsWith && source.startsWith('test:')) || 
-                           (target && target.startsWith && target.startsWith('test:'));
-                });
-                if (testEdgesInGraph.length > 0) {
-                    console.error(`ERROR: ${testEdgesInGraph.length} test edges still in graph!`, testEdgesInGraph);
-                }
-            }
-            
-            // Create renderer
-            const render = new dagreD3.render();
-            
-            // Set up zoom behavior
-            const zoom = d3.zoom()
-                .scaleExtent([0.1, 3])
-                .on('zoom', (event) => {
-                    inner.attr('transform', event.transform);
-                });
-            
-            svg.call(zoom);
-            
-            const inner = svg.append('g');
-            
-            // Render the graph
-            render(inner, g);
-            
-            // Dagre-D3 automatically creates labels, but we need to ensure they show full names
-            // Remove any duplicate labels and ensure the main label shows the full name
-            inner.selectAll('g.node').each(function(d) {
-                const node = d3.select(this);
-                // Dagre-D3 creates labels in a foreignObject or as text elements
-                // Find all text elements and keep only the main one
-                const texts = node.selectAll('text');
-                if (texts.size() > 1) {
-                    // Keep the first one (main label), remove duplicates
-                    texts.filter(function(_, i) { return i > 0; }).remove();
-                }
-                // Update the main label text to ensure it shows the full name
-                // Also check foreignObject > div structure that dagre-d3 uses for HTML labels
-                const foreignObject = node.select('foreignObject');
-                if (!foreignObject.empty()) {
-                    // Get the rect to know the actual node dimensions
-                    const rect = node.select('rect');
-                    const rectNode = rect.node();
-                    if (rectNode) {
-                        const rectBBox = rectNode.getBBox();
-                        const rectWidth = rectBBox.width;
-                        const rectHeight = rectBBox.height;
-                        
-                        // Get current foreignObject position (Dagre-D3 sets this)
-                        const currentX = parseFloat(foreignObject.attr('x')) || 0;
-                        const currentY = parseFloat(foreignObject.attr('y')) || 0;
-                        const currentWidth = parseFloat(foreignObject.attr('width')) || rectWidth;
-                        
-                        // Center the foreignObject horizontally if width changed
-                        const newWidth = rectWidth;
-                        const xOffset = (newWidth - currentWidth) / 2;
-                        const newX = currentX - xOffset;
-                        
-                        // Center vertically - node height is 40, foreignObject should be at y=0
-                        foreignObject.attr('x', newX);
-                        foreignObject.attr('y', 0);
-                        foreignObject.attr('width', newWidth);
-                        foreignObject.attr('height', 40);
-                        foreignObject.style('overflow', 'visible');
-                    }
-                    
-                    const div = foreignObject.select('div');
-                    if (!div.empty()) {
-                        // Remove "test:" prefix from display text
-                        let displayText = d;
-                        if (d.startsWith('test:')) {
-                            displayText = d.replace(/^test:/, '');
-                        }
-                        div.text(displayText);
-                        div.style('white-space', 'nowrap');
-                        div.style('overflow', 'visible');
-                        div.style('text-overflow', 'clip');
-                        div.style('width', '100%');
-                        div.style('max-width', 'none');
-                        div.style('text-align', 'center');
-                        div.style('display', 'flex');
-                        div.style('align-items', 'center');
-                        div.style('justify-content', 'center');
-                        div.style('height', '40px');
-                        div.style('min-height', '40px');
-                        div.style('line-height', '40px');
-                        div.style('font-family', "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif");
-                        div.style('font-size', '14px');
-                        div.style('font-weight', '500');
-                        div.style('margin', '0');
-                        div.style('padding', '0');
-                    }
-                }
-                // Get the first text element (select already returns the first match)
-                const mainText = node.select('text');
-                if (!mainText.empty()) {
-                    mainText.text(d);
-                }
-            });
-            
-            // Add interactivity to nodes - attach to both the group and the rect
-            inner.selectAll('g.node')
-                .style('cursor', 'pointer')
-                .on('click', function(event, d) {
-                    event.stopPropagation();
-                    const nodeId = d;
-                    selectNode(nodeId);
-                    updateFilter(`+${nodeId}+`);
-                })
-                .on('dblclick', function(event, d) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    const nodeId = d;
-                    const safeName = nodeId.replace(/[^a-zA-Z0-9_]/g, '_');
-                    window.location.href = `model_${safeName}.html`;
-                });
-            
-            // Also attach double-click to rect elements to ensure it works on the entire box
-            inner.selectAll('g.node rect')
-                .style('cursor', 'pointer')
-                .on('dblclick', function(event, d) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    // Get the node ID from the parent group
-                    const nodeId = d3.select(this.parentNode).datum();
-                    const safeName = nodeId.replace(/[^a-zA-Z0-9_]/g, '_');
-                    window.location.href = `model_${safeName}.html`;
-                });
-            
-            // Center the graph
-            const graphWidth = g.graph().width;
-            const graphHeight = g.graph().height;
-            const centerX = (width - graphWidth) / 2;
-            const centerY = (height - graphHeight) / 2;
-            
-            const initialTransform = d3.zoomIdentity
-                .translate(centerX, centerY)
-                .scale(0.8);
-            
-            svg.call(zoom.transform, initialTransform);
-            
-            // Store references for filtering
-            window.graphG = g;
-            window.graphInner = inner;
-            window.graphSvg = svg;
-        }
-        
-        // Select node and highlight ancestors/descendants
-        function selectNode(nodeName) {
-            selectedNode = nodeName;
-            
-            // Clear previous highlights
-            highlightedNodes.clear();
-            highlightedNodes.add(nodeName);
-            
-            // Add ancestors (dependencies)
-            const deps = graphData.dependencies[nodeName] || [];
-            deps.forEach(dep => highlightedNodes.add(dep));
-            
-            // Add descendants (dependents)
-            const dependents = graphData.dependents[nodeName] || [];
-            dependents.forEach(dep => highlightedNodes.add(dep));
-            
-            updateGraphHighlight();
-            updateTreeSelection();
-        }
-        
-        // Update graph highlighting
-        function updateGraphHighlight() {
-            if (!window.graphInner) return;
-            
-            window.graphInner.selectAll('g.node')
-                .each(function(d) {
-                    const node = d3.select(this);
-                    const nodeId = d;
-                    node.classed('selected', nodeId === selectedNode);
-                    node.classed('highlighted', highlightedNodes.has(nodeId) && nodeId !== selectedNode);
-                    node.classed('hidden', false);
-                });
-            
-            window.graphInner.selectAll('g.edgePath')
-                .each(function(d) {
-                    const edge = d3.select(this);
-                    const sourceId = d.v;
-                    const targetId = d.w;
-                    const isHighlighted = highlightedNodes.has(sourceId) && highlightedNodes.has(targetId);
-                    edge.classed('highlighted', isHighlighted);
-                    edge.classed('hidden', false);
-                });
-        }
-        
-        // Update tree selection
-        function updateTreeSelection() {
-            document.querySelectorAll('.tree-node').forEach(node => {
-                node.classList.toggle('selected', node.dataset.nodeName === selectedNode);
-            });
-        }
-        
-        // Update filter
-        function updateFilter(filterText) {
-            document.getElementById('filter-input').value = filterText;
-            // Redraw graph with new filter
-            initGraph();
-            updateVisibleCount();
-        }
-        
-        // Get type toggle state
-        function isTypeEnabled(type) {
-            const legendItem = document.querySelector(`.legend-item[data-type="${type}"]`);
-            return legendItem ? legendItem.getAttribute('data-enabled') === 'true' : true;
-        }
+function inferLayer(name) {
+  const n = name.toLowerCase();
+  if (n.startsWith("test:")) return "test";
+  const short = n.split(".").pop();
+  if (short.startsWith("raw_") || short.startsWith("src_raw_") || n.includes(".raw_")) return "raw";
+  if (short.startsWith("stg_") || short.includes("_stg_") || n.includes(".staging_")) return "staging";
+  if (short.startsWith("dim_")) return "dim";
+  if (short.startsWith("lkp_")) return "lookup";
+  if (short.startsWith("fct_") || short.startsWith("fact_") || n.includes(".fct_")) return "fact";
+  return "staging";
+}
 
-        // Toggle type visibility
-        function toggleType(type) {
-            const legendItem = document.querySelector(`.legend-item[data-type="${type}"]`);
-            if (!legendItem) {
-                console.warn(`Legend item not found for type: ${type}`);
-                return;
-            }
-            
-            const isEnabled = legendItem.getAttribute('data-enabled') === 'true';
-            const newState = (!isEnabled).toString();
-            legendItem.setAttribute('data-enabled', newState);
-            console.log(`Toggled ${type} to ${newState}`);
-            console.log('Calling initGraph() to redraw graph...');
-            // Redraw the graph with filtered nodes (not just hide them)
-            try {
-                initGraph();
-                console.log('initGraph() completed successfully');
-            } catch (error) {
-                console.error('Error calling initGraph():', error);
-                console.error(error.stack);
-            }
-            // Also update the visible count
-            updateVisibleCount();
-        }
+function titleFor(name) {
+  const parts = name.split(".");
+  return parts.length > 1 ? parts.slice(1).join(".") : name;
+}
 
-        // Apply filter
-        function applyFilter() {
-            const filterText = document.getElementById('filter-input').value;
-            const filters = parseFilter(filterText);
-            
-            if (!window.graphInner) return;
-            
-            let visibleCount = 0;
-            
-            // Get all nodes from the graph
-            const allNodeIds = graphData.nodes;
-            const visibleNodeIds = new Set();
-            
-            // Check which nodes match the filter AND are enabled by type toggle
-            allNodeIds.forEach(nodeId => {
-                const nodeType = getNodeType(nodeId);
-                const typeEnabled = isTypeEnabled(nodeType);
-                const matchesFilter = nodeMatchesFilter(nodeId, filters);
-                
-                if (matchesFilter && typeEnabled) {
-                    visibleNodeIds.add(nodeId);
-                    visibleCount++;
-                }
-            });
-            
-            // Update node visibility
-            if (window.graphInner) {
-                window.graphInner.selectAll('g.node')
-                    .each(function(d) {
-                        const nodeId = d;
-                        const matches = visibleNodeIds.has(nodeId);
-                        const node = d3.select(this);
-                        node.classed('hidden', !matches);
-                        // Also hide rect and foreignObject
-                        node.select('rect').classed('hidden', !matches);
-                        node.select('foreignObject').classed('hidden', !matches);
-                    });
-                
-                // Update edge visibility - only show if both source and target are visible
-                window.graphInner.selectAll('g.edgePath')
-                    .each(function(d) {
-                        const sourceId = d.v;
-                        const targetId = d.w;
-                        const matches = visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId);
-                        d3.select(this).classed('hidden', !matches);
-                    });
-            } else {
-                console.warn('graphInner not available');
-            }
-            
-            // Update edge visibility - only show if both source and target are visible
-            window.graphInner.selectAll('g.edgePath')
-                .each(function(d) {
-                    const sourceId = d.v;
-                    const targetId = d.w;
-                    const matches = visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId);
-                    d3.select(this).classed('hidden', !matches);
-                });
-            
-            document.getElementById('visible-count').textContent = visibleCount;
+function normalizeGraph() {
+  const nodes = graphData.nodes.map(id => ({
+    id,
+    label: titleFor(id),
+    layer: inferLayer(id),
+    description: modelsData[id]?.description || "No description",
+    columns: modelsData[id]?.columns || [],
+    table_type: modelsData[id]?.table_type,
+    data_model: modelsData[id]?.data_model,
+    hierarchy: modelsData[id]?.hierarchy || null,
+    _w: inferLayer(id) === "test"
+      ? Math.max(92, Math.min(360, titleFor(id).length * 5.9 + 20))
+      : LAYER_W[inferLayer(id)],
+    _h: 0,
+    _hCollapsed: H_COLLAPSED,
+    _rx: LAYER_RX[inferLayer(id)],
+    _unassignedColumns: [],
+    _levelBoxes: [],
+    _unassignedShown: 0
+  }));
+
+  const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const sqlEdgeSet = new Set(
+    (graphData.sql_edges || []).map(e => {
+      const src = Array.isArray(e) ? e[0] : e.source;
+      const tgt = Array.isArray(e) ? e[1] : e.target;
+      return `${src}::${tgt}`;
+    })
+  );
+  const filteredEdges = (graphData.edges || [])
+    .map(e => ({
+      source: Array.isArray(e) ? e[0] : e.source,
+      target: Array.isArray(e) ? e[1] : e.target
+    }))
+    .filter(e => nodeMap[e.source] && nodeMap[e.target])
+    .map(e => ({
+      source: nodeMap[e.source],
+      target: nodeMap[e.target],
+      is_sql: sqlEdgeSet.has(`${e.source}::${e.target}`)
+    }));
+
+  MODEL.nodes = nodes;
+  MODEL.edges = filteredEdges;
+  MODEL.nodes.forEach(n => {
+    const allCols = n.columns || [];
+    const dbtShown = Math.min(allCols.length, MAX_COLS[n.layer]);
+    const hasOverflow = allCols.length > MAX_COLS[n.layer];
+
+    // Defaults: flat column list.
+    n._unassignedColumns = allCols;
+    n._levelBoxes = [];
+    n._unassignedShown = dbtShown;
+
+    // Default node height: flat columns.
+    n._h = n.layer === "test"
+      ? (6 + TEST_HDR_H + 6)
+      : (PAD_V + HDR_H + DIVIDER_H + dbtShown * COL_ROW_H + (hasOverflow ? COL_ROW_H : 0) + PAD_V);
+
+    // If this is a hierarchical Data Model node, we also compute a separate
+    // height used when columns are hidden (hierarchy boxes only).
+    if (isHierarchicalDataModelNode(n)) {
+      const levels = (n.hierarchy && Array.isArray(n.hierarchy.levels)) ? n.hierarchy.levels : [];
+      const assigned = new Set();
+      const levelBoxes = [];
+
+      levels.forEach(level => {
+        if (!level || typeof level !== "object") return;
+        const pk = typeof level.primary_key === "string" ? level.primary_key : null;
+        const labelCol = typeof level.column === "string" ? level.column : null;
+        const attrCols = Array.isArray(level.columns) ? level.columns : [];
+
+        if (pk) assigned.add(pk);
+        if (labelCol) assigned.add(labelCol);
+        attrCols.forEach(c => { if (typeof c === "string" && c) assigned.add(c); });
+
+        const boxCols = [];
+        if (labelCol) boxCols.push(labelCol);
+        attrCols.forEach(c => { if (typeof c === "string" && c && !boxCols.includes(c)) boxCols.push(c); });
+
+        if (typeof level.name === "string" && level.name) {
+          levelBoxes.push({
+            level_number: level.level_number,
+            name: level.name,
+            primary_key: pk,
+            column: labelCol,
+            boxCols
+          });
         }
-        
-        // Update visible count based on current filters and toggles
-        function updateVisibleCount() {
-            const filterText = document.getElementById('filter-input')?.value || '';
-            const filters = parseFilter(filterText);
-            let visibleCount = 0;
-            
-            graphData.nodes.forEach(nodeId => {
-                const nodeType = getNodeType(nodeId);
-                const typeEnabled = isTypeEnabled(nodeType);
-                const matchesFilter = nodeMatchesFilter(nodeId, filters);
-                
-                if (typeEnabled && matchesFilter) {
-                    visibleCount++;
-                }
-            });
-            
-            const visibleCountEl = document.getElementById('visible-count');
-            if (visibleCountEl) {
-                visibleCountEl.textContent = visibleCount;
-            }
+      });
+
+      // Ensure deterministic top-to-bottom order (Region -> Shop) by level_number.
+      levelBoxes.sort((a, b) => {
+        const an = typeof a.level_number === "number" ? a.level_number : parseInt(a.level_number, 10) || 0;
+        const bn = typeof b.level_number === "number" ? b.level_number : parseInt(b.level_number, 10) || 0;
+        return an - bn;
+      });
+
+      const unassigned = allCols.filter(c => c && typeof c.name === "string" && !assigned.has(c.name));
+      const unassignedShown = Math.min(unassigned.length, MAX_COLS[n.layer]);
+
+      n._unassignedColumns = unassigned;
+      n._levelBoxes = levelBoxes;
+      n._unassignedShown = unassignedShown;
+
+      // Star view sizing:
+      // - _hCollapsed: small border when hierarchy is not expanded
+      // - _hHierExpanded: tall border when hierarchy boxes are expanded
+      const nLevels = levelBoxes.length || 1;
+      // Must match renderNodes() geometry for stacked hierarchy boxes:
+      // boxH = rowCount * COL_ROW_H + 7 (rowCount is 1 because PK row is omitted)
+      const boxH = COL_ROW_H + 7;
+      // In renderNodes():
+      //   dividerYBoxes = -h/2 + PAD_V + HDR_H
+      //   startYBoxes = dividerYBoxes + COL_ROW_H * 0.72
+      //   boxY0 = startYBoxes + 6
+      //   last box bottom = boxY0 + (nLevels-1)*(boxH+6) + boxH/2
+      // Solving last-bottom == h/2 gives:
+      n._hHierExpanded =
+        (PAD_V + HDR_H + COL_ROW_H * 0.72 + 6) +
+        (Math.max(0, nLevels - 1) * (boxH + 6)) +
+        (boxH / 2);
+      // Add a tiny extra padding so the last level box doesn't intersect
+      // the outer node border stroke.
+      n._hHierExpanded += 6;
+      n._hCollapsed = H_COLLAPSED;
+    } else {
+      n._hCollapsed = H_COLLAPSED;
+    }
+  });
+}
+
+function computeDbtLayout(nodes, w, h) {
+  const LAYER_ORDER = ["raw", "staging", "dim", "lookup", "fact"];
+  const layerLabel = { raw: "RAW", staging: "STAGING", dim: "DIMENSIONS", lookup: "LOOKUPS", fact: "FACTS" };
+  const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const coreNodes = nodes.filter(n => n.layer !== "test");
+  const coreIds = new Set(coreNodes.map(n => n.id));
+  const intraDepth = Object.fromEntries(coreNodes.map(n => [n.id, 0]));
+  const intraEdges = (edges || []).filter(e =>
+    coreIds.has(e.source.id) &&
+    coreIds.has(e.target.id) &&
+    nodeById[e.source.id]?.layer === nodeById[e.target.id]?.layer
+  );
+  const inDeg = Object.fromEntries(coreNodes.map(n => [n.id, 0]));
+  const kids = Object.fromEntries(coreNodes.map(n => [n.id, []]));
+  intraEdges.forEach(e => { inDeg[e.target.id] += 1; kids[e.source.id].push(e.target.id); });
+  const queue = coreNodes.filter(n => inDeg[n.id] === 0).map(n => n.id);
+  const seen = new Set(queue);
+  while (queue.length) {
+    const id = queue.shift();
+    kids[id].forEach(cid => {
+      intraDepth[cid] = Math.max(intraDepth[cid], intraDepth[id] + 1);
+      inDeg[cid] -= 1;
+      if (inDeg[cid] === 0 && !seen.has(cid)) { seen.add(cid); queue.push(cid); }
+    });
+  }
+  const bandCols = {};
+  LAYER_ORDER.forEach(layer => {
+    const ln = coreNodes.filter(n => n.layer === layer);
+    if (!ln.length) {
+      bandCols[layer] = 0;
+      return;
+    }
+    // Keep lookups in a single visual column in Data Flow.
+    // We still allow intra-layer links, but they are represented vertically.
+    if (layer === "lookup") {
+      bandCols[layer] = 1;
+      return;
+    }
+    bandCols[layer] = Math.max(...ln.map(n => intraDepth[n.id])) + 1;
+  });
+  const margin = 0.06;
+  const INTRA_RATIO = 0.45;
+  const activeLayers = LAYER_ORDER.filter(l => bandCols[l] > 0);
+  const interGaps = Math.max(activeLayers.length - 1, 0);
+  const intraGaps = activeLayers.reduce((s, l) => s + bandCols[l] - 1, 0);
+  const usableW = w * (1 - 2 * margin);
+  const G = usableW / Math.max(1, interGaps + intraGaps * INTRA_RATIO);
+  const g = G * INTRA_RATIO;
+  const bandStart = {};
+  const colXmap = {};
+  let cx = w * margin;
+  let absColIdx = 0;
+  activeLayers.forEach((layer, bi) => {
+    bandStart[layer] = absColIdx;
+    for (let s = 0; s < bandCols[layer]; s += 1) {
+      colXmap[absColIdx] = cx;
+      if (s < bandCols[layer] - 1) cx += g;
+      absColIdx += 1;
+    }
+    if (bi < activeLayers.length - 1) cx += G;
+  });
+  LAYER_ORDER.filter(l => !bandCols[l]).forEach(l => { bandStart[l] = absColIdx; });
+  const byAbsCol = {};
+  coreNodes.forEach(n => {
+    const absCol = n.layer === "lookup" ? bandStart[n.layer] : (bandStart[n.layer] + (intraDepth[n.id] || 0));
+    n._absCol = absCol;
+    if (!byAbsCol[absCol]) byAbsCol[absCol] = [];
+    byAbsCol[absCol].push(n);
+  });
+
+  // Reduce edge crossings by ordering nodes within each column using barycenters
+  // from neighboring columns. This keeps connected nodes closer vertically.
+  const sortedCols = Object.keys(byAbsCol).map(Number).sort((a, b) => a - b);
+  const edgesByTarget = new Map();
+  const edgesBySource = new Map();
+  (edges || []).forEach(e => {
+    if (!edgesByTarget.has(e.target.id)) edgesByTarget.set(e.target.id, []);
+    if (!edgesBySource.has(e.source.id)) edgesBySource.set(e.source.id, []);
+    edgesByTarget.get(e.target.id).push(e.source.id);
+    edgesBySource.get(e.source.id).push(e.target.id);
+  });
+
+  // Initialize deterministic order (id) before iterative refinement.
+  sortedCols.forEach(col => {
+    byAbsCol[col].sort((a, b) => a.id.localeCompare(b.id));
+  });
+
+  function indexMapFor(colNodes) {
+    const map = new Map();
+    colNodes.forEach((n, i) => map.set(n.id, i));
+    return map;
+  }
+
+  function median(values) {
+    if (!values.length) return null;
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2) return sorted[mid];
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+
+  // A few downward/upward sweeps are enough for meaningful crossing reduction.
+  const SWEEPS = 6;
+  for (let sweep = 0; sweep < SWEEPS; sweep += 1) {
+    // Downward pass: align to previous column
+    for (let i = 1; i < sortedCols.length; i += 1) {
+      const col = sortedCols[i];
+      const prevCol = sortedCols[i - 1];
+      const prevIdx = indexMapFor(byAbsCol[prevCol]);
+      byAbsCol[col].sort((a, b) => {
+        const aNeighbors = (edgesByTarget.get(a.id) || []).filter(id => prevIdx.has(id)).map(id => prevIdx.get(id));
+        const bNeighbors = (edgesByTarget.get(b.id) || []).filter(id => prevIdx.has(id)).map(id => prevIdx.get(id));
+        const aScore = median(aNeighbors);
+        const bScore = median(bNeighbors);
+        if (aScore === null && bScore === null) return a.id.localeCompare(b.id);
+        if (aScore === null) return 1;
+        if (bScore === null) return -1;
+        if (aScore !== bScore) return aScore - bScore;
+        return a.id.localeCompare(b.id);
+      });
+    }
+
+    // Upward pass: align to next column
+    for (let i = sortedCols.length - 2; i >= 0; i -= 1) {
+      const col = sortedCols[i];
+      const nextCol = sortedCols[i + 1];
+      const nextIdx = indexMapFor(byAbsCol[nextCol]);
+      byAbsCol[col].sort((a, b) => {
+        const aNeighbors = (edgesBySource.get(a.id) || []).filter(id => nextIdx.has(id)).map(id => nextIdx.get(id));
+        const bNeighbors = (edgesBySource.get(b.id) || []).filter(id => nextIdx.has(id)).map(id => nextIdx.get(id));
+        const aScore = median(aNeighbors);
+        const bScore = median(bNeighbors);
+        if (aScore === null && bScore === null) return a.id.localeCompare(b.id);
+        if (aScore === null) return 1;
+        if (bScore === null) return -1;
+        if (aScore !== bScore) return aScore - bScore;
+        return a.id.localeCompare(b.id);
+      });
+    }
+  }
+
+  // Keep lookups grouped by their nearest upstream dimension so lookup families
+  // from different dimensions stay contiguous in the single lookup column.
+  const lookupAbsCol = bandStart.lookup;
+  if (typeof lookupAbsCol === "number" && byAbsCol[lookupAbsCol] && byAbsCol[lookupAbsCol].length > 1) {
+    const upstreamByTarget = new Map();
+    coreNodes.forEach(n => upstreamByTarget.set(n.id, []));
+    (edges || []).forEach(e => {
+      if (!upstreamByTarget.has(e.target.id)) upstreamByTarget.set(e.target.id, []);
+      upstreamByTarget.get(e.target.id).push(e.source.id);
+    });
+
+    const dimAnchorCache = new Map();
+    function nearestDimAnchor(nodeId) {
+      if (dimAnchorCache.has(nodeId)) return dimAnchorCache.get(nodeId);
+      const queue = [nodeId];
+      const seen = new Set([nodeId]);
+      while (queue.length) {
+        const cur = queue.shift();
+        const curNode = nodeById[cur];
+        if (curNode && curNode.layer === "dim") {
+          dimAnchorCache.set(nodeId, curNode.id);
+          return curNode.id;
         }
-        
-        // Calculate optimal sidebar width based on longest model name
-        function calculateSidebarWidth() {
-            let maxWidth = 0;
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.visibility = 'hidden';
-            tempDiv.style.whiteSpace = 'nowrap';
-            tempDiv.style.fontSize = '14px';
-            tempDiv.style.fontFamily = getComputedStyle(document.body).fontFamily;
-            tempDiv.style.padding = '4px 8px';
-            document.body.appendChild(tempDiv);
-            
-            // Check all node names (including nested paths for tree structure)
-            graphData.nodes.forEach(nodeName => {
-                // Calculate width for the full path (schema.table format)
-                tempDiv.textContent = nodeName;
-                const width = tempDiv.offsetWidth;
-                if (width > maxWidth) {
-                    maxWidth = width;
-                }
-                
-                // Also check for nested paths (e.g., schema.table.test_name)
-                const parts = nodeName.split('.');
-                if (parts.length > 2) {
-                    // For nested items, add indentation (20px per level)
-                    const indent = (parts.length - 2) * 20;
-                    if (width + indent > maxWidth) {
-                        maxWidth = width + indent;
-                    }
-                }
-            });
-            
-            document.body.removeChild(tempDiv);
-            
-            // Add padding for icons, toggle, and margins
-            // Toggle (16px) + margin (4px) + icon (16px) + margin (4px) + padding (16px each side) + extra margin (20px)
-            const padding = 16 + 4 + 16 + 4 + 32 + 20;
-            const minWidth = 200;
-            const maxAllowedWidth = 450;
-            
-            return Math.max(minWidth, Math.min(maxWidth + padding, maxAllowedWidth));
-        }
-        
-        // Toggle sidebar collapse
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.getElementById('sidebar-toggle');
-            const isCollapsed = sidebar.classList.contains('collapsed');
-            
-            if (isCollapsed) {
-                sidebar.classList.remove('collapsed');
-                toggle.textContent = '◀';
-                toggle.title = 'Collapse sidebar';
-            } else {
-                sidebar.classList.add('collapsed');
-                toggle.textContent = '▶';
-                toggle.title = 'Expand sidebar';
-            }
-        }
-        
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                console.log('Initializing t4t docs...');
-                console.log('Graph data nodes:', graphData.nodes.length);
-                console.log('Models data:', Object.keys(modelsData).length);
-                
-                // Calculate and set sidebar width
-                const optimalWidth = calculateSidebarWidth();
-                document.getElementById('sidebar').style.width = optimalWidth + 'px';
-                console.log('Sidebar width set to:', optimalWidth + 'px');
-                
-                // Setup sidebar toggle
-                document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
-                
-                const tree = buildTree();
-                console.log('Tree built:', tree);
-                
-                const treeContainer = document.getElementById('tree-container');
-                if (!treeContainer) {
-                    console.error('Tree container not found!');
-                    return;
-                }
-                renderTree(tree, treeContainer);
-                console.log('Tree rendered');
-                
-                initGraph();
-                console.log('Graph initialized');
-                
-                const filterInput = document.getElementById('filter-input');
-                if (filterInput) {
-                    filterInput.addEventListener('input', () => {
-                        // Redraw graph when filter changes
-                        initGraph();
-                        updateVisibleCount();
-                    });
-                }
-                
-                // Setup legend toggle handlers
-                const legendItems = document.querySelectorAll('.legend-item');
-                console.log(`Found ${legendItems.length} legend items`);
-                legendItems.forEach(item => {
-                    const type = item.getAttribute('data-type');
-                    console.log(`Setting up toggle for type: ${type}`);
-                    item.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        const type = this.getAttribute('data-type');
-                        console.log(`Legend item clicked: ${type}`);
-                        toggleType(type);
-                    });
-                    // Make it clear it's clickable
-                    item.style.cursor = 'pointer';
-                });
-                
-                // Handle window resize
-                window.addEventListener('resize', () => {
-                    const width = document.querySelector('.graph-container').clientWidth;
-                    const height = document.querySelector('.graph-container').clientHeight;
-                    d3.select('#graph-svg').attr('width', width).attr('height', height);
-                    // Re-center the graph
-                    if (window.graphG && window.graphSvg) {
-                        const graphWidth = window.graphG.graph().width;
-                        const graphHeight = window.graphG.graph().height;
-                        const centerX = (width - graphWidth) / 2;
-                        const centerY = (height - graphHeight) / 2;
-                        const transform = d3.zoomIdentity.translate(centerX, centerY).scale(0.8);
-                        window.graphSvg.call(d3.zoom().transform, transform);
-                    }
-                });
-            } catch (error) {
-                console.error('Error initializing docs:', error);
-                console.error(error.stack);
-            }
+        (upstreamByTarget.get(cur) || []).forEach(pid => {
+          if (!seen.has(pid)) {
+            seen.add(pid);
+            queue.push(pid);
+          }
         });
-    </script>
-    {% block content %}{% endblock %}
+      }
+      dimAnchorCache.set(nodeId, "");
+      return "";
+    }
+
+    byAbsCol[lookupAbsCol].sort((a, b) => {
+      const aAnchor = nearestDimAnchor(a.id);
+      const bAnchor = nearestDimAnchor(b.id);
+      if (aAnchor !== bAnchor) return aAnchor.localeCompare(bAnchor);
+      return a.id.localeCompare(b.id);
+    });
+  }
+
+  const usableH = h - 180;
+  const testCountByModel = new Map();
+  if (testsVisible) {
+    const tests = nodes.filter(n => n.layer === "test");
+    tests.forEach(tn => {
+      const down = (edges || []).find(e => e.source.id === tn.id && e.target.layer !== "test");
+      const up = (edges || []).find(e => e.target.id === tn.id && e.source.layer !== "test");
+      const anchor = down ? down.target : (up ? up.source : null);
+      if (!anchor) return;
+      testCountByModel.set(anchor.id, (testCountByModel.get(anchor.id) || 0) + 1);
+    });
+  }
+  Object.entries(byAbsCol).forEach(([absCol, members]) => {
+    const x = colXmap[Number(absCol)];
+    const effectiveHeights = members.map(n => {
+      const tCount = testsVisible ? (testCountByModel.get(n.id) || 0) : 0;
+      // Reserve extra vertical space for tests attached to this model.
+      const extra = tCount > 0 ? (18 + (tCount - 1) * 16) : 0;
+      return n._h + extra;
+    });
+    const maxH = Math.max(...effectiveHeights);
+    const spacing = Math.max(maxH + 18, (usableH - members.length * maxH) / (members.length + 1) + maxH);
+    const totalSpan = members.length * spacing;
+    const startY = (h - totalSpan) / 2 + spacing / 2;
+    members.forEach((node, i) => { node.dbt = { x, y: Math.max(130, startY + i * spacing) }; });
+  });
+
+  // Place tests in front of related models, slightly below.
+  const tests = nodes.filter(n => n.layer === "test");
+  const testsByAnchor = new Map();
+  tests.forEach(tn => {
+    const down = (edges || []).find(e => e.source.id === tn.id && e.target.layer !== "test");
+    const up = (edges || []).find(e => e.target.id === tn.id && e.source.layer !== "test");
+    const anchor = down ? down.target : (up ? up.source : null);
+    if (!anchor || !anchor.dbt) return;
+    if (!testsByAnchor.has(anchor.id)) testsByAnchor.set(anchor.id, []);
+    testsByAnchor.get(anchor.id).push(tn);
+  });
+  testsByAnchor.forEach((testNodes, anchorId) => {
+    const anchor = nodeById[anchorId];
+    if (!anchor || !anchor.dbt) return;
+    testNodes.forEach((testNode, idx) => {
+      const dx = (anchor._w / 2) + (testNode._w / 2) + 20;
+      const dy = (anchor._h / 2) + 12 + idx * (testNode._h + 6);
+      testNode._absCol = anchor._absCol;
+      testNode.dbt = { x: anchor.dbt.x + dx, y: anchor.dbt.y + dy };
+    });
+  });
+
+  // Fallback for unanchored tests.
+  tests.forEach(tn => {
+    if (tn.dbt) return;
+    tn._absCol = 0;
+    tn.dbt = { x: w * 0.2, y: h * 0.12 };
+  });
+
+  // Resolve overlaps: push tests right/down until they no longer intersect model boxes.
+  const modelBoxes = coreNodes.map(n => ({
+    left: n.dbt.x - n._w / 2,
+    right: n.dbt.x + n._w / 2,
+    top: n.dbt.y - n._h / 2,
+    bottom: n.dbt.y + n._h / 2
+  }));
+  const testBoxes = [];
+  function overlaps(a, b, pad = 6) {
+    return !(a.right + pad < b.left || a.left - pad > b.right || a.bottom + pad < b.top || a.top - pad > b.bottom);
+  }
+  tests.forEach(tn => {
+    let box = {
+      left: tn.dbt.x - tn._w / 2,
+      right: tn.dbt.x + tn._w / 2,
+      top: tn.dbt.y - tn._h / 2,
+      bottom: tn.dbt.y + tn._h / 2
+    };
+    let guard = 0;
+    while (guard < 80 && (modelBoxes.some(mb => overlaps(box, mb, 8)) || testBoxes.some(tb => overlaps(box, tb, 4)))) {
+      tn.dbt.x += 10;
+      tn.dbt.y += 2;
+      box = {
+        left: tn.dbt.x - tn._w / 2,
+        right: tn.dbt.x + tn._w / 2,
+        top: tn.dbt.y - tn._h / 2,
+        bottom: tn.dbt.y + tn._h / 2
+      };
+      guard += 1;
+    }
+    testBoxes.push(box);
+  });
+  dbtColumns = [];
+  LAYER_ORDER.forEach(layer => {
+    const bc = bandCols[layer];
+    if (!bc) return;
+    const s = bandStart[layer];
+    const subCols = Array.from({ length: bc }, (_, i) => colXmap[s + i]);
+    dbtColumns.push({
+      label: layerLabel[layer],
+      x: (subCols[0] + subCols[subCols.length - 1]) / 2,
+      subCols,
+      multiCol: bc > 1
+    });
+  });
+}
+
+function nodesForDbtLayout() {
+  return testsVisible ? MODEL.nodes : MODEL.nodes.filter(n => n.layer !== "test");
+}
+
+function recomputeDbtGeometry() {
+  const nw = window.innerWidth;
+  const nh = window.innerHeight;
+  computeDbtLayout(nodesForDbtLayout(), nw, nh);
+  d3.select(".col-labels-g").remove();
+  renderColLabels(d3.select(".zoom-layer"), nw);
+}
+
+function computeStarLayout(nodes, w, h) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const factNodes = nodes.filter(n => n.layer === "fact");
+  const dimNodes = nodes.filter(n => n.layer === "dim");
+  const lookupNodes = nodes.filter(n => n.layer === "lookup");
+  const stgNodes = nodes.filter(n => n.layer === "staging");
+  const rawNodes = nodes.filter(n => n.layer === "raw");
+  const testNodes = nodes.filter(n => n.layer === "test");
+  const factOrbR = factNodes.length > 1 ? Math.min(w, h) * 0.10 : 0;
+  const dimR = Math.min(w, h) * 0.29;
+  const lookupBaseR = Math.min(w, h) * 0.43;
+  const lookupStepR = Math.min(w, h) * 0.06;
+  const stgR = Math.min(w, h) * 0.45;
+  const rawR = Math.min(w, h) * 0.60;
+  const avgAngle = angs => Math.atan2(d3.mean(angs, a => Math.sin(a)), d3.mean(angs, a => Math.cos(a)));
+
+  factNodes.forEach((node, i) => {
+    const angle = factNodes.length > 1 ? (2 * Math.PI * i) / factNodes.length : 0;
+    node.star = { x: cx + factOrbR * Math.cos(angle), y: cy + factOrbR * Math.sin(angle) };
+  });
+  dimNodes.forEach((node, i) => {
+    const angle = (2 * Math.PI * i) / Math.max(1, dimNodes.length) - Math.PI / 2;
+    node.star = { x: cx + dimR * Math.cos(angle), y: cy + dimR * Math.sin(angle) };
+  });
+  // Compute descendant counts among lookup nodes only.
+  const lookupIdSet = new Set(lookupNodes.map(n => n.id));
+  const lookupAdj = new Map();
+  lookupNodes.forEach(n => lookupAdj.set(n.id, []));
+  (edges || []).forEach(e => {
+    if (lookupIdSet.has(e.source.id) && lookupIdSet.has(e.target.id)) {
+      lookupAdj.get(e.source.id).push(e.target.id);
+    }
+  });
+  function lookupDescCount(startId) {
+    const seen = new Set();
+    const queue = [...(lookupAdj.get(startId) || [])];
+    while (queue.length) {
+      const id = queue.shift();
+      if (seen.has(id)) continue;
+      seen.add(id);
+      (lookupAdj.get(id) || []).forEach(nxt => {
+        if (!seen.has(nxt)) queue.push(nxt);
+      });
+    }
+    return seen.size;
+  }
+  const lookupDescById = new Map(lookupNodes.map(n => [n.id, lookupDescCount(n.id)]));
+
+  lookupNodes.forEach((node, i) => {
+    const down = edges.filter(e => e.source.id === node.id).map(e => e.target).filter(t => t.layer === "dim" || t.layer === "fact");
+    const up = edges.filter(e => e.target.id === node.id).map(e => e.source).filter(t => t.layer === "dim" || t.layer === "fact");
+    const neigh = [...down, ...up];
+    const angle = neigh.length
+      ? avgAngle(neigh.map(n => Math.atan2(n.star.y - cy, n.star.x - cx)))
+      : ((2 * Math.PI * i) / Math.max(1, lookupNodes.length) - Math.PI / 2);
+    const descCount = lookupDescById.get(node.id) || 0;
+    const nodeLookupR = lookupBaseR + descCount * lookupStepR;
+    node.star = { x: cx + nodeLookupR * Math.cos(angle), y: cy + nodeLookupR * Math.sin(angle) };
+  });
+
+  // Resolve lookup collisions in Data Model view by pushing nearby lookup nodes apart.
+  // Keep movement bounded so links still read as anchored around their neighborhoods.
+  if (lookupNodes.length > 1) {
+    const minDist = 225;
+    const maxR = Math.min(w, h) * 0.68;
+    const minR = lookupBaseR * 0.95;
+    for (let iter = 0; iter < 8; iter += 1) {
+      let moved = false;
+      for (let i = 0; i < lookupNodes.length; i += 1) {
+        for (let j = i + 1; j < lookupNodes.length; j += 1) {
+          const a = lookupNodes[i];
+          const b = lookupNodes[j];
+          const dx = b.star.x - a.star.x;
+          const dy = b.star.y - a.star.y;
+          const dist = Math.hypot(dx, dy) || 0.001;
+          if (dist >= minDist) continue;
+          moved = true;
+          const push = (minDist - dist) / 2;
+          const ux = dx / dist;
+          const uy = dy / dist;
+          a.star.x -= ux * push;
+          a.star.y -= uy * push;
+          b.star.x += ux * push;
+          b.star.y += uy * push;
+        }
+      }
+      // Re-clamp on ring bounds to avoid drifting too far.
+      lookupNodes.forEach(n => {
+        const vx = n.star.x - cx;
+        const vy = n.star.y - cy;
+        const r = Math.hypot(vx, vy) || 0.001;
+        const clampedR = Math.max(minR, Math.min(maxR, r));
+        n.star.x = cx + (vx / r) * clampedR;
+        n.star.y = cy + (vy / r) * clampedR;
+      });
+      if (!moved) break;
+    }
+  }
+  const starAngle = n => Math.atan2(n.star.y - cy, n.star.x - cx);
+  stgNodes.forEach((node, i) => {
+    const down = edges.filter(e => e.source.id === node.id).map(e => e.target).filter(t => t.layer === "dim" || t.layer === "fact");
+    const angle = down.length ? avgAngle(down.map(starAngle)) : (2 * Math.PI * i) / Math.max(1, stgNodes.length);
+    node.star = { x: cx + stgR * Math.cos(angle), y: cy + stgR * Math.sin(angle) };
+  });
+  rawNodes.forEach((node, i) => {
+    const down = edges.filter(e => e.source.id === node.id).map(e => e.target).filter(t => t.layer === "staging");
+    const angle = down.length ? avgAngle(down.map(starAngle)) : (2 * Math.PI * i) / Math.max(1, rawNodes.length);
+    node.star = { x: cx + rawR * Math.cos(angle), y: cy + rawR * Math.sin(angle) };
+  });
+
+  // Keep test nodes anchored so dbt->star transitions do not break.
+  const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+  testNodes.forEach(n => {
+    const down = (edges || []).find(e => e.source.id === n.id && e.target.layer !== "test");
+    const up = (edges || []).find(e => e.target.id === n.id && e.source.layer !== "test");
+    const anchor = down ? nodeById[down.target.id] : (up ? nodeById[up.source.id] : null);
+    if (anchor && anchor.star) n.star = { x: anchor.star.x, y: anchor.star.y };
+    else n.star = { x: cx, y: cy };
+  });
+}
+
+function nodeTransform(d, view) {
+  const pos = view === "dbt" ? d.dbt : d.star;
+  const scale = view === "star" ? STAR_SCALE[d.layer] : 1.0;
+  return scale === 1.0 ? `translate(${pos.x},${pos.y})` : `translate(${pos.x},${pos.y}) scale(${scale})`;
+}
+
+function renderedNodeHeight(node, view = currentView) {
+  if (node.layer === "test") return node._h;
+  if (view !== "dbt") {
+    if (!colsVisible && isHierarchicalDataModelNode(node) && isHierarchyExpanded(node)) {
+      return node._hHierExpanded || node._hCollapsed;
+    }
+    return colsVisible ? node._h : node._hCollapsed;
+  }
+  return colsVisible ? node._h : node._hCollapsed;
+}
+
+function nodeEdgePoint(node, view, isSource) {
+  const pos = view === "dbt" ? node.dbt : node.star;
+  if (view === "dbt") return { x: pos.x + (isSource ? node._w / 2 : -node._w / 2), y: pos.y };
+  return { x: pos.x, y: pos.y };
+}
+
+function edgePoint(edge, node, view, isSource) {
+  const other = isSource ? edge.target : edge.source;
+  if (view === "dbt") {
+    const nodeIsTest = node.layer === "test";
+    const otherIsTest = other.layer === "test";
+    // Model <-> test links should attach from model bottom and into test side.
+    if (!nodeIsTest && otherIsTest) {
+      return { x: node.dbt.x, y: node.dbt.y + renderedNodeHeight(node, view) / 2 };
+    }
+    if (nodeIsTest && !otherIsTest) {
+      const testOnRight = node.dbt.x >= other.dbt.x;
+      return { x: node.dbt.x + (testOnRight ? -node._w / 2 : node._w / 2), y: node.dbt.y };
+    }
+  }
+  return nodeEdgePoint(node, view, isSource);
+}
+
+function makeEdgePath(sx, sy, tx, ty, view) {
+  if (view === "star") return `M${sx},${sy} L${tx},${ty}`;
+  const mx = (sx + tx) / 2;
+  return `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
+}
+
+function bfsUpstream(startId, edgeList = edges, maxDepth = Infinity) {
+  const visited = new Set();
+  let frontier = [startId];
+  let depth = 0;
+  while (frontier.length && depth < maxDepth) {
+    depth += 1;
+    const next = [];
+    frontier.forEach(id => {
+      edgeList.filter(e => e.target.id === id).forEach(e => {
+        if (!visited.has(e.source.id)) { visited.add(e.source.id); next.push(e.source.id); }
+      });
+    });
+    frontier = next;
+  }
+  return [...visited];
+}
+
+function bfsDownstream(startId, edgeList = edges, maxDepth = Infinity) {
+  const visited = new Set();
+  let frontier = [startId];
+  let depth = 0;
+  while (frontier.length && depth < maxDepth) {
+    depth += 1;
+    const next = [];
+    frontier.forEach(id => {
+      edgeList.filter(e => e.source.id === id).forEach(e => {
+        if (!visited.has(e.target.id)) { visited.add(e.target.id); next.push(e.target.id); }
+      });
+    });
+    frontier = next;
+  }
+  return [...visited];
+}
+
+function parseSelector(raw) {
+  let s = raw.trim();
+  if (!s) return null;
+  let exclude = false;
+  let dimensionalOnly = false;
+  if (s.startsWith("-")) {
+    exclude = true;
+    s = s.slice(1).trim();
+  }
+  if (!s) return null;
+  if (s.startsWith("*")) {
+    dimensionalOnly = true;
+    s = s.slice(1).trim();
+  }
+  if (!s) return null;
+  let upDepth = 0;
+  let downDepth = 0;
+  const upNum = s.match(/^(\d+)\+/);
+  if (upNum) { upDepth = parseInt(upNum[1], 10); s = s.slice(upNum[0].length); }
+  else if (s.startsWith("+")) { upDepth = Infinity; s = s.slice(1); }
+  const downNum = s.match(/\+(\d+)$/);
+  if (downNum) { downDepth = parseInt(downNum[1], 10); s = s.slice(0, -downNum[0].length); }
+  else if (s.endsWith("+")) { downDepth = Infinity; s = s.slice(0, -1); }
+  const name = s.trim().toLowerCase();
+  if (!name) return null;
+  return { name, upDepth, downDepth, exclude, dimensionalOnly };
+}
+
+const LAYER_ALIASES = { fact: "fact", facts: "fact", dim: "dim", dims: "dim", dimension: "dim", dimensions: "dim", lookup: "lookup", lookups: "lookup", lkp: "lookup", staging: "staging", stg: "staging", raw: "raw" };
+LAYER_ALIASES.test = "test";
+LAYER_ALIASES.tests = "test";
+
+function dataModelTypeForNode(node) {
+  const meta = modelsData[node.id] || {};
+  if (meta.table_type === "fact" || meta.table_type === "dim" || meta.table_type === "lookup") return meta.table_type;
+  if (node.layer === "fact") return "fact";
+  if (node.layer === "dim") return "dim";
+  if (node.layer === "lookup") return "lookup";
+  return null;
+}
+
+function dimensionalConnectedSet(startId) {
+  const byId = Object.fromEntries(MODEL.nodes.map(n => [n.id, n]));
+  const startNode = byId[startId];
+  if (!startNode) return new Set();
+  const startType = dataModelTypeForNode(startNode);
+  if (!startType) return new Set([startId]);
+
+  // Build undirected adjacency only for dimensional model nodes.
+  const neighbors = new Map();
+  MODEL.nodes.forEach(n => {
+    if (dataModelTypeForNode(n)) neighbors.set(n.id, []);
+  });
+  edges.forEach(e => {
+    const srcType = dataModelTypeForNode(e.source);
+    const tgtType = dataModelTypeForNode(e.target);
+    if (!srcType || !tgtType) return;
+    neighbors.get(e.source.id).push(e.target.id);
+    neighbors.get(e.target.id).push(e.source.id);
+  });
+
+  const visible = new Set([startId]);
+  const queue = [startId];
+  while (queue.length) {
+    const curId = queue.shift();
+    const curNode = byId[curId];
+    const curType = curNode ? dataModelTypeForNode(curNode) : null;
+    (neighbors.get(curId) || []).forEach(nextId => {
+      const nextNode = byId[nextId];
+      const nextType = nextNode ? dataModelTypeForNode(nextNode) : null;
+      if (!nextType || visible.has(nextId)) return;
+
+      // Facts are terminal unless they are the selected seed.
+      if (curType === "fact" && curId !== startId) return;
+      if (nextType === "fact" && nextId !== startId) {
+        if (startType === "fact") return; // prevent sibling facts via shared dimensions
+      }
+
+      visible.add(nextId);
+      // Never expand from non-seed facts.
+      if (nextType !== "fact" || nextId === startId) queue.push(nextId);
+    });
+  }
+
+  return visible;
+}
+
+function resolveFilter(input) {
+  if (!input || !input.trim()) return null;
+  const parts = input.split(/[\s,]+/).filter(Boolean);
+  const sqlLineageEdges = edges.filter(e => e.is_sql);
+  const include = new Set();
+  const exclude = new Set();
+  let hasIncludeSelector = false;
+  let hasAnyMatch = false;
+  parts.forEach(part => {
+    const sel = parseSelector(part);
+    if (!sel) return;
+    if (!sel.exclude) hasIncludeSelector = true;
+    const layerKey = LAYER_ALIASES[sel.name];
+    const matches = layerKey ? MODEL.nodes.filter(n => n.layer === layerKey) : MODEL.nodes.filter(n => n.id.toLowerCase().includes(sel.name) || n.label.toLowerCase().includes(sel.name));
+    if (!matches.length) return;
+    hasAnyMatch = true;
+    const targetSet = sel.exclude ? exclude : include;
+    matches.forEach(n => {
+      if (sel.dimensionalOnly) {
+        dimensionalConnectedSet(n.id).forEach(id => targetSet.add(id));
+      } else {
+        targetSet.add(n.id);
+        if (sel.upDepth > 0) bfsUpstream(n.id, sqlLineageEdges, sel.upDepth).forEach(id => targetSet.add(id));
+        if (sel.downDepth > 0) bfsDownstream(n.id, sqlLineageEdges, sel.downDepth).forEach(id => targetSet.add(id));
+      }
+    });
+  });
+  if (!hasAnyMatch) return null;
+  const combined = hasIncludeSelector ? new Set(include) : new Set(MODEL.nodes.map(n => n.id));
+  exclude.forEach(id => combined.delete(id));
+  return combined;
+}
+
+function resolveVisibleIds() {
+  if (activeFilter) return activeFilter;
+  if (selectedNodeId) {
+    return new Set([selectedNodeId, ...bfsUpstream(selectedNodeId), ...bfsDownstream(selectedNodeId)]);
+  }
+  return null;
+}
+
+function navigationTargetId(node) {
+  if (node.layer !== "test") return node.id;
+  const down = edges.find(e => e.source.id === node.id && e.target.layer !== "test");
+  if (down) return down.target.id;
+  const up = edges.find(e => e.target.id === node.id && e.source.layer !== "test");
+  if (up) return up.source.id;
+  return null;
+}
+
+function isDataModelNode(d) {
+  const m = modelsData[d.id] || {};
+  if (m.data_model) return true;
+  if (m.table_type === "dim" || m.table_type === "fact" || m.table_type === "lookup") return true;
+  // Fallback for older JSON payloads: keep previous dim/fact behavior.
+  return d.layer === "dim" || d.layer === "fact";
+}
+
+function isHierarchicalDataModelNode(d) {
+  if (!isDataModelNode(d)) return false;
+  const m = modelsData[d.id] || {};
+  // Lookup tables may carry a (single-level) hierarchy definition for generation,
+  // but they should render as simple nodes without internal hierarchy boxes.
+  if (m.table_type === "lookup") return false;
+  const h = d.hierarchy || m.hierarchy || null;
+  return !!(h && Array.isArray(h.levels) && h.levels.length);
+}
+
+function isHierarchyExpanded(d) {
+  // Default: collapsed (hidden). User clicks the dimension node to toggle.
+  return !!hierBoxExpanded[d.id];
+}
+
+function isFkEdge(e) {
+  const tgtCols = e.target.columns || [];
+  return tgtCols.some(c => c.fk_to && c.fk_to.table === e.source.id);
+}
+
+function nodeOpacityForView(d, view, visibleIds) {
+  if (view === "star" && d.layer === "test") return 0;
+  if (view === "dbt" && d.layer === "test" && !testsVisible) return 0;
+  const inStar = view === "star";
+  const isDataModel = isDataModelNode(d);
+  const isGhost = inStar && !isDataModel;
+  if (!visibleIds) return isGhost ? 0.1 : 1;
+  const inSet = visibleIds.has(d.id);
+  if (!inSet) {
+    if (activeFilter) return 0;
+    return inStar ? 0 : 0.1;
+  }
+  return isGhost ? 0.2 : 1;
+}
+
+function nodePointerEventsForView(d, view, visibleIds) {
+  if (view === "star" && d.layer === "test") return "none";
+  if (view === "dbt" && d.layer === "test" && !testsVisible) return "none";
+  if (view === "star" && !isDataModelNode(d)) return "none";
+  if (!visibleIds) return "all";
+  if (view === "star" && !visibleIds.has(d.id)) return "none";
+  return "all";
+}
+
+function edgeOpacityForView(e, view, visibleIds) {
+  if ((e.source.layer === "test" || e.target.layer === "test") && (view === "star" || !testsVisible)) return 0;
+  if (visibleIds && (!visibleIds.has(e.source.id) || !visibleIds.has(e.target.id))) return 0;
+  if (view === "dbt" && (e.source.layer === "test" || e.target.layer === "test")) return 0.55;
+  if (view === "star") return isFkEdge(e) ? 0.75 : 0;
+  // In Data Flow, show only physical SQL lineage edges.
+  return e.is_sql ? 0.55 : 0;
+}
+
+function defaultEdgeOpacity(e) {
+  return edgeOpacityForView(e, currentView, resolveVisibleIds());
+}
+
+function applyVisibility(visibleIds) {
+  if (isViewTransitioning) return;
+  const inStar = currentView === "star";
+  const v = visibleIds;
+  nodeGroups.transition().duration(250)
+    .attr("opacity", d => nodeOpacityForView(d, inStar ? "star" : "dbt", v))
+    .style("pointer-events", d => nodePointerEventsForView(d, inStar ? "star" : "dbt", v));
+
+  linkPaths.transition().duration(250)
+    .attr("opacity", e => edgeOpacityForView(e, inStar ? "star" : "dbt", v));
+}
+
+function resetHighlight() {
+  selectedNodeId = null;
+  nodeGroups.select(".node-glow").attr("opacity", 0);
+  applyVisibility(resolveVisibleIds());
+}
+
+function setViewLabels(view) {
+  document.getElementById("lbl-dbt").classList.toggle("active", view === "dbt");
+  document.getElementById("lbl-star").classList.toggle("active", view === "star");
+}
+
+function setTestsLabel(visible) {
+  document.getElementById("lbl-tests").classList.toggle("active", visible);
+}
+
+function setTestsControlVisibility(view) {
+  const show = view === "dbt";
+  const display = show ? "" : "none";
+  document.getElementById("testsLatch").style.display = display;
+  document.getElementById("lbl-tests").style.display = display;
+  document.getElementById("testsSep").style.display = display;
+}
+
+function syncTestVisibilityImmediate() {
+  if (!nodeGroups || !linkPaths) return;
+  if (testsVisible) {
+    nodeGroups.filter(d => d.layer === "test")
+      .attr("opacity", d => nodeOpacityForView(d, currentView, resolveVisibleIds()))
+      .style("pointer-events", d => nodePointerEventsForView(d, currentView, resolveVisibleIds()));
+    linkPaths.filter(e => e.source.layer === "test" || e.target.layer === "test")
+      .attr("opacity", e => edgeOpacityForView(e, currentView, resolveVisibleIds()));
+  } else {
+    nodeGroups.filter(d => d.layer === "test").attr("opacity", 0).style("pointer-events", "none");
+    linkPaths.filter(e => e.source.layer === "test" || e.target.layer === "test").attr("opacity", 0);
+  }
+}
+
+function applyInnerVisibilityForView(view) {
+  nodeGroups.each(function(d) {
+    const el = d3.select(this);
+    const hier = isHierarchicalDataModelNode(d);
+    const showDbtCols = view === "dbt" && colsVisible;
+    const showStarFlatCols = view === "star" && colsVisible && isDataModelNode(d);
+    const showStarHierBoxes = view === "star" && !colsVisible && hier && isHierarchyExpanded(d);
+    const showColRows = showDbtCols || showStarFlatCols;
+
+    el.selectAll(".node-col-row")
+      .attr("opacity", showColRows ? 1 : 0)
+      .style("pointer-events", showColRows ? "all" : "none");
+
+    el.selectAll(".node-hier-box")
+      .attr("opacity", showStarHierBoxes ? 1 : 0)
+      .style("pointer-events", showStarHierBoxes ? "all" : "none");
+
+    el.selectAll(".node-overflow")
+      .attr("opacity", showColRows ? 1 : 0)
+      .style("pointer-events", showColRows ? "all" : "none");
+
+    el.selectAll(".node-divider")
+      .attr("opacity", showColRows ? 0.4 : 0)
+      .style("pointer-events", showColRows ? "all" : "none");
+
+    el.selectAll(".node-hier-connector")
+      .attr("opacity", showStarHierBoxes ? 1 : 0)
+      .style("pointer-events", showStarHierBoxes ? "all" : "none");
+  });
+}
+
+function updateHierarchyVisualsInStar() {
+  if (currentView !== "star" || colsVisible) return;
+  const t = d3.transition().duration(250).ease(d3.easeCubicInOut);
+  nodeGroups.each(function(d) {
+    if (!isHierarchicalDataModelNode(d)) return;
+    const el = d3.select(this);
+    const show = isHierarchyExpanded(d);
+    const newH = show ? (d._hHierExpanded || d._hCollapsed) : d._hCollapsed;
+
+    el.select(".node-rect").transition(t).attr("y", -newH / 2).attr("height", newH);
+    el.select(".node-glow").transition(t).attr("y", -(newH / 2 + 4)).attr("height", newH + 8);
+    // When a hierarchy is expanded, the header label can visually collide with the
+    // stacked level boxes. Lift it slightly in that mode only.
+    const headerLift = show ? 2 : 0;
+    const headerY = -newH / 2 + PAD_V + HDR_H / 2 - headerLift;
+    el.select(".node-header").transition(t).attr("y", headerY);
+
+    const dividerY = -newH / 2 + PAD_V + HDR_H;
+    el.select(".node-divider").transition(t).attr("y1", dividerY).attr("y2", dividerY);
+
+    el.selectAll(".node-hier-box")
+      .attr("opacity", show ? 1 : 0)
+      .style("pointer-events", show ? "all" : "none");
+    el.selectAll(".node-hier-connector")
+      .attr("opacity", show ? 1 : 0)
+      .style("pointer-events", show ? "all" : "none");
+  });
+}
+
+function applyViewInstant(view) {
+  currentView = view;
+  if (view === "dbt") recomputeDbtGeometry();
+  const vids = resolveVisibleIds();
+  nodeGroups.interrupt()
+    .attr("transform", d => nodeTransform(d, view))
+    .attr("opacity", d => nodeOpacityForView(d, view, vids))
+    .style("pointer-events", d => nodePointerEventsForView(d, view, vids));
+  linkPaths.interrupt().attr("d", d => {
+      const sp = edgePoint(d, d.source, view, true);
+      const tp = edgePoint(d, d.target, view, false);
+    return makeEdgePath(sp.x, sp.y, tp.x, tp.y, view);
+  }).attr("opacity", e => edgeOpacityForView(e, view, vids));
+  colLabels.interrupt().attr("opacity", view === "dbt" ? 1 : 0);
+  setViewLabels(view);
+  setTestsControlVisibility(view);
+  setTestsLabel(testsVisible);
+  applyInnerVisibilityForView(view);
+}
+
+function transitionTo(toView) {
+  if (toView === currentView || isViewTransitioning) return;
+  const fromView = currentView;
+  currentView = toView;
+  isViewTransitioning = true;
+
+  nodeGroups.interrupt();
+  linkPaths.interrupt();
+  colLabels.interrupt();
+
+  const t = d3.transition().duration(850).ease(d3.easeCubicInOut);
+  const vids = resolveVisibleIds();
+
+  /* Opacity/pointer-events must run on the SAME transition as transform.
+     A separate nodeGroups.transition() (from applyVisibility) interrupts attrTween and
+     leaves nodes in column layout while star visibility rules apply. */
+  nodeGroups.transition(t)
+    .attrTween("transform", function(d) {
+      const pFrom = fromView === "dbt" ? d.dbt : d.star;
+      const pTo = toView === "dbt" ? d.dbt : d.star;
+      const sFrom = fromView === "star" ? STAR_SCALE[d.layer] : 1.0;
+      const sTo = toView === "star" ? STAR_SCALE[d.layer] : 1.0;
+      const ix = d3.interpolateNumber(pFrom.x, pTo.x);
+      const iy = d3.interpolateNumber(pFrom.y, pTo.y);
+      const is = d3.interpolateNumber(sFrom, sTo);
+      return u => {
+        const s = is(u);
+        return s === 1.0 ? `translate(${ix(u)},${iy(u)})` : `translate(${ix(u)},${iy(u)}) scale(${s})`;
+      };
+    })
+    .attr("opacity", d => nodeOpacityForView(d, toView, vids))
+    .style("pointer-events", d => nodePointerEventsForView(d, toView, vids));
+
+  linkPaths.transition(t).attrTween("d", function(d) {
+      const sS = edgePoint(d, d.source, fromView, true);
+      const sE = edgePoint(d, d.source, toView, true);
+      const tS = edgePoint(d, d.target, fromView, false);
+      const tE = edgePoint(d, d.target, toView, false);
+    const iSX = d3.interpolateNumber(sS.x, sE.x);
+    const iSY = d3.interpolateNumber(sS.y, sE.y);
+    const iTX = d3.interpolateNumber(tS.x, tE.x);
+    const iTY = d3.interpolateNumber(tS.y, tE.y);
+    return u => makeEdgePath(iSX(u), iSY(u), iTX(u), iTY(u), u < 0.5 ? fromView : toView);
+  }).attr("opacity", e => edgeOpacityForView(e, toView, vids));
+
+  colLabels.transition(t).attr("opacity", toView === "dbt" ? 1 : 0);
+  setViewLabels(toView);
+  setTestsControlVisibility(toView);
+  // Adjust which inner columns/hierarchy elements are visible for the view.
+  applyInnerVisibilityForView(toView);
+
+  const done = () => { isViewTransitioning = false; };
+  if (typeof t.end === "function") t.end().then(done, done);
+  else t.on("end.tee", done);
+}
+
+function initSvg() {
+  return d3.select("body").append("svg").attr("id", "main-svg");
+}
+
+function renderColLabels(container, w) {
+  colLabels = container.insert("g", ":first-child").attr("class", "col-labels-g");
+  const svgH = window.innerHeight;
+  dbtColumns.forEach(({ subCols, multiCol }) => {
+    subCols.forEach(sx => {
+      colLabels.append("line").attr("x1", sx).attr("y1", 68).attr("x2", sx).attr("y2", svgH - 20).attr("stroke", "#21262d").attr("stroke-width", 1).attr("stroke-dasharray", "4,6");
+    });
+    if (multiCol) {
+      const bw = subCols[subCols.length - 1] - subCols[0] + 2;
+      colLabels.append("rect")
+        .attr("x", subCols[0] - 1)
+        .attr("y", 44)
+        .attr("width", bw)
+        .attr("height", svgH - 64)
+        .attr("fill", "none")
+        .attr("stroke", "#21262d")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", "3,6")
+        .attr("opacity", 0.5)
+        .attr("rx", 4)
+        .attr("pointer-events", "none");
+    }
+  });
+  dbtColumns.forEach(({ x, label }) => {
+    colLabels.append("text").attr("x", x).attr("y", 60).attr("class", "col-label").attr("text-anchor", "middle").text(label);
+  });
+}
+
+function renderEdges(container) {
+  const g = container.append("g").attr("class", "edges-g");
+  linkPaths = g.selectAll(".edge-path").data(edges).enter().append("path")
+    .attr("class", "edge-path")
+    .attr("marker-end", "url(#arrow-solid)")
+    .attr("stroke", d => LAYER_STYLE[d.source.layer].stroke)
+    .attr("opacity", d => edgeOpacityForView(d, currentView, resolveVisibleIds()))
+    .attr("d", d => {
+      const sp = edgePoint(d, d.source, "dbt", true);
+      const tp = edgePoint(d, d.target, "dbt", false);
+      return makeEdgePath(sp.x, sp.y, tp.x, tp.y, "dbt");
+    });
+}
+
+function renderNodes(container) {
+  const tooltip = d3.select("#tooltip");
+  const g = container.append("g").attr("class", "nodes-g");
+  nodeGroups = g.selectAll(".node-group").data(MODEL.nodes).enter().append("g").attr("class", "node-group").attr("transform", d => nodeTransform(d, "dbt"));
+  nodeGroups.each(function(d) {
+    const el = d3.select(this);
+    const ls = LAYER_STYLE[d.layer];
+    const w = d._w;
+    const h = d._h;
+    const maxC = MAX_COLS[d.layer];
+    const allCols = d.columns || [];
+    const shown = Math.min(allCols.length, maxC);
+    const hasOverflow = allCols.length > maxC;
+    el.append("rect").attr("class", "node-glow").attr("x", -(w / 2 + 4)).attr("y", -(h / 2 + 4)).attr("width", w + 8).attr("height", h + 8).attr("rx", 7).attr("fill", "none").attr("stroke", ls.stroke).attr("stroke-width", 2).attr("opacity", 0).attr("filter", "url(#glow)");
+    el.append("rect").attr("class", "node-rect").attr("x", -w / 2).attr("y", -h / 2).attr("width", w).attr("height", h).attr("rx", d._rx).attr("fill", ls.fill).attr("stroke", ls.stroke).attr("stroke-width", d.layer === "fact" ? 2 : 1.5);
+    const headerY = d.layer === "test"
+      ? 0
+      : (-h / 2 + PAD_V + HDR_H / 2);
+    el.append("text")
+      .attr("class", d.layer === "test" ? "node-header test-header" : "node-header")
+      .attr("y", headerY)
+      .attr("fill", ls.text)
+      .text(d.label);
+    const dividerY = -h / 2 + PAD_V + HDR_H;
+    el.append("line").attr("class", "node-divider").attr("x1", -w / 2 + 8).attr("x2", w / 2 - 8).attr("y1", dividerY).attr("y2", dividerY).attr("stroke", ls.stroke).attr("stroke-width", 0.5).attr("opacity", 0.4);
+    if (d.layer === "test") {
+      el.select(".node-divider").attr("opacity", 0);
+    }
+    const colsStartY = dividerY + COL_ROW_H * 0.75;
+    allCols.slice(0, shown).forEach((col, i) => {
+      const rowY = colsStartY + i * COL_ROW_H;
+      const rowG = el.append("g").attr("class", "node-col-row");
+      rowG.append("rect").attr("x", -w / 2 + 8).attr("y", rowY - 3.5).attr("width", 6).attr("height", 6).attr("rx", 1.5).attr("fill", COL_TYPE_COLOR[col.type] || COL_TYPE_COLOR.col).attr("opacity", col.type === "col" ? 0.5 : 0.9);
+      rowG.append("text").attr("class", "node-col-name").attr("x", -w / 2 + 20).attr("y", rowY).attr("fill", col.type === "pk" ? "#d29922" : (col.type === "fk" ? "#58a6ff" : "#6e7681")).text(col.name);
+    });
+    if (hasOverflow) {
+      const overflowY = colsStartY + shown * COL_ROW_H;
+      el.append("text").attr("class", "node-overflow").attr("x", -w / 2 + 20).attr("y", overflowY).text(`+${(d.columns || []).length - shown} more columns`);
+    }
+
+    // Hierarchical Data Model view: unassigned columns first, then stacked hierarchy level boxes.
+    if (isHierarchicalDataModelNode(d)) {
+      const hBoxes = d._hHierExpanded || d._hCollapsed;
+      const dividerYBoxes = -hBoxes / 2 + PAD_V + HDR_H;
+      // Nudge the stacked boxes away from the outer node header/border.
+      const startYBoxes = dividerYBoxes + COL_ROW_H * 0.72;
+
+      let boxY = startYBoxes + 6;
+      const boxes = d._levelBoxes || [];
+      const connectorX = 0; // center of node
+
+      let prevBottom = null;
+      boxes.forEach((box, idx) => {
+        const rowCount = 1; // level name only
+        const boxH = rowCount * COL_ROW_H + 7;
+
+        const boxG = el.append("g").attr("class", "node-hier-box").attr("opacity", 0);
+        boxG.append("rect")
+          .attr("x", -w / 2 + 6)
+          .attr("y", boxY - boxH / 2)
+          .attr("width", w - 12)
+          .attr("height", boxH)
+          .attr("rx", 6)
+          .attr("fill", "rgba(0, 0, 0, 0)")
+          .attr("stroke", "#3fb950")
+          .attr("stroke-width", 1.2);
+
+        boxG.append("text")
+          .attr("x", 0)
+          // Vertically center the hierarchy level label inside its box.
+          .attr("y", boxY)
+          .attr("class", "node-hier-level-name")
+          .attr("fill", "#3fb950")
+          .attr("font-size", 10)
+          .attr("font-weight", 800)
+          .attr("dominant-baseline", "middle")
+          .attr("text-anchor", "middle")
+          .text(box.name || "");
+
+        const top = boxY - boxH / 2;
+        const bottom = boxY + boxH / 2;
+
+        if (prevBottom !== null) {
+          el.append("line")
+            .attr("class", "node-hier-connector")
+            .attr("x1", connectorX)
+            .attr("x2", connectorX)
+            .attr("y1", prevBottom)
+            .attr("y2", top)
+            .attr("stroke", "#3fb950")
+            .attr("stroke-width", 1)
+            .attr("opacity", 0);
+        }
+
+        prevBottom = bottom;
+        boxY += boxH + 6;
+      });
+    }
+  });
+
+  let dragging = false;
+  const drag = d3.drag()
+    .on("start", function() { dragging = false; d3.select(this).raise(); tooltip.style("display", "none"); })
+    .on("drag", function(event, d) {
+      dragging = true;
+      const pos = currentView === "dbt" ? d.dbt : d.star;
+      pos.x += event.dx;
+      pos.y += event.dy;
+      d3.select(this).attr("transform", nodeTransform(d, currentView));
+      linkPaths.filter(e => e.source.id === d.id || e.target.id === d.id).attr("d", e => {
+        const sp = edgePoint(e, e.source, currentView, true);
+        const tp = edgePoint(e, e.target, currentView, false);
+        return makeEdgePath(sp.x, sp.y, tp.x, tp.y, currentView);
+      });
+    });
+  nodeGroups.call(drag);
+
+  nodeGroups.on("click", function(event, d) {
+    if (dragging) { dragging = false; return; }
+    event.stopPropagation();
+    if (activeFilter) return;
+    const considerHierarchy =
+      currentView === "star" && !colsVisible && isHierarchicalDataModelNode(d);
+
+    if (selectedNodeId === d.id) {
+      if (considerHierarchy) {
+        hierBoxExpanded[d.id] = !hierBoxExpanded[d.id];
+        updateHierarchyVisualsInStar();
+      }
+      resetHighlight();
+      return;
+    }
+    selectedNodeId = d.id;
+
+    if (considerHierarchy) {
+      // Keep only one hierarchy expanded at a time.
+      hierBoxExpanded = {};
+      hierBoxExpanded[d.id] = true;
+    }
+    const lineage = new Set([d.id, ...bfsUpstream(d.id), ...bfsDownstream(d.id)]);
+    nodeGroups.select(".node-glow").attr("opacity", n => n.id === d.id ? 0.8 : 0);
+    applyVisibility(lineage);
+    if (considerHierarchy) updateHierarchyVisualsInStar();
+  }).on("dblclick", function(event, d) {
+    event.stopPropagation();
+    const targetId = navigationTargetId(d);
+    if (!targetId) return;
+    window.location.href = `model_${safeName(targetId)}.html`;
+  }).on("mouseover", function(event, d) {
+    if (dragging) return;
+    const colRows = (d.columns || []).map(c => `<li>${c.type !== "col" ? `<span class="tag ${c.type}">${c.type.toUpperCase()}</span>` : ""}${c.name}</li>`).join("");
+    tooltip.style("display", "block").html(`<strong>${d.id}</strong><span class="badge ${d.layer}">${d.layer.toUpperCase()}</span><p>${d.description}</p>${colRows ? `<ul class="col-list">${colRows}</ul>` : ""}`);
+    d3.select(this).select(".node-glow").attr("opacity", 0.4);
+  }).on("mousemove", function(event) {
+    if (dragging) return;
+    tooltip.style("left", `${event.pageX + 16}px`).style("top", `${event.pageY - 32}px`);
+  }).on("mouseout", function() {
+    tooltip.style("display", "none");
+    d3.select(this).select(".node-glow").attr("opacity", 0);
+  });
+
+  d3.select("#main-svg").on("click", () => { if (!activeFilter && !dragging) resetHighlight(); });
+}
+
+function applyFilter(input) {
+  activeFilter = resolveFilter(input);
+  nodeGroups.select(".node-glow").attr("opacity", 0);
+  applyVisibility(resolveVisibleIds());
+}
+
+function setColsVisible(visible) {
+  colsVisible = visible;
+  const t = d3.transition().duration(400).ease(d3.easeCubicInOut);
+  nodeGroups.each(function(d) {
+    const el = d3.select(this);
+    let newH = d.layer === "test" ? d._h : (visible ? d._h : d._hCollapsed);
+    if (!visible && currentView === "star" && isHierarchicalDataModelNode(d) && isHierarchyExpanded(d)) {
+      newH = d._hHierExpanded || d._hCollapsed;
+    }
+    el.select(".node-rect").transition(t).attr("y", -newH / 2).attr("height", newH);
+    el.select(".node-glow").transition(t).attr("y", -(newH / 2 + 4)).attr("height", newH + 8);
+    // Mirror updateHierarchyVisualsInStar() lift to avoid collisions when toggling columns.
+    const headerLift = (!visible && currentView === "star" && isHierarchicalDataModelNode(d) && isHierarchyExpanded(d)) ? 2 : 0;
+    const headerY = d.layer === "test" ? 0 : (-newH / 2 + PAD_V + HDR_H / 2 - headerLift);
+    el.select(".node-header").transition(t).attr("y", headerY);
+    const hier = isHierarchicalDataModelNode(d);
+    const showDbtCols = currentView === "dbt" && visible;
+    const showStarFlatCols = currentView === "star" && visible && isDataModelNode(d);
+    const showStarHierBoxes = currentView === "star" && !visible && hier;
+    const showColRows = showDbtCols || showStarFlatCols;
+
+    el.selectAll(".node-col-row")
+      .transition(t)
+      .attr("opacity", showColRows ? 1 : 0)
+      .style("pointer-events", showColRows ? "all" : "none");
+
+    el.selectAll(".node-overflow")
+      .transition(t)
+      .attr("opacity", showColRows ? 1 : 0)
+      .style("pointer-events", showColRows ? "all" : "none");
+
+    el.selectAll(".node-hier-box")
+      .transition(t)
+      .attr("opacity", showStarHierBoxes && isHierarchyExpanded(d) ? 1 : 0)
+      .style("pointer-events", showStarHierBoxes && isHierarchyExpanded(d) ? "all" : "none");
+
+    el.selectAll(".node-divider")
+      .transition(t)
+      .attr("opacity", showColRows ? 0.4 : 0)
+      .style("pointer-events", showColRows ? "all" : "none");
+
+    el.selectAll(".node-hier-connector")
+      .transition(t)
+      .attr("opacity", showStarHierBoxes && isHierarchyExpanded(d) ? 1 : 0)
+      .style("pointer-events", showStarHierBoxes && isHierarchyExpanded(d) ? "all" : "none");
+  });
+  linkPaths.transition(t).attr("d", d => {
+    const sp = edgePoint(d, d.source, currentView, true);
+    const tp = edgePoint(d, d.target, currentView, false);
+    return makeEdgePath(sp.x, sp.y, tp.x, tp.y, currentView);
+  });
+  document.getElementById("lbl-cols").classList.toggle("active", visible);
+}
+
+function init() {
+  normalizeGraph();
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  edges = MODEL.edges;
+  computeDbtLayout(nodesForDbtLayout(), w, h);
+  computeStarLayout(MODEL.nodes, w, h);
+  const svg = initSvg();
+  const defs = svg.append("defs");
+  defs.append("marker").attr("id", "arrow-solid").attr("viewBox", "0 -5 10 10").attr("refX", 10).attr("refY", 0).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto").append("path").attr("d", "M0,-4L10,0L0,4Z").attr("fill", "#4a5568");
+  const flt = defs.append("filter").attr("id", "glow").attr("x", "-50%").attr("y", "-50%").attr("width", "200%").attr("height", "200%");
+  flt.append("feGaussianBlur").attr("stdDeviation", "4").attr("result", "coloredBlur");
+  const fm = flt.append("feMerge");
+  fm.append("feMergeNode").attr("in", "coloredBlur");
+  fm.append("feMergeNode").attr("in", "SourceGraphic");
+  const zoomLayer = svg.append("g").attr("class", "zoom-layer");
+  zoomBehavior = d3.zoom().scaleExtent([0.15, 4]).on("zoom", event => zoomLayer.attr("transform", event.transform));
+  svg.call(zoomBehavior).on("dblclick.zoom", null);
+  renderColLabels(zoomLayer, w);
+  renderEdges(zoomLayer);
+  renderNodes(zoomLayer);
+
+  const ZOOM_STEP = 1.3;
+  document.getElementById("zoom-in").addEventListener("click", () => svg.transition().duration(300).call(zoomBehavior.scaleBy, ZOOM_STEP));
+  document.getElementById("zoom-out").addEventListener("click", () => svg.transition().duration(300).call(zoomBehavior.scaleBy, 1 / ZOOM_STEP));
+  document.getElementById("zoom-reset").addEventListener("click", () => svg.transition().duration(400).call(zoomBehavior.transform, d3.zoomIdentity));
+  document.getElementById("viewToggle").addEventListener("change", e => transitionTo(e.target.checked ? "star" : "dbt"));
+  document.getElementById("testsToggle").addEventListener("change", e => {
+    testsVisible = e.target.checked;
+    setTestsLabel(testsVisible);
+    recomputeDbtGeometry();
+    applyVisibility(resolveVisibleIds());
+    syncTestVisibilityImmediate();
+    if (currentView === "dbt") {
+      nodeGroups.attr("transform", d => nodeTransform(d, currentView));
+      linkPaths.attr("d", d => {
+        const sp = edgePoint(d, d.source, currentView, true);
+        const tp = edgePoint(d, d.target, currentView, false);
+        return makeEdgePath(sp.x, sp.y, tp.x, tp.y, currentView);
+      });
+    }
+  });
+  document.getElementById("colsToggle").addEventListener("change", e => setColsVisible(e.target.checked));
+  const filterInput = document.getElementById("filterInput");
+  const filterClear = document.getElementById("filterClear");
+  let filterTimer = null;
+  filterInput.addEventListener("input", () => {
+    filterClear.classList.toggle("visible", filterInput.value.length > 0);
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(() => applyFilter(filterInput.value), 250);
+  });
+  filterInput.addEventListener("keydown", e => {
+    if (e.key === "Escape") { filterInput.value = ""; filterClear.classList.remove("visible"); activeFilter = null; resetHighlight(); }
+    if (e.key === "Enter") { clearTimeout(filterTimer); applyFilter(filterInput.value); }
+  });
+  filterClear.addEventListener("click", () => { filterInput.value = ""; filterClear.classList.remove("visible"); activeFilter = null; resetHighlight(); filterInput.focus(); });
+  window.addEventListener("resize", () => {
+    const nw = window.innerWidth;
+    const nh = window.innerHeight;
+    computeDbtLayout(nodesForDbtLayout(), nw, nh);
+    computeStarLayout(MODEL.nodes, nw, nh);
+    nodeGroups.attr("transform", d => nodeTransform(d, currentView));
+    linkPaths.attr("d", d => {
+      const sp = edgePoint(d, d.source, currentView, true);
+      const tp = edgePoint(d, d.target, currentView, false);
+      return makeEdgePath(sp.x, sp.y, tp.x, tp.y, currentView);
+    });
+    d3.select(".col-labels-g").remove();
+    renderColLabels(d3.select(".zoom-layer"), nw);
+    applyViewInstant(currentView);
+  });
+  setTestsControlVisibility(currentView);
+  setTestsLabel(testsVisible);
+  if (START_WITH_TESTS_HIDDEN) {
+    const testsToggle = document.getElementById("testsToggle");
+    testsToggle.checked = false;
+    testsVisible = false;
+    setTestsLabel(false);
+    // Reuse the same stable path as the manual toggle.
+    recomputeDbtGeometry();
+    applyVisibility(resolveVisibleIds());
+    syncTestVisibilityImmediate();
+    if (currentView === "dbt") {
+      nodeGroups.attr("transform", d => nodeTransform(d, currentView));
+      linkPaths.attr("d", d => {
+        const sp = edgePoint(d, d.source, currentView, true);
+        const tp = edgePoint(d, d.target, currentView, false);
+        return makeEdgePath(sp.x, sp.y, tp.x, tp.y, currentView);
+      });
+    }
+  }
+  if (START_WITH_COLUMNS_HIDDEN) {
+    const colsToggle = document.getElementById("colsToggle");
+    colsToggle.checked = false;
+    setColsVisible(false);
+  }
+  syncTestVisibilityImmediate();
+}
+
+init();
+</script>
+{% block content %}{% endblock %}
 </body>
 </html>
 

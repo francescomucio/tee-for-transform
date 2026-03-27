@@ -2,8 +2,7 @@
 Tests for OTS to Model converter.
 """
 
-import pytest
-from tee.parser.input import OTSConverter, OTSConverterError
+from tee.parser.input import OTSConverter
 from tee.typing.metadata import OTSModule
 
 
@@ -94,12 +93,12 @@ class TestOTSConverter:
 
         parsed_models, parsed_functions = converter.convert_module(module)
         parsed_model = parsed_models["test_schema.test_table"]
-        
+
         # Check that tests are attached
         metadata = parsed_model["model_metadata"]["metadata"]
         assert "tests" in metadata
         assert "row_count_gt_0" in metadata["tests"]
-        
+
         # Check column tests
         schema = metadata["schema"]
         id_col = next(col for col in schema if col["name"] == "id")
@@ -142,7 +141,7 @@ class TestOTSConverter:
 
         parsed_models, parsed_functions = converter.convert_module(module)
         parsed_model = parsed_models["test_schema.test_table"]
-        
+
         metadata = parsed_model["model_metadata"]["metadata"]
         assert metadata["materialization"] == "incremental"
         assert "incremental" in metadata
@@ -180,7 +179,7 @@ class TestOTSConverter:
 
         parsed_models, parsed_functions = converter.convert_module(module)
         parsed_model = parsed_models["test_schema.test_table"]
-        
+
         metadata = parsed_model["model_metadata"]["metadata"]
         assert "tags" in metadata
         # Should merge module and transformation tags
@@ -188,4 +187,3 @@ class TestOTSConverter:
         assert "module_tag1" in tags
         assert "module_tag2" in tags
         assert "transformation_tag1" in tags
-

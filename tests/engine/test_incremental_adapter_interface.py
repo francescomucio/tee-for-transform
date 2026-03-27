@@ -5,15 +5,15 @@ These tests verify that adapters correctly implement the incremental
 materialization interface and can be reused across different adapters.
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
-from typing import Any
 
 from tee.adapters.base import DatabaseAdapter
 from tee.typing.metadata import (
     IncrementalAppendConfig,
-    IncrementalMergeConfig,
     IncrementalDeleteInsertConfig,
+    IncrementalMergeConfig,
 )
 
 
@@ -414,7 +414,6 @@ class TestIncrementalAdapterIntegration:
 
     def test_mixed_strategy_execution(self, mock_adapter):
         """Test execution of mixed strategies."""
-        table_name = "test_table"
 
         # Execute different strategies for different tables
         strategies = [

@@ -5,7 +5,6 @@ Tests for the structure converter.
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from tee.importer.dbt.infrastructure import StructureConverter
 
@@ -17,7 +16,7 @@ class TestStructureConverter:
         """Test creating t4t project structure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             target_path = Path(tmpdir) / "test_project"
-            
+
             converter = StructureConverter(
                 target_path=target_path,
                 output_format="t4t",
@@ -25,7 +24,7 @@ class TestStructureConverter:
                 verbose=False,
             )
             converter.create_structure()
-            
+
             # Check directories were created
             assert (target_path / "models").exists()
             assert (target_path / "tests").exists()
@@ -38,7 +37,7 @@ class TestStructureConverter:
         """Test creating OTS project structure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             target_path = Path(tmpdir) / "test_project"
-            
+
             converter = StructureConverter(
                 target_path=target_path,
                 output_format="ots",
@@ -46,7 +45,7 @@ class TestStructureConverter:
                 verbose=False,
             )
             converter.create_structure()
-            
+
             # Check directories were created
             assert (target_path / "models").exists()
             assert (target_path / "tests").exists()
@@ -54,7 +53,7 @@ class TestStructureConverter:
             assert (target_path / "ots_modules").exists()
             assert (target_path / "data").exists()
             assert (target_path / "output").exists()
-            
+
             # OTS format should not have functions directory
             assert not (target_path / "functions").exists()
 
@@ -62,7 +61,7 @@ class TestStructureConverter:
         """Test creating structure with verbose output."""
         with tempfile.TemporaryDirectory() as tmpdir:
             target_path = Path(tmpdir) / "test_project"
-            
+
             converter = StructureConverter(
                 target_path=target_path,
                 output_format="t4t",
@@ -71,43 +70,42 @@ class TestStructureConverter:
             )
             # Should not raise
             converter.create_structure()
-            
+
             assert (target_path / "models").exists()
 
     def test_create_structure_preserve_filenames(self):
         """Test that preserve_filenames flag is stored correctly."""
         with tempfile.TemporaryDirectory() as tmpdir:
             target_path = Path(tmpdir) / "test_project"
-            
+
             converter = StructureConverter(
                 target_path=target_path,
                 output_format="t4t",
                 preserve_filenames=True,
                 verbose=False,
             )
-            
+
             assert converter.preserve_filenames is True
             converter.create_structure()
-            
+
             assert (target_path / "models").exists()
 
     def test_create_structure_idempotent(self):
         """Test that creating structure multiple times doesn't fail."""
         with tempfile.TemporaryDirectory() as tmpdir:
             target_path = Path(tmpdir) / "test_project"
-            
+
             converter = StructureConverter(
                 target_path=target_path,
                 output_format="t4t",
                 preserve_filenames=False,
                 verbose=False,
             )
-            
+
             # Create structure twice
             converter.create_structure()
             converter.create_structure()
-            
+
             # Should still work
             assert (target_path / "models").exists()
             assert (target_path / "tests").exists()
-

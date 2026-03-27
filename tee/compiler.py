@@ -14,8 +14,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 from tee.parser import ProjectParser
 from tee.parser.input import (
     OTSConverter,
@@ -81,201 +79,35 @@ def compile_project(
 
     try:
         logger.info("Starting project compilation to OTS modules")
-
-        # Step 1: Parse SQL/Python models and functions
-        print("\n" + "=" * 50)
-        print("STEP 1: Parsing SQL and Python models and functions")
-        print("=" * 50)
-        parser = ProjectParser(project_folder, connection_config, variables, project_config)
-        parsed_models = parser.collect_models()
-        print(f"✅ Parsed {len(parsed_models)} models from SQL/Python files")
-
-        # Discover and parse functions
-        parsed_functions = parser.orchestrator.discover_and_parse_functions()
-        if parsed_functions:
-            print(f"✅ Parsed {len(parsed_functions)} functions")
-        else:
-            print("✅ No functions found")
-
-        # Step 2: Discover and validate imported OTS modules
-        print("\n" + "=" * 50)
-        print("STEP 2: Loading imported OTS modules")
-        print("=" * 50)
-
-        from tee.parser.processing import FileDiscovery
-
-        file_discovery = FileDiscovery(models_folder)
-        ots_files = file_discovery.discover_ots_modules()
-
-        imported_ots_models = {}
-        if ots_files:
-            print(f"Found {len(ots_files)} imported OTS module(s)")
-            reader = OTSModuleReader()
-            converter = OTSConverter()
-
-            for ots_file in ots_files:
-                try:
-                    # Validate location matches target schema
-                    validate_ots_module_location(ots_file, models_folder)
-
-                    # Load and convert
-                    module = reader.read_module(ots_file)
-                    module_models, module_functions = converter.convert_module(module)
-
-                    # Merge into imported models
-                    for transformation_id, parsed_model in module_models.items():
-                        if transformation_id in imported_ots_models:
-                            raise CompilationError(
-                                f"Duplicate transformation_id '{transformation_id}' found in imported OTS modules. "
-                                f"Found in both {ots_file} and another imported module."
-                            )
-                        imported_ots_models[transformation_id] = parsed_model
-
-                    # Note: Functions from OTS modules are not yet integrated into the compilation flow
-                    # This will be handled in Phase 8 (Execution Engine Integration)
-                    if module_functions:
-                        logger.debug(
-                            f"Loaded {len(module_functions)} functions from OTS module {ots_file.name} (not yet integrated)"
-                        )
-
-                    print(
-                        f"  ✅ Loaded {ots_file.name}: {len(module_models)} transformations", end=""
-                    )
-                    if module_functions:
-                        print(f" and {len(module_functions)} functions")
-                    else:
-                        print()
-                except (OTSValidationError, OTSModuleReaderError, OTSConverterError) as e:
-                    raise CompilationError(
-                        f"Failed to load imported OTS module {ots_file}: {e}"
-                    ) from e
-                except Exception as e:
-                    raise CompilationError(
-                        f"Unexpected error loading OTS module {ots_file}: {e}"
-                    ) from e
-        else:
-            print("No imported OTS modules found")
-
-        # Step 3: Detect conflicts
-        print("\n" + "=" * 50)
-        print("STEP 3: Detecting conflicts")
-        print("=" * 50)
-
-        conflicts = []
-        for transformation_id in parsed_models.keys():
-            if transformation_id in imported_ots_models:
-                conflicts.append(transformation_id)
-
-        if conflicts:
-            error_msg = (
-                f"Found {len(conflicts)} conflict(s): duplicate transformation_id found in both "
-                f"SQL/Python models and imported OTS modules:\n"
-            )
-            for conflict in conflicts:
-                error_msg += f"  - {conflict}\n"
-            raise CompilationError(error_msg)
-
-        print("✅ No conflicts detected")
-
-        # Step 4: Merge all models
-        print("\n" + "=" * 50)
-        print("STEP 4: Merging models")
-        print("=" * 50)
-
-        all_models = parsed_models.copy()
-        all_models.update(imported_ots_models)
-        print(
-            f"✅ Merged {len(parsed_models)} SQL/Python models with {len(imported_ots_models)} imported OTS transformations"
+        parser, parsed_models, parsed_functions = _parse_project_models_and_functions(
+            project_folder, connection_config, variables, project_config
         )
-        print(f"   Total: {len(all_models)} transformations")
+        ots_files, imported_ots_models = _load_imported_ots_models(models_folder)
 
-        # Step 4.5: Build dependency graph and save analysis files
-        # Inject merged models into parser for dependency graph building
-        parser.parsed_models = all_models
-        graph = parser.build_dependency_graph()
-        execution_order = parser.get_execution_order()
+        _detect_transformation_conflicts(parsed_models, imported_ots_models)
+        all_models = _merge_models(parsed_models, imported_ots_models)
+        graph, execution_order = _build_dependency_artifacts(parser, all_models)
 
-        # Save analysis files (dependency graph JSON, Mermaid diagram, Markdown report)
-        parser.save_dependency_graph()
-        parser.save_mermaid_diagram()
-        parser.save_markdown_report()
-        parser.save_to_json()
-
-        logger.debug(f"Built dependency graph with {len(graph['nodes'])} nodes")
-        logger.debug(f"Execution order: {' -> '.join(execution_order)}")
-
-        # Step 5: Convert, validate, and export OTS modules
-        print("\n" + "=" * 50)
-        print("STEP 5: Building OTS modules")
-        print("=" * 50)
-
-        from tee.parser.output import OTSTransformer
-
-        transformer = OTSTransformer(project_config or {})
-
-        # Load and merge test libraries
-        # Collect imported OTS modules to extract their test library paths
-        imported_ots_modules = []
-        if ots_files:
-            reader = OTSModuleReader()
-            for ots_file in ots_files:
-                try:
-                    module = reader.read_module(ots_file)
-                    imported_ots_modules.append((module, ots_file))
-                except Exception:
-                    # Skip if we can't read it (already validated earlier, but be safe)
-                    pass
-
-        test_library_path = _merge_test_libraries(
-            project_path, tests_folder, output_folder, project_config, imported_ots_modules, format
-        )
-
-        ots_modules = transformer.transform_to_ots_modules(
-            all_models, parsed_functions=parsed_functions, test_library_path=test_library_path
-        )
-
-        # Validate compiled modules
-        for module_name, module in ots_modules.items():
-            try:
-                # Re-read to validate (this will check version, structure, etc.)
-                # We'll create a temporary file for validation
-                import tempfile
-
-                with tempfile.NamedTemporaryFile(mode="w", suffix=".ots.json", delete=False) as tmp:
-                    import json
-
-                    json.dump(module, tmp, indent=2)
-                    tmp_path = Path(tmp.name)
-
-                reader = OTSModuleReader()
-                reader.read_module(tmp_path)
-                tmp_path.unlink()  # Clean up
-            except Exception as e:
-                raise CompilationError(f"Validation failed for module {module_name}: {e}") from e
-
-        # Export OTS modules
-        output_folder.mkdir(parents=True, exist_ok=True)
-
-        from tee.parser.output import JSONExporter
-
-        exporter = JSONExporter(output_folder, project_config, project_path)
-
-        # Export OTS modules in the specified format
-        exported_paths = exporter.export_ots_modules(
-            all_models,
+        _print_step("STEP 5: Building OTS modules")
+        imported_ots_modules = _load_imported_ots_modules(ots_files)
+        exported_paths, ots_modules_count = _build_validate_and_export_ots_modules(
+            project_path=project_path,
+            tests_folder=tests_folder,
+            output_folder=output_folder,
+            project_config=project_config,
+            all_models=all_models,
             parsed_functions=parsed_functions,
-            test_library_path=test_library_path,
+            imported_ots_modules=imported_ots_modules,
             format=format,
         )
-
-        print(f"✅ Built and exported {len(ots_modules)} OTS module(s)")
+        print(f"✅ Built and exported {ots_modules_count} OTS module(s)")
 
         return {
             "success": True,
             "parsed_models_count": len(parsed_models),
             "imported_ots_count": len(imported_ots_models),
             "total_transformations": len(all_models),
-            "ots_modules_count": len(ots_modules),
+            "ots_modules_count": ots_modules_count,
             "exported_paths": exported_paths,
             "output_folder": str(output_folder),
             "dependency_graph": graph,
@@ -289,9 +121,206 @@ def compile_project(
         raise CompilationError(f"Compilation failed: {e}") from e
 
 
-def _merge_test_libraries(
+def _print_step(title: str) -> None:
+    print("\n" + "=" * 50)
+    print(title)
+    print("=" * 50)
+
+
+def _parse_project_models_and_functions(
+    project_folder: str,
+    connection_config: dict[str, Any],
+    variables: dict[str, Any] | None,
+    project_config: dict[str, Any] | None,
+) -> tuple[ProjectParser, dict[str, Any], dict[str, Any]]:
+    _print_step("STEP 1: Parsing SQL and Python models and functions")
+    parser = ProjectParser(project_folder, connection_config, variables, project_config)
+    parsed_models = parser.collect_models()
+    print(f"✅ Parsed {len(parsed_models)} models from SQL/Python files")
+
+    parsed_functions = parser.orchestrator.discover_and_parse_functions()
+    if parsed_functions:
+        print(f"✅ Parsed {len(parsed_functions)} functions")
+    else:
+        print("✅ No functions found")
+
+    return parser, parsed_models, parsed_functions
+
+
+def _load_imported_ots_models(models_folder: Path) -> tuple[list[Path], dict[str, Any]]:
+    _print_step("STEP 2: Loading imported OTS modules")
+
+    from tee.parser.processing import FileDiscovery
+
+    ots_files = FileDiscovery(models_folder).discover_ots_modules()
+    imported_ots_models: dict[str, Any] = {}
+
+    if not ots_files:
+        print("No imported OTS modules found")
+        return ots_files, imported_ots_models
+
+    print(f"Found {len(ots_files)} imported OTS module(s)")
+    reader = OTSModuleReader()
+    converter = OTSConverter()
+
+    for ots_file in ots_files:
+        try:
+            validate_ots_module_location(ots_file, models_folder)
+            module = reader.read_module(ots_file)
+            module_models, module_functions = converter.convert_module(module)
+
+            for transformation_id, parsed_model in module_models.items():
+                if transformation_id in imported_ots_models:
+                    raise CompilationError(
+                        f"Duplicate transformation_id '{transformation_id}' found in imported OTS modules. "
+                        f"Found in both {ots_file} and another imported module."
+                    )
+                imported_ots_models[transformation_id] = parsed_model
+
+            if module_functions:
+                logger.debug(
+                    f"Loaded {len(module_functions)} functions from OTS module {ots_file.name} (not yet integrated)"
+                )
+
+            print(f"  ✅ Loaded {ots_file.name}: {len(module_models)} transformations", end="")
+            if module_functions:
+                print(f" and {len(module_functions)} functions")
+            else:
+                print()
+        except (OTSValidationError, OTSModuleReaderError, OTSConverterError) as e:
+            raise CompilationError(f"Failed to load imported OTS module {ots_file}: {e}") from e
+        except Exception as e:
+            raise CompilationError(f"Unexpected error loading OTS module {ots_file}: {e}") from e
+
+    return ots_files, imported_ots_models
+
+
+def _detect_transformation_conflicts(
+    parsed_models: dict[str, Any], imported_ots_models: dict[str, Any]
+) -> None:
+    _print_step("STEP 3: Detecting conflicts")
+
+    conflicts = [
+        transformation_id
+        for transformation_id in parsed_models
+        if transformation_id in imported_ots_models
+    ]
+    if conflicts:
+        error_msg = (
+            f"Found {len(conflicts)} conflict(s): duplicate transformation_id found in both "
+            f"SQL/Python models and imported OTS modules:\n"
+        )
+        for conflict in conflicts:
+            error_msg += f"  - {conflict}\n"
+        raise CompilationError(error_msg)
+
+    print("✅ No conflicts detected")
+
+
+def _merge_models(
+    parsed_models: dict[str, Any], imported_ots_models: dict[str, Any]
+) -> dict[str, Any]:
+    _print_step("STEP 4: Merging models")
+    all_models = parsed_models.copy()
+    all_models.update(imported_ots_models)
+
+    print(
+        f"✅ Merged {len(parsed_models)} SQL/Python models with {len(imported_ots_models)} imported OTS transformations"
+    )
+    print(f"   Total: {len(all_models)} transformations")
+    return all_models
+
+
+def _build_dependency_artifacts(
+    parser: ProjectParser, all_models: dict[str, Any]
+) -> tuple[dict[str, Any], list[str]]:
+    parser.parsed_models = all_models
+    graph = parser.build_dependency_graph()
+    execution_order = parser.get_execution_order()
+
+    parser.save_dependency_graph()
+    parser.save_mermaid_diagram()
+    parser.save_markdown_report()
+    parser.save_to_json()
+
+    logger.debug(f"Built dependency graph with {len(graph['nodes'])} nodes")
+    logger.debug(f"Execution order: {' -> '.join(execution_order)}")
+    return graph, execution_order
+
+
+def _load_imported_ots_modules(ots_files: list[Path]) -> list[tuple[dict[str, Any], Path]]:
+    imported_ots_modules: list[tuple[dict[str, Any], Path]] = []
+    if not ots_files:
+        return imported_ots_modules
+
+    reader = OTSModuleReader()
+    for ots_file in ots_files:
+        try:
+            module = reader.read_module(ots_file)
+            imported_ots_modules.append((module, ots_file))
+        except Exception:
+            # Already validated above, but keep compilation robust.
+            continue
+
+    return imported_ots_modules
+
+
+def _build_validate_and_export_ots_modules(
     project_path: Path,
     tests_folder: Path,
+    output_folder: Path,
+    project_config: dict[str, Any] | None,
+    all_models: dict[str, Any],
+    parsed_functions: dict[str, Any],
+    imported_ots_modules: list[tuple[dict[str, Any], Path]],
+    format: str,
+) -> tuple[list[Path], int]:
+    import json
+    import tempfile
+
+    from tee.parser.output import JSONExporter, OTSTransformer
+
+    transformer = OTSTransformer(project_config or {})
+    test_library_path = _merge_test_libraries(
+        project_path,
+        tests_folder,
+        output_folder,
+        project_config,
+        imported_ots_modules,
+        format,
+    )
+    ots_modules = transformer.transform_to_ots_modules(
+        all_models,
+        parsed_functions=parsed_functions,
+        test_library_path=test_library_path,
+    )
+
+    reader = OTSModuleReader()
+    for module_name, module in ots_modules.items():
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ots.json", delete=False) as tmp:
+                json.dump(module, tmp, indent=2)
+                tmp_path = Path(tmp.name)
+            reader.read_module(tmp_path)
+            tmp_path.unlink()
+        except Exception as e:
+            raise CompilationError(f"Validation failed for module {module_name}: {e}") from e
+
+    output_folder.mkdir(parents=True, exist_ok=True)
+    exporter = JSONExporter(output_folder, project_config, project_path)
+    exported_paths = exporter.export_ots_modules(
+        all_models,
+        parsed_functions=parsed_functions,
+        test_library_path=test_library_path,
+        format=format,
+    )
+
+    return exported_paths, len(ots_modules)
+
+
+def _merge_test_libraries(
+    project_path: Path,
+    _tests_folder: Path,
     output_folder: Path,
     project_config: dict[str, Any] | None,
     imported_ots_modules: list[tuple],

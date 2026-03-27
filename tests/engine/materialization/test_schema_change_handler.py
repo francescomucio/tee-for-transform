@@ -2,9 +2,10 @@
 Unit tests for schema change handling functionality.
 """
 
-import pytest
 from unittest import mock
-from unittest.mock import Mock, MagicMock, call
+from unittest.mock import Mock
+
+import pytest
 
 from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
 from tee.engine.materialization.schema_comparator import SchemaComparator
@@ -109,7 +110,9 @@ class TestSchemaChangeHandler:
         assert call_args[0][0] == "test_table"
         assert call_args[0][1]["name"] == "email"
 
-    def test_handle_schema_changes_append_new_columns_fallback_ddl(self, handler, query_schema, table_schema):
+    def test_handle_schema_changes_append_new_columns_fallback_ddl(
+        self, handler, query_schema, table_schema
+    ):
         """Test append_new_columns falls back to DDL when adapter method not available."""
         # Don't set add_column method
         handler.adapter.add_column = None
@@ -166,7 +169,9 @@ class TestSchemaChangeHandler:
         # Should recreate with full query
         handler.adapter.create_table.assert_called_once_with("test_table", sql_query)
 
-    def test_handle_schema_changes_full_refresh_requires_query(self, handler, query_schema, table_schema):
+    def test_handle_schema_changes_full_refresh_requires_query(
+        self, handler, query_schema, table_schema
+    ):
         """Test full_refresh raises error if sql_query not provided."""
         with pytest.raises(ValueError) as exc_info:
             handler.handle_schema_changes(
@@ -179,7 +184,9 @@ class TestSchemaChangeHandler:
 
         assert "full_refresh requires sql_query" in str(exc_info.value)
 
-    def test_handle_schema_changes_full_incremental_refresh(self, handler, query_schema, table_schema, mock_adapter):
+    def test_handle_schema_changes_full_incremental_refresh(
+        self, handler, query_schema, table_schema, mock_adapter
+    ):
         """Test full_incremental_refresh drops, recreates, and prepares for chunking."""
         sql_query = "SELECT id, name, email FROM source"
         full_incremental_config = {
@@ -199,9 +206,7 @@ class TestSchemaChangeHandler:
         # Mock the LIMIT 0 query result to return schema info
         # The handler will use SchemaComparator which will call infer_query_schema
         # For this test, we just verify the table is dropped and DDL is executed
-        with mock.patch.object(
-            SchemaComparator, "infer_query_schema", return_value=query_schema
-        ):
+        with mock.patch.object(SchemaComparator, "infer_query_schema", return_value=query_schema):
             handler.handle_schema_changes(
                 "test_table",
                 query_schema,
@@ -217,7 +222,9 @@ class TestSchemaChangeHandler:
         # Should create empty table (via DDL)
         handler.adapter.execute_query.assert_called()
 
-    def test_handle_schema_changes_full_incremental_refresh_requires_config(self, handler, query_schema, table_schema):
+    def test_handle_schema_changes_full_incremental_refresh_requires_config(
+        self, handler, query_schema, table_schema
+    ):
         """Test full_incremental_refresh raises error if configs not provided."""
         with pytest.raises(ValueError) as exc_info:
             handler.handle_schema_changes(
@@ -229,7 +236,9 @@ class TestSchemaChangeHandler:
                 full_incremental_refresh_config=None,
             )
 
-        assert "full_incremental_refresh requires full_incremental_refresh_config" in str(exc_info.value)
+        assert "full_incremental_refresh requires full_incremental_refresh_config" in str(
+            exc_info.value
+        )
 
     def test_handle_schema_changes_recreate_empty(self, handler, query_schema, table_schema):
         """Test recreate_empty drops and recreates empty table."""
@@ -343,4 +352,3 @@ class TestSchemaChangeHandler:
             handler._create_empty_table_from_schema("test_table", [])
 
         assert "schema is empty" in str(exc_info.value)
-

@@ -5,9 +5,9 @@ These tests verify that adapters correctly implement the function
 management interface and can be reused across different adapters.
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
-from abc import ABC
 
 from tee.adapters.base import DatabaseAdapter
 
@@ -18,6 +18,7 @@ class TestFunctionAdapterInterface:
     def test_adapter_has_create_function_abstract_method(self):
         """Test that DatabaseAdapter defines create_function as abstract."""
         assert hasattr(DatabaseAdapter, "create_function")
+
         # Check if it's abstract by trying to instantiate a class without implementing it
         class IncompleteAdapter(DatabaseAdapter):
             def get_default_dialect(self):
@@ -82,7 +83,9 @@ class TestFunctionAdapterInterface:
         adapter.create_function = Mock()
         adapter.function_exists = Mock(return_value=False)
         adapter.drop_function = Mock()
-        adapter.get_function_info = Mock(return_value={"function_name": "test.func", "exists": False})
+        adapter.get_function_info = Mock(
+            return_value={"function_name": "test.func", "exists": False}
+        )
 
         # Test create_function
         function_name = "my_schema.calculate_percentage"
@@ -226,6 +229,7 @@ class TestFunctionAdapterDefaultImplementation:
 
     def test_get_function_info_default_implementation(self):
         """Test that get_function_info has a default implementation."""
+
         # Create a minimal adapter that implements all abstract methods
         class MinimalAdapter(DatabaseAdapter):
             def get_default_dialect(self):
@@ -356,7 +360,9 @@ class TestFunctionAdapterQualifiedNames:
         ]
 
         for function_name in qualified_names:
-            function_sql = f"CREATE OR REPLACE FUNCTION {function_name}() RETURNS DOUBLE AS $$ SELECT 1.0 $$;"
+            function_sql = (
+                f"CREATE OR REPLACE FUNCTION {function_name}() RETURNS DOUBLE AS $$ SELECT 1.0 $$;"
+            )
             mock_adapter.create_function(function_name, function_sql)
 
         # Verify all qualified names were used
@@ -367,9 +373,10 @@ class TestFunctionAdapterQualifiedNames:
         unqualified_names = ["calculate_percentage", "math_utils", "complex_calculation"]
 
         for function_name in unqualified_names:
-            function_sql = f"CREATE OR REPLACE FUNCTION {function_name}() RETURNS DOUBLE AS $$ SELECT 1.0 $$;"
+            function_sql = (
+                f"CREATE OR REPLACE FUNCTION {function_name}() RETURNS DOUBLE AS $$ SELECT 1.0 $$;"
+            )
             mock_adapter.create_function(function_name, function_sql)
 
         # Verify all unqualified names were used
         assert mock_adapter.create_function.call_count == len(unqualified_names)
-

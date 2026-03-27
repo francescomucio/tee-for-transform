@@ -13,9 +13,10 @@ API reference documentation is currently being developed. The API reference incl
 - **Adapters API** - Database adapter implementations (coming soon)
 
 For now, please refer to:
-- [Functions API](functions.md) - Function decorators and API reference
-- [Models API](models.md) - Model decorators and `create_model()` function
-- [CLI Reference](../user-guide/cli-reference.md) - Command-line interface
-- [User Guide](../user-guide/) - User documentation with examples
-- Source code documentation - Inline docstrings in the codebase
+- [Functions API](functions.md) — function decorators and metadata API
+- [Models API](models.md) — model decorators and `create_model()`
+- [Engine API](engine/README.md), [Parser API](parser/README.md), [Adapters API](adapters/README.md) — module maps until full reference exists
+- [CLI Reference](../user-guide/cli-reference.md) — command-line interface
+- [User Guide](../user-guide/overview.md) — concepts and examples
+- Source — docstrings under `tee/`
 

@@ -164,7 +164,7 @@ def validate_function_metadata_consistency(
             )
 
         # Check parameter names match
-        for i, (sql_param, python_param) in enumerate(zip(sql_params, python_params)):
+        for i, (sql_param, python_param) in enumerate(zip(sql_params, python_params, strict=True)):
             if sql_param.get("name") != python_param.get("name"):
                 raise FunctionMetadataError(
                     f"Parameter {i + 1} name mismatch: SQL has '{sql_param.get('name')}', "

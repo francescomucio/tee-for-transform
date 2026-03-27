@@ -119,16 +119,20 @@ def model(
 
             # Validate table name
             final_table_name = table_name or func.__name__
-            if final_table_name and not final_table_name.replace(".", "").replace("_", "").isalnum():
+            if (
+                final_table_name
+                and not final_table_name.replace(".", "").replace("_", "").isalnum()
+            ):
                 raise ModelDecoratorError(f"Invalid table name: {final_table_name}")
 
             # Get caller file path for registration
             # First try to get from __tee_file_path__ (injected by parser for executed modules)
             # Otherwise fall back to frame inspection
             import os
+
             frame = inspect.currentframe()
             caller_file = None
-            
+
             # Walk up the frame stack to find the module's __tee_file_path__ or __file__
             current_frame = frame
             for _ in range(5):  # Go up to 5 frames to find the module
@@ -145,11 +149,13 @@ def model(
                         # Don't break here - keep looking for __tee_file_path__ in higher frames
                 else:
                     break
-            
+
             # If still not found, use get_caller_file_info
             if not caller_file:
-                caller_file, _ = get_caller_file_info(frames_up=3)  # decorator -> model() -> @model -> module
-            
+                caller_file, _ = get_caller_file_info(
+                    frames_up=3
+                )  # decorator -> model() -> @model -> module
+
             # Ensure absolute path
             if caller_file:
                 caller_file = os.path.abspath(caller_file)
@@ -188,9 +194,7 @@ def model(
 
             # Skip registration if we're in evaluation mode
             if ModelRegistry.should_skip_registration():
-                logger.debug(
-                    f"Skipping registration of {final_table_name} (evaluation mode)"
-                )
+                logger.debug(f"Skipping registration of {final_table_name} (evaluation mode)")
                 return func
 
             # Check for conflicts (only if from a different file)
@@ -214,9 +218,7 @@ def model(
                     )
 
             ModelRegistry.register(standardized_model)
-            logger.debug(
-                f"Registered model: {final_table_name} from function {func.__name__}"
-            )
+            logger.debug(f"Registered model: {final_table_name} from function {func.__name__}")
 
             return func
 
@@ -280,7 +282,7 @@ def create_model(
     # Otherwise fall back to frame inspection
     frame = inspect.currentframe()
     caller_file = None
-    
+
     # Walk up the frame stack to find the module's __tee_file_path__ or __file__
     current_frame = frame
     for _ in range(4):  # Go up to 4 frames to find the module
@@ -297,11 +299,11 @@ def create_model(
                 # Don't break here - keep looking for __tee_file_path__ in higher frames
         else:
             break
-    
+
     # If still not found, use get_caller_file_info
     if not caller_file:
         caller_file, _ = get_caller_file_info(frames_up=2)  # create_model() -> module
-    
+
     # Ensure absolute path
     if caller_file:
         caller_file = os.path.abspath(caller_file)
@@ -331,22 +333,26 @@ def create_model(
                     full_table_name_for_qualification = f"{schema_name}.{table_name}"
         except Exception as e:
             logger.debug(f"Could not derive schema from file path {caller_file}: {e}")
-    
+
     # Parse SQL through SQLParser to get qualified SQL (same as @model does)
     # This ensures table references are qualified with schema prefixes
     # Pass full_table_name_with_schema so generate_resolved_sql can use the schema
     # Use caller_file if available, otherwise use a temporary path for parsing
     sql_parser = SQLParser()
     parse_file_path = caller_file if caller_file else None
-    parsed_sql_data = sql_parser.parse(sql, file_path=parse_file_path, table_name=full_table_name_for_qualification)
-    
+    parsed_sql_data = sql_parser.parse(
+        sql, file_path=parse_file_path, table_name=full_table_name_for_qualification
+    )
+
     # Extract code data from parsed result (contains qualified resolved_sql)
     # SQLParser.parse() returns a single model dict with "code" key
     if parsed_sql_data and "code" in parsed_sql_data:
         code_data = parsed_sql_data["code"]
     else:
         # Fallback if parsing fails (shouldn't happen, but be safe)
-        logger.warning(f"SQL parsing returned invalid result for {table_name}, using unqualified SQL")
+        logger.warning(
+            f"SQL parsing returned invalid result for {table_name}, using unqualified SQL"
+        )
         code_data = {
             "sql": {
                 "original_sql": sql,
@@ -398,4 +404,3 @@ def create_model(
 
     ModelRegistry.register(standardized_model)
     logger.debug(f"Registered model via create_model(): {table_name}")
-

@@ -103,18 +103,18 @@ def _generate_project_toml(project_name: str, db_type: str) -> str:
 
     # Add extra section for motherduck token
     if db_type.lower() == "motherduck":
-        toml_content += '''
+        toml_content += """
 
 [connection.extra]
 # MotherDuck access token (recommended: use MOTHERDUCK_TOKEN environment variable instead)
 # motherduck_token = "your_motherduck_access_token_here"
-'''
+"""
 
-    toml_content += '''
+    toml_content += """
 
 [flags]
 materialization_change_behavior = "warn"  # Options: "warn", "error", "ignore"
-'''
+"""
 
     return toml_content
 

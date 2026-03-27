@@ -189,4 +189,3 @@ class TestProfilesParser:
         assert result["type"] == "bigquery"
         assert result["project"] == "myproject"
         assert result["database"] == "mydataset"
-

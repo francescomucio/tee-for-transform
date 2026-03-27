@@ -31,7 +31,9 @@ class IncrementalHandler:
         # Check if table exists
         if not self.adapter.table_exists(table_name):
             # First run: create table from query
-            self.logger.info(f"Table {table_name} does not exist. Creating it as a full load first.")
+            self.logger.info(
+                f"Table {table_name} does not exist. Creating it as a full load first."
+            )
             self.adapter.create_table(table_name, sql_query, metadata=None)
             return
 

@@ -7,6 +7,7 @@ import typer
 from tee.cli.context import CommandContext
 from tee.engine.connection_manager import ConnectionManager
 from tee.executor import execute_models
+from tee.parser.output.lookup_generator import generate_lookups
 
 
 def _pluralize(count: int, singular: str, plural: str | None = None) -> str:
@@ -32,6 +33,7 @@ def cmd_run(
     verbose: bool = False,
     select: list[str] | None = None,
     exclude: list[str] | None = None,
+    auto_resolve_level_conflicts: bool = True,
 ) -> None:
     """Execute the run command."""
     ctx = CommandContext(
@@ -47,6 +49,13 @@ def cmd_run(
         typer.echo(f"Running t4t on project: {project_folder}")
         ctx.print_variables_info()
         ctx.print_selection_info()
+
+        typer.echo("Refreshing generated lookup models...")
+        generate_lookups(
+            project_path=ctx.project_path,
+            vars_dict=ctx.vars,
+            auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+        )
 
         # Create unified connection manager
         connection_manager = ConnectionManager(
@@ -67,16 +76,16 @@ def cmd_run(
         )
 
         # Calculate statistics
-        total_tables = len(results["executed_tables"]) + len(results["failed_tables"])
+        len(results["executed_tables"]) + len(results["failed_tables"])
         successful_tables = len(results["executed_tables"])
         failed_tables = len(results["failed_tables"])
-        
+
         executed_functions = results.get("executed_functions", [])
         failed_functions = results.get("failed_functions", [])
-        total_functions = len(executed_functions) + len(failed_functions)
+        len(executed_functions) + len(failed_functions)
         successful_functions = len(executed_functions)
         failed_functions_count = len(failed_functions)
-        
+
         warning_count = len(results.get("warnings", []))
 
         # Build completion message
@@ -85,28 +94,36 @@ def cmd_run(
             parts.append(f"{successful_tables} {_pluralize(successful_tables, 'table')}")
         if successful_functions > 0:
             parts.append(f"{successful_functions} {_pluralize(successful_functions, 'function')}")
-        
+
         if parts:
             typer.echo(f"\nCompleted! Successfully executed: {', '.join(parts)}")
         else:
             typer.echo("\nCompleted!")
-        
+
         # Show failures if any
         if failed_tables > 0 or failed_functions_count > 0 or warning_count > 0:
             if successful_tables > 0 or successful_functions > 0:
-                typer.echo(f"  ✅ Successful: {successful_tables} {_pluralize(successful_tables, 'table')}, {successful_functions} {_pluralize(successful_functions, 'function')}")
+                typer.echo(
+                    f"  ✅ Successful: {successful_tables} {_pluralize(successful_tables, 'table')}, {successful_functions} {_pluralize(successful_functions, 'function')}"
+                )
             if failed_tables > 0:
                 typer.echo(f"  ❌ Failed: {failed_tables} {_pluralize(failed_tables, 'table')}")
             if failed_functions_count > 0:
-                typer.echo(f"  ❌ Failed: {failed_functions_count} {_pluralize(failed_functions_count, 'function')}")
+                typer.echo(
+                    f"  ❌ Failed: {failed_functions_count} {_pluralize(failed_functions_count, 'function')}"
+                )
             if warning_count > 0:
                 typer.echo(f"  ⚠️  Warnings: {warning_count} {_pluralize(warning_count, 'warning')}")
         elif successful_tables > 0 or successful_functions > 0:
             # All successful
             if successful_tables > 0:
-                typer.echo(f"  ✅ All {successful_tables} {_pluralize(successful_tables, 'table')} executed successfully!")
+                typer.echo(
+                    f"  ✅ All {successful_tables} {_pluralize(successful_tables, 'table')} executed successfully!"
+                )
             if successful_functions > 0:
-                typer.echo(f"  ✅ All {successful_functions} {_pluralize(successful_functions, 'function')} deployed successfully!")
+                typer.echo(
+                    f"  ✅ All {successful_functions} {_pluralize(successful_functions, 'function')} deployed successfully!"
+                )
 
         if ctx.verbose:
             typer.echo(f"Analysis info: {results.get('analysis', {})}")

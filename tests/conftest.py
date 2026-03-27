@@ -2,15 +2,15 @@
 Pytest configuration and shared fixtures for TEE tests.
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
-from tee.engine.config import AdapterConfig
-from tee.engine.model_state import ModelStateManager
+import pytest
+
 from tee.adapters.duckdb.adapter import DuckDBAdapter
+from tee.engine.model_state import ModelStateManager
 
 
 @pytest.fixture
@@ -68,6 +68,7 @@ def duckdb_adapter(duckdb_config):
 def state_manager(temp_state_db_path):
     """Create state manager instance."""
     import os
+
     # Ensure parent directory exists
     parent_dir = os.path.dirname(temp_state_db_path)
     if parent_dir:
@@ -109,7 +110,11 @@ def sample_incremental_config() -> dict[str, Any]:
     """Sample incremental configuration."""
     return {
         "strategy": "append",
-        "append": {"filter_column": "created_at", "start_value": "2024-01-01", "lookback": "7 days"},
+        "append": {
+            "filter_column": "created_at",
+            "start_value": "2024-01-01",
+            "lookback": "7 days",
+        },
     }
 
 
@@ -145,7 +150,7 @@ def large_dataset_sql():
     """Large dataset SQL for performance testing."""
     return """
     CREATE TABLE test_schema.large_source_table AS
-    SELECT 
+    SELECT
         row_number() OVER () as id,
         'User ' || row_number() OVER () as name,
         '2024-01-01'::timestamp + (row_number() OVER () * interval '1 hour') as created_at,
@@ -184,7 +189,11 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.integration)
 
         # Add slow marker to performance tests
-        if "performance" in item.name or "large_dataset" in item.name or "test_incremental_performance.py" in str(item.fspath):
+        if (
+            "performance" in item.name
+            or "large_dataset" in item.name
+            or "test_incremental_performance.py" in str(item.fspath)
+        ):
             item.add_marker(pytest.mark.slow)
 
     # Remove items that shouldn't be collected as tests

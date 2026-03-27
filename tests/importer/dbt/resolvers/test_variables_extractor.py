@@ -4,7 +4,6 @@ Unit tests for VariablesExtractor.
 
 from pathlib import Path
 
-import pytest
 
 from tee.importer.dbt.resolvers import VariablesExtractor
 
@@ -36,11 +35,7 @@ class TestVariablesExtractor:
     def test_extract_variables_from_if_statement(self, tmp_path: Path) -> None:
         """Test extracting variables from if statements."""
         model_file = tmp_path / "test_model.sql"
-        model_file.write_text(
-            "{% if var('include_email') %}\n"
-            "SELECT email FROM users\n"
-            "{% endif %}"
-        )
+        model_file.write_text("{% if var('include_email') %}\nSELECT email FROM users\n{% endif %}")
 
         model_files = {"models/test_model.sql": model_file}
         dbt_project = {"vars": {}}
@@ -75,4 +70,3 @@ class TestVariablesExtractor:
         assert len(variables["env"]["used_in"]) == 2
         assert "model1" in variables["env"]["used_in"]
         assert "model2" in variables["env"]["used_in"]
-

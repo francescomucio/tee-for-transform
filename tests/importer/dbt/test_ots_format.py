@@ -4,9 +4,8 @@ Unit tests for OTS format import functionality.
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
 import yaml
 
 from tee.compiler import CompilationError
@@ -325,4 +324,3 @@ class TestOtsFormatImport:
             assert "OTS Compilation Status" in report_content
             assert "OTS Modules Generated" in report_content
             assert "3" in report_content  # ots_modules_count
-

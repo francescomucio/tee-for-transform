@@ -3,7 +3,6 @@ Unit tests for OTS function export functionality.
 """
 
 import pytest
-from typing import Any
 
 from tee.parser.output.ots.transformer import OTSTransformer
 from tee.typing import Function, Model
@@ -77,7 +76,13 @@ class TestOTSFunctionExport:
         parsed_models: dict[str, Model] = {
             "my_schema.table1": {
                 "model_metadata": {"metadata": {}, "file_path": "models/table1.sql"},
-                "code": {"sql": {"original_sql": "SELECT 1", "resolved_sql": "SELECT 1", "source_tables": []}},
+                "code": {
+                    "sql": {
+                        "original_sql": "SELECT 1",
+                        "resolved_sql": "SELECT 1",
+                        "source_tables": [],
+                    }
+                },
             }
         }
 
@@ -156,7 +161,9 @@ class TestOTSFunctionExport:
             "code": {
                 "sql": {
                     "original_sql": "CREATE FUNCTION helper_func() AS $$ SELECT * FROM my_schema.users $$",
-                    "source_tables": ["my_schema.users"],  # Dependencies in code["sql"] (consistent with models)
+                    "source_tables": [
+                        "my_schema.users"
+                    ],  # Dependencies in code["sql"] (consistent with models)
                     "source_functions": ["my_schema.base_func"],
                 }
             },
@@ -212,14 +219,22 @@ class TestOTSFunctionExport:
         parsed_models: dict[str, Model] = {
             "my_schema.table1": {
                 "model_metadata": {"metadata": {}, "file_path": "models/table1.sql"},
-                "code": {"sql": {"original_sql": "SELECT 1", "resolved_sql": "SELECT 1", "source_tables": []}},
+                "code": {
+                    "sql": {
+                        "original_sql": "SELECT 1",
+                        "resolved_sql": "SELECT 1",
+                        "source_tables": [],
+                    }
+                },
             }
         }
         parsed_functions: dict[str, Function] = {
             "my_schema.calculate_percentage": sample_function,
         }
 
-        modules = transformer.transform_to_ots_modules(parsed_models, parsed_functions=parsed_functions)
+        modules = transformer.transform_to_ots_modules(
+            parsed_models, parsed_functions=parsed_functions
+        )
 
         assert len(modules) == 1
         module = modules["test_project.my_schema"]
@@ -292,4 +307,3 @@ class TestOTSFunctionExport:
         assert "production" in tags
         assert "math" in tags
         assert "helper" in tags
-

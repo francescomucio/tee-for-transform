@@ -11,7 +11,7 @@ import yaml
 
 from tee.parser.shared.constants import OUTPUT_FILES
 from tee.parser.shared.exceptions import OutputGenerationError
-from tee.parser.shared.types import DependencyGraph, ParsedFunction, ParsedModel
+from tee.parser.shared.types import DependencyGraph, DimensionalGraph, ParsedFunction, ParsedModel
 
 from .ots.transformer import OTSTransformer
 from .test_library_exporter import TestLibraryExporter
@@ -120,8 +120,75 @@ class JSONExporter:
         except Exception as e:
             raise OutputGenerationError(f"Failed to export dependency graph: {e}") from e
 
+    def export_dimensional_graph(
+        self, graph: DimensionalGraph, output_file: str | None = None
+    ) -> Path:
+        """
+        Export dimensional relationship graph to JSON file.
+
+        Args:
+            graph: Dimensional graph to export
+            output_file: Optional custom output file path
+
+        Returns:
+            Path to the exported file
+
+        Raises:
+            OutputGenerationError: If export fails
+        """
+        try:
+            if output_file is None:
+                output_file = self.output_folder / OUTPUT_FILES["dimensional_graph"]
+            else:
+                output_file = Path(output_file)
+
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(graph, f, indent=2, ensure_ascii=False)
+
+            logger.debug(f"Dimensional graph saved to {output_file}")
+            return output_file
+        except Exception as e:
+            raise OutputGenerationError(f"Failed to export dimensional graph: {e}") from e
+
+    def export_dimension_registry(
+        self,
+        registry: dict[str, str],
+        output_file: str | Path | None = None,
+    ) -> Path:
+        """
+        Export auto-built logical dimension → table mapping for troubleshooting.
+
+        Args:
+            registry: Mapping from logical keys (e.g. ``date``, ``date.month``) to qualified table names
+            output_file: Optional path; default uses OUTPUT_FILES under output_folder
+
+        Returns:
+            Path to the written JSON file
+        """
+        try:
+            if output_file is None:
+                output_file = self.output_folder / OUTPUT_FILES["dimension_registry"]
+            else:
+                output_file = Path(output_file)
+
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(registry, f, indent=2, ensure_ascii=False, sort_keys=True)
+
+            logger.debug("Dimension registry saved to %s", output_file)
+            return output_file
+        except Exception as e:
+            raise OutputGenerationError(f"Failed to export dimension registry: {e}") from e
+
     def export_all(
-        self, parsed_models: dict[str, ParsedModel], graph: DependencyGraph
+        self,
+        parsed_models: dict[str, ParsedModel],
+        graph: DependencyGraph,
+        *,
+        dimension_registry: dict[str, str] | None = None,
     ) -> dict[str, Path]:
         """
         Export both parsed models and dependency graph.
@@ -129,6 +196,7 @@ class JSONExporter:
         Args:
             parsed_models: Parsed models to export
             graph: Dependency graph to export
+            dimension_registry: Optional logical → table map (from parsed dimension models)
 
         Returns:
             Dict mapping export type to file path
@@ -144,6 +212,9 @@ class JSONExporter:
 
             # Export dependency graph
             results["dependency_graph"] = self.export_dependency_graph(graph)
+
+            if dimension_registry is not None:
+                results["dimension_registry"] = self.export_dimension_registry(dimension_registry)
 
             return results
 
@@ -217,7 +288,9 @@ class JSONExporter:
                 logger.info(
                     f"Exported OTS module '{module_name}' to {output_file} ({format.upper()})"
                 )
-                logger.debug(f"OTS module '{module_name}' saved to {output_file} ({format.upper()})")
+                logger.debug(
+                    f"OTS module '{module_name}' saved to {output_file} ({format.upper()})"
+                )
 
             logger.debug(f"Exported {len(results)} OTS module(s) ({format.upper()})")
 

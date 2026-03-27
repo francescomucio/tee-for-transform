@@ -2,9 +2,11 @@
 Test Python variable support functionality.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
+
 from tee.parser.parsers import PythonParser
 from tee.parser.processing import model
 from tee.parser.shared.registry import ModelRegistry
@@ -61,7 +63,7 @@ def test_model():
         try:
             # Write test file
             test_file.write_text(test_content)
-            
+
             # Convert to absolute path for proper file_path matching
             test_file_abs = test_file.resolve()
 
@@ -77,8 +79,10 @@ def test_model():
             variables = {"env": "production", "debug": True}
 
             # Mock the module execution to avoid import issues
-            with patch.object(parser, "_execute_function") as mock_execute, \
-                 patch.object(parser._sql_parser, "parse") as mock_parse:
+            with (
+                patch.object(parser, "_execute_function") as mock_execute,
+                patch.object(parser._sql_parser, "parse") as mock_parse,
+            ):
                 mock_execute.return_value = "SELECT * FROM users"
                 mock_parse.return_value = {
                     "code": {
@@ -93,9 +97,7 @@ def test_model():
                 }
 
                 # Execute the model with variables
-                result = parser.evaluate_model_function(
-                    model_data, "test_schema.test_model", variables
-                )
+                parser.evaluate_model_function(model_data, "test_schema.test_model", variables)
 
                 # Verify that _execute_function was called with variables
                 mock_execute.assert_called_once()
@@ -124,7 +126,7 @@ def test_nested_model():
         try:
             # Write test file
             test_file.write_text(test_content)
-            
+
             # Convert to absolute path for proper file_path matching
             test_file_abs = test_file.resolve()
 
@@ -140,8 +142,10 @@ def test_nested_model():
             variables = {"config": {"database": {"host": "localhost", "port": 5432}}}
 
             # Mock the module execution
-            with patch.object(parser, "_execute_function") as mock_execute, \
-                 patch.object(parser._sql_parser, "parse") as mock_parse:
+            with (
+                patch.object(parser, "_execute_function") as mock_execute,
+                patch.object(parser._sql_parser, "parse") as mock_parse,
+            ):
                 mock_execute.return_value = "SELECT * FROM users"
                 mock_parse.return_value = {
                     "code": {
@@ -156,7 +160,7 @@ def test_nested_model():
                 }
 
                 # Execute the model with nested variables
-                result = parser.evaluate_model_function(
+                parser.evaluate_model_function(
                     model_data, "test_schema.test_nested_model", variables
                 )
 
@@ -211,11 +215,17 @@ def test_nested_model():
             mock_execute.side_effect = lambda model_data, table_name, vars: {
                 **model_data,
                 "needs_execution": False,
-                "code": {"sql": {"resolved_sql": "SELECT * FROM test", "original_sql": "SELECT * FROM test", "source_tables": []}},
+                "code": {
+                    "sql": {
+                        "resolved_sql": "SELECT * FROM test",
+                        "original_sql": "SELECT * FROM test",
+                        "source_tables": [],
+                    }
+                },
             }
 
             # Execute all models with variables
-            result = parser.evaluate_all_models(parsed_models, variables)
+            parser.evaluate_all_models(parsed_models, variables)
 
             # Verify that both models were executed with variables
             assert mock_execute.call_count == 2
@@ -272,8 +282,10 @@ def test_nested_model():
         }
 
         # Test with None variables
-        with patch.object(parser, "_execute_function") as mock_execute, \
-             patch.object(parser._sql_parser, "parse") as mock_parse:
+        with (
+            patch.object(parser, "_execute_function") as mock_execute,
+            patch.object(parser._sql_parser, "parse") as mock_parse,
+        ):
             mock_execute.return_value = "SELECT * FROM users"
             mock_parse.return_value = {
                 "code": {
@@ -287,7 +299,7 @@ def test_nested_model():
                 "sqlglot_hash": "test_hash",
             }
 
-            result = parser.evaluate_model_function(model_data, "test_schema.test_model", None)
+            parser.evaluate_model_function(model_data, "test_schema.test_model", None)
 
             # Verify that _execute_function was called with None variables
             mock_execute.assert_called_once()
@@ -308,8 +320,10 @@ def test_nested_model():
             "needs_evaluation": True,
         }
 
-        with patch.object(parser2, "_execute_function") as mock_execute2, \
-             patch.object(parser2._sql_parser, "parse") as mock_parse2:
+        with (
+            patch.object(parser2, "_execute_function") as mock_execute2,
+            patch.object(parser2._sql_parser, "parse") as mock_parse2,
+        ):
             mock_execute2.return_value = "SELECT * FROM users"
             mock_parse2.return_value = {
                 "code": {
@@ -323,7 +337,7 @@ def test_nested_model():
                 "sqlglot_hash": "test_hash",
             }
 
-            result = parser2.evaluate_model_function(model_data2, "test_schema.test_model2", {})
+            parser2.evaluate_model_function(model_data2, "test_schema.test_model2", {})
 
             # Verify that _execute_function was called with empty variables
             mock_execute2.assert_called_once()

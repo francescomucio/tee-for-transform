@@ -75,7 +75,9 @@ class SQLFunctionMetadata:
 
         # SQL Query Section - read original SQL file to preserve formatting
         output.append("  📝 SQL Definition:")
-        sql_file_path = os.path.splitext(self._caller_file)[0] + ".sql" if self._caller_file else None
+        sql_file_path = (
+            os.path.splitext(self._caller_file)[0] + ".sql" if self._caller_file else None
+        )
         if sql_file_path and os.path.exists(sql_file_path):
             with open(sql_file_path, encoding="utf-8") as f:
                 sql_content = f.read().strip()
@@ -121,7 +123,10 @@ class SQLFunctionMetadata:
             output.append(f"     Deterministic: {func_metadata['deterministic']}")
 
         if func_metadata.get("tests"):
-            test_strs = [str(t) if isinstance(t, str) else t.get("name", str(t)) for t in func_metadata["tests"]]
+            test_strs = [
+                str(t) if isinstance(t, str) else t.get("name", str(t))
+                for t in func_metadata["tests"]
+            ]
             output.append(f"     Tests: {', '.join(test_strs)}")
 
         if func_metadata.get("tags"):
@@ -167,4 +172,3 @@ class SQLFunctionMetadata:
                 # Print if called from __main__
                 if self._caller_main:
                     self._print_function()
-

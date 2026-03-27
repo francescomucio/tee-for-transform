@@ -260,6 +260,6 @@ Each model is converted to the target database as needed.
 ## Related Documentation
 
 - [Database Adapters](database-adapters.md) - Learn about adapter system
-- [Configuration](getting-started/configuration.md) - Configuration options
+- [Configuration](../getting-started/configuration.md) - Configuration options
 - [Execution Engine](execution-engine.md) - How models are executed
 

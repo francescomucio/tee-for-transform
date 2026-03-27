@@ -18,6 +18,7 @@ from tee.importer.dbt.parsers import MacroParser
 
 class DoExtension(Extension):
     """Jinja2 extension to support dbt's {% do %} statement."""
+
     tags = {"do"}
 
     def parse(self, parser):
@@ -40,7 +41,6 @@ class DoExtension(Extension):
         # The expression is already evaluated by Jinja2, we just don't output it
         # Note: expr and caller are required by Jinja2's CallBlock interface
         return ""
-
 
 
 logger = logging.getLogger(__name__)
@@ -204,6 +204,7 @@ class JinjaRenderer:
         def env_var(var_name: str, default: Any = None) -> Any:
             """dbt env_var() function - returns environment variable value or default."""
             import os  # noqa: PLC0415
+
             return os.environ.get(var_name, default)
 
         def config(**kwargs: Any) -> dict[str, Any]:
@@ -234,6 +235,7 @@ class JinjaRenderer:
             - postgres__macro_name (if adapter_type == "postgres")
             - default__macro_name (fallback)
             """
+
             def dispatch(self, macro_name: str, package: str = None):
                 """
                 Dispatch to adapter-specific or default implementation of a macro.
@@ -244,6 +246,7 @@ class JinjaRenderer:
                 3. Default macros (default__)
                 4. Package macros (lowest)
                 """
+
                 # Return a function that looks up the right macro
                 def dispatch_func(*args, **kwargs):
                     # Try adapter-specific first (e.g., duckdb__cents_to_dollars)
@@ -278,6 +281,7 @@ class JinjaRenderer:
                         f"(tried {adapter_macro_name}, {default_macro_name}), returning empty string"
                     )
                     return ""
+
                 return dispatch_func
 
         # Create dbt utility functions object
@@ -356,7 +360,9 @@ class JinjaRenderer:
                 """Truncate date to specified part."""
                 return f"DATE_TRUNC('{datepart}', {date_expr})"
 
-            def dateadd(self, datepart: str, interval: int | str, from_date_or_timestamp: str) -> str:
+            def dateadd(
+                self, datepart: str, interval: int | str, from_date_or_timestamp: str
+            ) -> str:
                 """Add interval to date."""
                 if isinstance(interval, str):
                     # SQL expression - use directly
@@ -399,6 +405,7 @@ class JinjaRenderer:
         # Add this and target objects (dbt context objects)
         class This:
             """dbt this object - provides context about current model."""
+
             def __init__(self, schema: str | None = None, name: str | None = None):
                 self.schema = schema
                 self.name = name
@@ -408,6 +415,7 @@ class JinjaRenderer:
 
         class Target:
             """dbt target object - provides context about target environment."""
+
             def __init__(self, name: str = "dev", schema: str | None = None, **kwargs: Any):
                 self.name = name
                 self.schema = schema
@@ -518,7 +526,9 @@ class JinjaRenderer:
             if pkg_macro_files:
                 pkg_macros = macro_parser.parse_all_macros(pkg_macro_files)
                 if self.verbose:
-                    logger.info(f"Parsed {len(pkg_macros)} unique macros from package {pkg_name}: {list(pkg_macros.keys())[:10]}")
+                    logger.info(
+                        f"Parsed {len(pkg_macros)} unique macros from package {pkg_name}: {list(pkg_macros.keys())[:10]}"
+                    )
                 # Register macros under package namespace (e.g., dbt_utils.generate_surrogate_key)
                 self._register_macros(pkg_macros, pkg_name, f"package:{pkg_name}")
 
@@ -572,6 +582,7 @@ class JinjaRenderer:
                     # We use an exception to stop rendering and return the value immediately
                     class MacroReturn(Exception):
                         """Exception used to return a value from a macro."""
+
                         def __init__(self, value: Any):
                             self.value = value
                             super().__init__()
@@ -581,20 +592,22 @@ class JinjaRenderer:
                         # Convert value to appropriate type (int, float, bool, or keep as-is)
                         if isinstance(value, str) and value.strip().isdigit():
                             return_value = int(value.strip())
-                        elif isinstance(value, str) and value.strip().replace('.', '', 1).isdigit():
+                        elif isinstance(value, str) and value.strip().replace(".", "", 1).isdigit():
                             return_value = float(value.strip())
                         else:
                             return_value = value
                         # Raise exception to stop rendering and return the value
                         if self.verbose:
-                            logger.debug(f"Macro {m_name} calling return() with {return_value} (type: {type(return_value)})")
+                            logger.debug(
+                                f"Macro {m_name} calling return() with {return_value} (type: {type(return_value)})"
+                            )
                         raise MacroReturn(return_value)
 
                     # Build context: start with all globals, then override with macro args and special handlers
                     context = dict(self.env.globals)
                     # Override with macro arguments (only zip matching pairs - args may be fewer than params)
                     # This handles cases where macros have default values or are called with fewer positional args
-                    context.update(dict(zip(m_params, args)))
+                    context.update(dict(zip(m_params, args, strict=False)))
                     context.update(kwargs)
                     # Override with special return handler (must come after globals to take precedence)
                     context["return"] = return_func
@@ -605,17 +618,23 @@ class JinjaRenderer:
                         rendered_output = macro_template.render(**context)
                         # If no return() was called, return the rendered output (normal macro behavior)
                         if self.verbose:
-                            logger.debug(f"Macro {m_name} rendered output (no return()): {repr(rendered_output[:50])}")
+                            logger.debug(
+                                f"Macro {m_name} rendered output (no return()): {repr(rendered_output[:50])}"
+                            )
                         return rendered_output
                     except MacroReturn as e:
                         # return() was called - return the captured value instead of rendered output
                         if self.verbose:
-                            logger.debug(f"Macro {m_name} return() caught: {e.value} (type: {type(e.value)})")
+                            logger.debug(
+                                f"Macro {m_name} return() caught: {e.value} (type: {type(e.value)})"
+                            )
                         return e.value
                     except Exception as e:
                         # Re-raise other exceptions, but log them
                         if self.verbose:
-                            logger.debug(f"Macro {m_name} raised exception: {type(e).__name__}: {e}")
+                            logger.debug(
+                                f"Macro {m_name} raised exception: {type(e).__name__}: {e}"
+                            )
                         raise
 
                 return macro_func  # noqa: B023
@@ -628,7 +647,9 @@ class JinjaRenderer:
                 full_name = f"{namespace}.{macro_name}" if namespace else macro_name
                 logger.info(f"Registered macro {full_name} from {source}")
                 if namespace:
-                    logger.debug(f"Namespace {namespace} now contains: {list(namespace_obj.keys())}")
+                    logger.debug(
+                        f"Namespace {namespace} now contains: {list(namespace_obj.keys())}"
+                    )
 
     def render(self, sql_content: str, model_name: str | None = None) -> str:
         """
@@ -662,16 +683,22 @@ class JinjaRenderer:
                 parsed = sqlglot.parse_one(rendered, read="postgres")
                 converted = parsed.sql(dialect=target_dialect_name)
                 if self.verbose:
-                    logger.debug(f"Converted SQL from postgres to {target_dialect_name} for model {model_name or 'unknown'}")
+                    logger.debug(
+                        f"Converted SQL from postgres to {target_dialect_name} for model {model_name or 'unknown'}"
+                    )
                 return converted
             except Exception:
                 # If parse_one fails, try parse() for multiple statements
                 try:
                     parsed_statements = sqlglot.parse(rendered, read="postgres")
                     if parsed_statements:
-                        converted = ";\n".join(stmt.sql(dialect=target_dialect_name) for stmt in parsed_statements)
+                        converted = ";\n".join(
+                            stmt.sql(dialect=target_dialect_name) for stmt in parsed_statements
+                        )
                         if self.verbose:
-                            logger.debug(f"Converted {len(parsed_statements)} SQL statements to {target_dialect_name}")
+                            logger.debug(
+                                f"Converted {len(parsed_statements)} SQL statements to {target_dialect_name}"
+                            )
                         return converted
                 except Exception as e:
                     # If all conversion attempts fail, log warning and return original
@@ -685,4 +712,3 @@ class JinjaRenderer:
             error_msg = f"Error rendering Jinja2 template for model {model_name or 'unknown'}: {e}"
             logger.error(error_msg)
             raise RuntimeError(error_msg) from e
-

@@ -9,7 +9,6 @@ import inspect
 import logging
 import os
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from tee.parser.shared.inspect_utils import get_caller_file_info
 
@@ -67,8 +66,6 @@ class SqlTestMetadata:
         """Post-initialization: find SQL file, read it, and create test."""
         # Get caller file path and whether it's being run as __main__
         # When executed in isolated module, we need to check module globals first
-        import inspect
-
         frame = inspect.currentframe()
         caller_file = None
         caller_main = False
@@ -127,7 +124,9 @@ class SqlTestMetadata:
 
         # Convert severity string to enum if needed
         if isinstance(self.severity, str):
-            severity_enum = TestSeverity.ERROR if self.severity.lower() == "error" else TestSeverity.WARNING
+            severity_enum = (
+                TestSeverity.ERROR if self.severity.lower() == "error" else TestSeverity.WARNING
+            )
         else:
             severity_enum = self.severity
 
@@ -172,7 +171,9 @@ class SqlTestMetadata:
 
         # SQL Query Section - read original SQL file to preserve formatting
         output.append("  📝 SQL Query:")
-        sql_file_path = os.path.splitext(self._caller_file)[0] + ".sql" if self._caller_file else None
+        sql_file_path = (
+            os.path.splitext(self._caller_file)[0] + ".sql" if self._caller_file else None
+        )
         if sql_file_path and os.path.exists(sql_file_path):
             with open(sql_file_path, encoding="utf-8") as f:
                 sql_content = f.read().strip()
@@ -201,4 +202,3 @@ class SqlTestMetadata:
         output.append("")
 
         print("\n".join(output))
-

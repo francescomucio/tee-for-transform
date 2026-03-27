@@ -2,16 +2,12 @@
 Tests for function metadata type definitions.
 """
 
-import pytest
-from typing import Any
-
 from tee.typing.metadata import (
-    FunctionType,
-    FunctionParameter,
     FunctionMetadata,
+    FunctionParameter,
+    FunctionType,
     OTSFunction,
     OTSModule,
-    ColumnDefinition,
 )
 
 
@@ -243,4 +239,3 @@ class TestOTSModule:
         assert module["functions"] is not None
         assert len(module["functions"]) == 1
         assert module["functions"][0]["function_id"] == "my_schema.calculate_metric"
-

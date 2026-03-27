@@ -8,7 +8,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -27,7 +26,7 @@ class ProjectConfigGenerator:
     def generate_project_toml(
         self,
         target_path: Path,
-        dbt_project: dict[str, Any],
+        dbt_project: dict[str, Any],  # noqa: ARG002
         connection_config: dict[str, Any] | None = None,
         packages_info: dict[str, Any] | None = None,
     ) -> None:

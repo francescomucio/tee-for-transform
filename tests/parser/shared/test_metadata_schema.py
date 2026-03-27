@@ -2,24 +2,20 @@
 Tests for metadata schema functionality.
 """
 
-import pytest
-import tempfile
 import os
-from pathlib import Path
+import tempfile
+
+import pytest
 
 from tee.parser.shared.metadata_schema import (
     ColumnSchema,
     ValidatedModelMetadata,
-    validate_metadata_dict,
     parse_metadata_from_python_file,
+    validate_metadata_dict,
 )
 from tee.typing.metadata import (
     ColumnDefinition,
     ModelMetadata,
-    DataType,
-    MaterializationType,
-    ColumnTestName,
-    ModelTestName,
 )
 
 
@@ -107,6 +103,33 @@ class TestValidateMetadataDict:
         assert result.partitions == []
         assert result.materialization is None
         assert result.tests == []
+
+    def test_valid_metadata_with_semantic_fields(self):
+        """Test validate_metadata_dict accepts optional semantic fields."""
+        metadata_dict = {
+            "table_type": "dim",
+            "data_model": True,
+            "hierarchy": {"type": "Fixed-Depth Hierarchy", "levels": []},
+            "disable_default_tests": ["primary_key"],
+            "schema": [
+                {
+                    "name": "shop_id",
+                    "datatype": "integer",
+                    "description": "Shop surrogate key",
+                    "dimension": "shop",
+                }
+            ],
+            "tests": ["row_count_gt_0"],
+        }
+
+        result = validate_metadata_dict(metadata_dict)
+        assert isinstance(result, ValidatedModelMetadata)
+        assert result.table_type == "dim"
+        assert result.data_model is True
+        assert result.hierarchy is not None
+        assert result.disable_default_tests == ["primary_key"]
+        assert result.schema is not None
+        assert result.schema[0].dimension == "shop"
 
     def test_invalid_schema(self):
         """Test invalid schema format."""

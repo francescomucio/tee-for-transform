@@ -5,9 +5,9 @@ Test runner for incremental materialization tests.
 This script provides different test execution modes for incremental tests.
 """
 
-import sys
-import subprocess
 import argparse
+import subprocess
+import sys
 from pathlib import Path
 
 

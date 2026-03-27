@@ -23,20 +23,20 @@ Welcome to the Tee for Transform (t4t) documentation. t4t is a powerful Python f
 - [Documentation Site](user-guide/documentation-site.md) - Generating interactive documentation
 - [dbt Import Guide](user-guide/dbt-import.md) - Importing dbt projects into t4t
 - [dbt Import Limitations](user-guide/dbt-import-limitations.md) - Known limitations and unsupported features
-- [Examples](user-guide/examples/) - Practical usage examples and tutorials
+- [Examples](user-guide/examples/README.md) - Practical usage examples and tutorials
 
 ### 🔧 API Reference
 - [API Reference Overview](api-reference/README.md) - API documentation status and overview
 - [Functions API](api-reference/functions.md) - Function decorators and API reference
 - [Models API](api-reference/models.md) - Model decorators and dynamic model creation
-- [Engine API](api-reference/engine/) - Execution engine classes and methods (coming soon)
-- [Parser API](api-reference/parser/) - SQL parsing and analysis (coming soon)
-- [Adapters API](api-reference/adapters/) - Database adapter implementations (coming soon)
+- [Engine API](api-reference/engine/README.md) - Execution engine module map
+- [Parser API](api-reference/parser/README.md) - Parser module map
+- [Adapters API](api-reference/adapters/README.md) - Adapters module map
 
 ### 🛠️ Development
 - [Architecture](development/architecture.md) - System design and components
 - [Contributing](development/contributing.md) - How to contribute to t4t
-- [Migration Guides](development/migration-guides/) - Upgrading between versions
+- [Migration Guides](development/migration-guides/index.md) - Upgrading between versions
 
 ## Key Features
 
@@ -54,21 +54,15 @@ Welcome to the Tee for Transform (t4t) documentation. t4t is a powerful Python f
 - **Incremental Materialization**: Efficient data processing with append, merge, and delete+insert strategies
 - **Comprehensive Tagging**: dbt-style tags and database object tags for tables, views, schemas, and functions
 - **Pluggable Architecture**: Easy to add new database adapters
-- **Configuration Management**: Flexible configuration via `pyproject.toml`
+- **Configuration Management**: `project.toml` (from `t4t init`) or `pyproject.toml` with `[tool.tee]`, plus environment overrides
 
 ## Quick Example
 
 ```python
-from tee.engine import ModelExecutor, load_database_config
+from tee.engine import load_database_config
 
-# Load configuration
-config = load_database_config()
-
-# Create executor
-executor = ModelExecutor("/path/to/project", config)
-
-# Execute models
-results = executor.execute_models(parser)
+config = load_database_config(project_root="/path/to/my_project")
+print(config.type)  # e.g. duckdb — see Configuration guide for precedence
 ```
 
 ## Building Documentation
@@ -110,13 +104,15 @@ uv run mkdocs gh-deploy
 
 ```
 docs/
-├── README.md                    # Main documentation index
-├── getting-started/             # Getting started guides
+├── README.md                    # Main documentation index (MkDocs home)
+├── parser-model-flow.md         # Parser/model pipeline (Development nav)
+├── getting-started/
 │   ├── installation.md
 │   ├── quick-start.md
 │   └── configuration.md
-├── user-guide/                  # User documentation
+├── user-guide/
 │   ├── overview.md
+│   ├── cli-reference.md
 │   ├── execution-engine.md
 │   ├── functions.md
 │   ├── seeds.md
@@ -125,25 +121,25 @@ docs/
 │   ├── database-adapters.md
 │   ├── tags-and-metadata.md
 │   ├── sql-dialect-conversion.md
+│   ├── documentation-site.md
+│   ├── dbt-import.md
+│   ├── dbt-import-limitations.md
 │   └── examples/
-│       ├── basic-usage.md
-│       ├── functions.md
-│       ├── incremental-example.md
-│       └── testing-example.md
-├── api-reference/               # API documentation
+├── api-reference/
+│   ├── README.md
 │   ├── functions.md
-│   ├── engine/
-│   ├── parser/
-│   └── adapters/
-├── development/                 # Development documentation
+│   ├── models.md
+│   ├── engine/README.md
+│   ├── parser/README.md
+│   └── adapters/README.md
+├── development/
 │   ├── architecture.md
 │   ├── contributing.md
-│   └── migration-guides/
-├── assets/                      # Static assets
-│   ├── images/
-│   └── diagrams/
-├── mkdocs.yml                   # MkDocs configuration
-└── build_docs.py               # Build script
+│   ├── migration-guides/index.md
+│   └── implementation-guides/   # Deep dives (not all in MkDocs nav)
+└── build_docs.py
+
+../mkdocs.yml                    # MkDocs config (repository root)
 ```
 
 ## Publishing Documentation
@@ -176,7 +172,7 @@ docs/
 
 ## Need Help?
 
-- Browse the [examples](user-guide/examples/) for practical usage
-- Check the [User Guide](user-guide/) for comprehensive documentation
+- Browse the [examples](user-guide/examples/README.md) for practical usage
+- Check the [User Guide](user-guide/overview.md) for comprehensive documentation
 - Join our community discussions
 - Report issues on GitHub
