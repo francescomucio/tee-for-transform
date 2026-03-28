@@ -14,8 +14,8 @@ Thank you for your interest in contributing to t4t! This guide will help you get
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/francescomucio/tee-as-transformation.git
-   cd tee-as-transformation
+   git clone https://github.com/francescomucio/tee-for-transform.git
+   cd tee-for-transform
    ```
 
 2. **Install dependencies:**

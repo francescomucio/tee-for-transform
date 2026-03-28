@@ -10,8 +10,8 @@ The **supported way to use t4t today** is to install from a clone of the GitHub 
 ## Install from GitHub (recommended)
 
 ```bash
-git clone https://github.com/francescomucio/tee-as-transformation.git
-cd tee-as-transformation
+git clone https://github.com/francescomucio/tee-for-transform.git
+cd tee-for-transform
 
 # Install project + dependencies into .venv (exposes `t4t` via uv run)
 uv sync

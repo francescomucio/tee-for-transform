@@ -1,8 +1,8 @@
 site_name: Tee for Transform (t4t)
 site_description: Transform, Extract, Execute — SQL transformations with multiple database backends
-site_url: https://francescomucio.github.io/tee-as-transformation/
-repo_url: https://github.com/francescomucio/tee-as-transformation
-repo_name: francescomucio/tee-as-transformation
+site_url: https://francescomucio.github.io/tee-for-transform/
+repo_url: https://github.com/francescomucio/tee-for-transform
+repo_name: francescomucio/tee-for-transform
 
 theme:
   name: material
@@ -110,6 +110,6 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/francescomucio/tee-as-transformation
+      link: https://github.com/francescomucio/tee-for-transform
   version:
     provider: mike

@@ -95,13 +95,13 @@ See [dbt Import Limitations](../../../docs/user-guide/dbt-import-limitations.md)
 
 Related issues tracking missing features:
 
-- [#1](https://github.com/francescomucio/tee-as-transformation/issues/1) - Freshness Tests Support
-- [#2](https://github.com/francescomucio/tee-as-transformation/issues/2) - Source Metadata Handling
-- [#3](https://github.com/francescomucio/tee-as-transformation/issues/3) - Missing Incremental Strategies
-- [#4](https://github.com/francescomucio/tee-as-transformation/issues/4) - Jinja2 Support
-- [#5](https://github.com/francescomucio/tee-as-transformation/issues/5) - Spark Support (insert_overwrite)
-- [#6](https://github.com/francescomucio/tee-as-transformation/issues/6) - on_schema_change Support
-- [#8](https://github.com/francescomucio/tee-as-transformation/issues/8) - Dependency Resolution (model+, +model)
+- [#1](https://github.com/francescomucio/tee-for-transform/issues/1) - Freshness Tests Support
+- [#2](https://github.com/francescomucio/tee-for-transform/issues/2) - Source Metadata Handling
+- [#3](https://github.com/francescomucio/tee-for-transform/issues/3) - Missing Incremental Strategies
+- [#4](https://github.com/francescomucio/tee-for-transform/issues/4) - Jinja2 Support
+- [#5](https://github.com/francescomucio/tee-for-transform/issues/5) - Spark Support (insert_overwrite)
+- [#6](https://github.com/francescomucio/tee-for-transform/issues/6) - on_schema_change Support
+- [#8](https://github.com/francescomucio/tee-for-transform/issues/8) - Dependency Resolution (model+, +model)
 
 ## Testing
 
