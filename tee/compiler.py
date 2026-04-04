@@ -239,7 +239,6 @@ def _build_dependency_artifacts(
     execution_order = parser.get_execution_order()
 
     parser.save_dependency_graph()
-    parser.save_mermaid_diagram()
     parser.save_markdown_report()
     parser.save_to_json()
 

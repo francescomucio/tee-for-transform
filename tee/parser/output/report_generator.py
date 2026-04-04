@@ -17,14 +17,13 @@ from .markdown_report_builder import (
     build_transformation_details_section,
     separate_nodes_by_type,
 )
-from .visualizer import DependencyVisualizer
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 
 class ReportGenerator:
-    """Handles generation of markdown reports with Mermaid diagrams."""
+    """Handles generation of markdown reports for dependency analysis."""
 
     def __init__(self, output_folder: Path):
         """
@@ -35,7 +34,6 @@ class ReportGenerator:
         """
         self.output_folder = output_folder
         self.output_folder.mkdir(parents=True, exist_ok=True)
-        self.visualizer = DependencyVisualizer()
 
     def generate_markdown_report(
         self,
@@ -44,7 +42,7 @@ class ReportGenerator:
         parsed_functions: dict[str, ParsedFunction] | None = None,
     ) -> Path:
         """
-        Generate a comprehensive markdown report with Mermaid diagram.
+        Generate a comprehensive markdown report (statistics, execution order, tests, cycles).
 
         Args:
             graph: The dependency graph
@@ -69,8 +67,6 @@ class ReportGenerator:
             parsed_functions = parsed_functions or {}
             function_names = set(parsed_functions.keys())
 
-            mermaid_diagram = self.visualizer.generate_mermaid_diagram(graph, parsed_functions)
-
             # Separate nodes by type
             test_nodes, function_nodes, table_nodes = separate_nodes_by_type(
                 graph["nodes"], function_names
@@ -90,12 +86,16 @@ This report provides a comprehensive analysis of the SQL model dependencies.
                 table_nodes, function_nodes, test_nodes, graph
             )
 
-            # Visual diagram section
-            markdown_content += f"""## Visual Diagram
+            # Visualization (interactive HTML is the primary graph UI)
+            markdown_content += """## Visualization
 
-```mermaid
-{mermaid_diagram}
+For an interactive dependency graph (Data flow, filters, model pages), run:
+
+```bash
+t4t docs <project_folder>
 ```
+
+Open `output/docs/index.html` (or your `--output-dir`) in a browser.
 
 """
 
@@ -121,47 +121,12 @@ This report provides a comprehensive analysis of the SQL model dependencies.
 
             logger.info(f"Markdown report saved to {output_file}")
             print(f"Markdown report saved to {output_file}")
-            print("Includes Mermaid diagram and detailed analysis")
+            print("Includes detailed analysis (use `t4t docs` for interactive graph)")
 
             return output_file
 
         except Exception as e:
             raise OutputGenerationError(f"Failed to generate markdown report: {e}") from e
-
-    def generate_mermaid_diagram(
-        self,
-        graph: DependencyGraph,
-        output_file: str | None = None,
-        parsed_functions: dict[str, ParsedFunction] | None = None,
-    ) -> Path:
-        """
-        Generate a standalone Mermaid diagram file.
-
-        Args:
-            graph: The dependency graph
-            output_file: Optional custom output file path
-
-        Returns:
-            Path to the generated Mermaid file
-
-        Raises:
-            OutputGenerationError: If diagram generation fails
-        """
-        try:
-            if output_file is None:
-                output_file = self.output_folder / OUTPUT_FILES["mermaid_diagram"]
-            else:
-                output_file = Path(output_file)
-
-            # Use the visualizer to save the Mermaid diagram
-            self.visualizer.save_mermaid_diagram(
-                graph, str(output_file), parsed_functions=parsed_functions
-            )
-
-            return output_file
-
-        except Exception as e:
-            raise OutputGenerationError(f"Failed to generate Mermaid diagram: {e}") from e
 
     def generate_all_reports(
         self, graph: DependencyGraph, parsed_functions: dict[str, ParsedFunction] | None = None
@@ -180,15 +145,9 @@ This report provides a comprehensive analysis of the SQL model dependencies.
             OutputGenerationError: If report generation fails
         """
         try:
-            results = {}
+            results: dict[str, Path] = {}
 
-            # Generate markdown report
             results["markdown_report"] = self.generate_markdown_report(
-                graph, parsed_functions=parsed_functions
-            )
-
-            # Generate Mermaid diagram
-            results["mermaid_diagram"] = self.generate_mermaid_diagram(
                 graph, parsed_functions=parsed_functions
             )
 
