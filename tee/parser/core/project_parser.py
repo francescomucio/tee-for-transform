@@ -79,7 +79,6 @@ class ProjectParser:
         The result is cached in self.graph for reuse.
         Automatically saves:
         - Dependency graph as JSON
-        - Mermaid diagram
         - Markdown report
 
         Returns:
@@ -91,7 +90,6 @@ class ProjectParser:
 
             # Save all outputs automatically
             self.save_dependency_graph()
-            self.save_mermaid_diagram()
             self.save_markdown_report()
 
             return self.graph
@@ -160,29 +158,8 @@ class ProjectParser:
         except Exception as e:
             raise ParserError(f"Failed to save dependency graph: {e}") from e
 
-    def save_mermaid_diagram(self, output_file: str = None) -> None:
-        """Save the dependency graph as a Mermaid diagram file."""
-        try:
-            if self.graph is None:
-                self.build_dependency_graph()
-
-            # Get parsed functions from orchestrator for function identification
-            parsed_functions = self.orchestrator._parsed_functions or {}
-
-            # Use orchestrator's report generator
-            if output_file is None:
-                self.orchestrator.report_generator.generate_mermaid_diagram(
-                    self.graph, parsed_functions=parsed_functions
-                )
-            else:
-                self.orchestrator.report_generator.generate_mermaid_diagram(
-                    self.graph, output_file, parsed_functions=parsed_functions
-                )
-        except Exception as e:
-            raise ParserError(f"Failed to save Mermaid diagram: {e}") from e
-
     def save_markdown_report(self, output_file: str = None) -> None:
-        """Save a comprehensive markdown report with Mermaid diagram."""
+        """Save a comprehensive markdown report (statistics, execution order, tests, cycles)."""
         try:
             if self.graph is None:
                 self.build_dependency_graph()

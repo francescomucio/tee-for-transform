@@ -9,7 +9,6 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
-from tee.parser.output.visualizer import DependencyVisualizer
 from tee.parser.shared.dimension_registry import (
     parse_dimension_field,
     resolve_dimension_target_table,
@@ -57,8 +56,6 @@ class DocsGenerator:
             "grain": {},
             "diagnostics": {},
         }
-        self.visualizer = DependencyVisualizer()
-
         # Set up Jinja2 template environment
         templates_dir = Path(__file__).parent / "templates"
         self.env = Environment(

@@ -61,6 +61,5 @@ OUTPUT_FILES = {
     "dependency_graph": "dependency_graph.json",
     "dimensional_graph": "dimensional_graph.json",
     "dimension_registry": "dimension_registry.json",
-    "mermaid_diagram": "dependency_graph.mmd",
     "markdown_report": "dependency_report.md",
 }
