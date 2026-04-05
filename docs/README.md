@@ -36,6 +36,7 @@ Welcome to the Tee for Transform (t4t) documentation. t4t is a powerful Python f
 ### 🛠️ Development
 - [Architecture](development/architecture.md) - System design and components
 - [Contributing](development/contributing.md) - How to contribute to t4t
+- [Running the pytest suite](https://github.com/francescomucio/tee-for-transform/blob/main/tests/README.md) - Markers, Snowflake E2E, coverage, CI notes (source: `tests/README.md` in the repo)
 - [Migration Guides](development/migration-guides/index.md) - Upgrading between versions
 
 ## Key Features

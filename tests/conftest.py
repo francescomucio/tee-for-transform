@@ -168,6 +168,10 @@ def pytest_configure(config):
     )
     config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "unit: marks tests as unit tests")
+    config.addinivalue_line(
+        "markers",
+        'snowflake_e2e: live Snowflake E2E; exclude with -m "not snowflake_e2e" for fast local runs',
+    )
 
 
 def pytest_collection_modifyitems(config, items):
@@ -195,6 +199,14 @@ def pytest_collection_modifyitems(config, items):
             or "test_incremental_performance.py" in str(item.fspath)
         ):
             item.add_marker(pytest.mark.slow)
+
+        # Live Snowflake E2E (network + warehouse): exclude from default fast local runs
+        fp = str(item.fspath)
+        if (
+            ("adapters/snowflake/" in fp and "_e2e.py" in fp)
+            or "test_function_execution_snowflake.py" in fp
+        ):
+            item.add_marker(pytest.mark.snowflake_e2e)
 
     # Remove items that shouldn't be collected as tests
     for item in items_to_remove:
