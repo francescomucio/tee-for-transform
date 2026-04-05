@@ -137,7 +137,56 @@ Tests specific to database adapter implementations:
 
 ## Running Tests
 
-### Using the Test Runner
+### Prerequisites
+
+- Run commands from the **package root** (`tee-for-transform/`, next to `pyproject.toml`), not from a subfolder, so `testpaths = ["tests"]` and imports resolve as in CI.
+- Install dev dependencies: **`uv sync`** (includes pytest and pytest-cov).
+
+### Choosing what to run: with or without Snowflake E2E
+
+Some tests are tagged **`snowflake_e2e`**. They open a **live Snowflake** session (warehouse, network) and exercise end-to-end materialization and related flows. They are defined under `tests/adapters/snowflake/*_e2e.py` and in `tests/engine/integration/test_function_execution_snowflake.py` (see [Test Markers](#test-markers)).
+
+**Run without Snowflake E2E** (recommended default for local work):
+
+- Typical wall time is **tens of seconds** for the rest of the suite (without coverage); the Snowflake E2E portion alone is often **many minutes**.
+- Use this for everyday development, refactors, parser/engine/DuckDB work, and any change that does not need a real Snowflake warehouse to validate.
+- Works **without** Snowflake credentials; nothing in that subset requires `tests/.snowflake_config.json`.
+
+```bash
+uv run pytest tests/ -m "not snowflake_e2e"
+```
+
+Add `-v` for verbose output.
+
+**Coverage (default):** `[tool.pytest.ini_options] addopts` in `pyproject.toml` turns on **`--cov=tee`** and HTML output under **`htmlcov/`**. For a **faster** feedback loop, pass **`--no-cov`** (especially with the full suite).
+
+**Combining markers:** For the **leanest** local run (no Snowflake E2E and no tests marked `slow`), use:
+
+```bash
+uv run pytest tests/ -m "not snowflake_e2e and not slow" --no-cov
+```
+
+**Run the full suite including Snowflake E2E** when:
+
+- You changed **Snowflake adapter** code, Snowflake-specific SQL, or behavior covered only by those E2E tests.
+- You are doing a **final check before merge** or release and have credentials available.
+- Your **CI** job is allowed to use Snowflake secrets (often a dedicated workflow or branch).
+
+```bash
+uv run pytest tests/
+```
+
+Requires Snowflake configuration: use `tests/.snowflake_config.json` (gitignored) or environment variables such as `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_USER`, and `SNOWFLAKE_PASSWORD` (see the Snowflake E2E modules under `tests/adapters/snowflake/` for details).
+
+**Run only Snowflake E2E** when you are **debugging Snowflake-specific** failures or iterating on those modules:
+
+```bash
+uv run pytest tests/ -m snowflake_e2e -v
+```
+
+### Using the Test Runner (`run_incremental_tests.py`)
+
+The script **`tests/run_incremental_tests.py`** is an **optional** helper that runs **pytest on a subset** of the tree (mostly incremental engine, adapter interface, DuckDB, performance). It does **not** replace **`uv run pytest tests/`** for full coverage of the project. Use it when you are focused on incremental materialization code paths; use full pytest for CLI, parser, importer, and the rest.
 
 ```bash
 # Run all incremental tests
@@ -164,10 +213,22 @@ uv run python tests/run_incremental_tests.py specific --test-path tests/engine/i
 
 ### Using pytest directly
 
+The commands above are summarized here for quick copy-paste:
+
 ```bash
-# Run all tests
+# Recommended default: full suite except Snowflake E2E
+uv run pytest tests/ -m "not snowflake_e2e" -v
+
+# Everything including Snowflake E2E (requires tests/.snowflake_config.json or env vars)
 uv run pytest tests/ -v
 
+# Only Snowflake E2E
+uv run pytest tests/ -m snowflake_e2e -v
+```
+
+Other useful invocations:
+
+```bash
 # Run specific test file
 uv run pytest tests/engine/incremental/test_should_run.py -v
 
@@ -188,7 +249,17 @@ uv run pytest tests/ -m integration -v
 
 # Skip slow tests
 uv run pytest tests/ -m "not slow" -v
+
+# Stop on first failure
+uv run pytest tests/ -x
+
+# Shorter tracebacks
+uv run pytest tests/ --tb=short
 ```
+
+### Parallel execution
+
+Parallel test runs (**pytest-xdist**, e.g. `-n auto`) are **not** wired into this repo by default. They can speed up some suites but are not required; start with **`--no-cov`** before adding workers.
 
 ## Test Markers
 
@@ -197,6 +268,7 @@ Tests are marked with categories for easy filtering:
 - `@pytest.mark.unit`: Unit tests (fast, isolated)
 - `@pytest.mark.integration`: Integration tests (require database)
 - `@pytest.mark.slow`: Performance tests (may take longer)
+- `@pytest.mark.snowflake_e2e`: Live Snowflake end-to-end tests (applied in `conftest.py` to `tests/adapters/snowflake/*_e2e.py` and `tests/engine/integration/test_function_execution_snowflake.py`). For when to exclude them, see [Choosing what to run](#choosing-what-to-run-with-or-without-snowflake-e2e).
 
 ## Test Fixtures
 
@@ -356,7 +428,8 @@ Tests are designed to run in CI environments:
 - No external dependencies beyond test databases
 - Temporary files are cleaned up automatically
 - Tests are marked for different execution environments
-- Performance tests can be skipped in fast CI runs
+- Performance tests can be skipped in fast CI runs (`-m "not slow"`)
+- **Snowflake E2E** often need secrets and significant time; many pipelines run **`pytest -m "not snowflake_e2e"`** on every push and reserve the full suite (or a scheduled job) for environments with Snowflake credentials
 
 ## Debugging Tests
 

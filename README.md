@@ -289,16 +289,24 @@ uv run python docs/build_docs.py serve
 
 ### Running Tests
 
+For **local development**, prefer excluding live **Snowflake E2E** tests (they need credentials and dominate runtime). For **pre-merge** or Snowflake-related changes, run the full suite when you can.
+
 ```bash
-# Run all tests
-uv run pytest
+# Recommended default (fast; no Snowflake config required)
+uv run pytest tests/ -m "not snowflake_e2e"
 
-# Run with verbose output
+# Full suite including Snowflake E2E (slow; needs credentials)
+uv run pytest tests/
+
+# Verbose or pattern filtering
 uv run pytest tests/ -v
-
-# Run specific test patterns
 uv run pytest tests/ -k test_name
+
+# Faster iteration (disables default coverage from pyproject.toml)
+uv run pytest tests/ -m "not snowflake_e2e" --no-cov
 ```
+
+Details, markers, coverage defaults, and CI: **[tests/README.md](tests/README.md)**.
 
 ## 🤝 Contributing
 

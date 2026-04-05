@@ -52,9 +52,19 @@ Branch naming conventions:
 
 ### 3. Run Tests
 
+Most day-to-day work should use the **fast suite**, which **excludes live Snowflake E2E** tests. Those tests connect to a real Snowflake warehouse, need credentials, and take **much longer** than everything else combined. Use the **full suite** (including Snowflake E2E) before merging or when you change Snowflake-specific code and need warehouse-level validation.
+
+See **[tests/README.md](../../tests/README.md)** for the full rationale, credential setup, and CI notes.
+
 ```bash
-# Run all tests
-uv run pytest
+# Default for local development (no Snowflake credentials required)
+uv run pytest tests/ -m "not snowflake_e2e"
+
+# Full suite including Snowflake E2E (requires tests/.snowflake_config.json or env vars; slow)
+uv run pytest tests/
+
+# Only Snowflake E2E (debugging Snowflake integration)
+uv run pytest tests/ -m snowflake_e2e
 
 # Run with coverage
 uv run pytest --cov=tee --cov-report=html
