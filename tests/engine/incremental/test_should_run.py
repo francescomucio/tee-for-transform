@@ -4,7 +4,7 @@ Test cases for should_run_incremental method.
 
 from datetime import datetime
 
-from tee.engine.model_state import ModelState
+from t4t.engine.model_state import ModelState
 from tests.engine.incremental.test_executor_base import TestIncrementalExecutor
 
 

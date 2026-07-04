@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from tee.cli.utils import load_project_config
-from tee.compiler import compile_project
-from tee.parser.core.orchestrator import ParserOrchestrator
+from t4t.cli.utils import load_project_config
+from t4t.compiler import compile_project
+from t4t.parser.core.orchestrator import ParserOrchestrator
 
 
 class TestRealProjectsWithFunctions:

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 
-from tee.importer.dbt.converters import JinjaConverter, MetadataConverter, PythonModelGenerator
+from t4t.importer.dbt.converters import JinjaConverter, MetadataConverter, PythonModelGenerator
 
 
 class TestConversionExamples:
@@ -130,7 +130,7 @@ FROM {{ ref('staging_customers') }}
             with schema_file.open("w", encoding="utf-8") as f:
                 yaml.dump(schema_content, f)
 
-            from tee.importer.dbt.parsers import SchemaParser
+            from t4t.importer.dbt.parsers import SchemaParser
 
             parser = SchemaParser()
             models = parser.parse_schema_file(schema_file)
@@ -198,7 +198,7 @@ FROM {{ ref('staging_customers') }}
                 yaml.dump(schema_content, f)
 
             # Parse schema file
-            from tee.importer.dbt.parsers import SchemaParser
+            from t4t.importer.dbt.parsers import SchemaParser
 
             parser = SchemaParser()
             models = parser.parse_schema_file(schema_file)

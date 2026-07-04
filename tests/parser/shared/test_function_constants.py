@@ -2,7 +2,7 @@
 Tests for function-related constants.
 """
 
-from tee.parser.shared.constants import (
+from t4t.parser.shared.constants import (
     DEFAULT_FUNCTIONS_FOLDER,
     SUPPORTED_FUNCTION_OVERRIDE_EXTENSIONS,
 )

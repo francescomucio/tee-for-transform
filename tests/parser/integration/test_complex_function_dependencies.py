@@ -2,7 +2,7 @@
 Complex dependency scenario tests for functions.
 """
 
-from tee.parser.core.orchestrator import ParserOrchestrator
+from t4t.parser.core.orchestrator import ParserOrchestrator
 
 
 class TestComplexFunctionDependencies:

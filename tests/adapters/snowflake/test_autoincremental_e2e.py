@@ -21,9 +21,9 @@ from typing import Any
 
 import pytest
 
-from tee.adapters.snowflake.adapter import SnowflakeAdapter
-from tee.engine.materialization.materialization_handler import MaterializationHandler
-from tee.engine.model_state import ModelStateManager
+from t4t.adapters.snowflake.adapter import SnowflakeAdapter
+from t4t.engine.materialization.materialization_handler import MaterializationHandler
+from t4t.engine.model_state import ModelStateManager
 
 
 def _load_snowflake_config() -> dict[str, Any] | None:

@@ -8,8 +8,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.parser.analysis import TableResolver
-from tee.parser.analysis.dependency_graph import DependencyGraphBuilder
+from t4t.parser.analysis import TableResolver
+from t4t.parser.analysis.dependency_graph import DependencyGraphBuilder
 
 
 class TestDependencyGraphWithTests:
@@ -258,8 +258,8 @@ class TestDependencyGraphWithTests:
         test_file = tests_folder / "my_test.sql"
         test_file.write_text("SELECT * FROM @table_name WHERE id = 1")
 
-        from tee.parser.parsers.sql_parser import SQLParser
-        from tee.testing.test_discovery import TestDiscovery
+        from t4t.parser.parsers.sql_parser import SQLParser
+        from t4t.testing.test_discovery import TestDiscovery
 
         discovery = TestDiscovery(temp_dir)
         discovered_tests = discovery.discover_tests()

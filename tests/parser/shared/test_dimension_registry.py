@@ -2,7 +2,7 @@
 
 import pytest
 
-from tee.parser.shared.dimension_registry import (
+from t4t.parser.shared.dimension_registry import (
     build_dimension_registry_from_models,
     hierarchy_level_slugs,
     is_dimension_model,

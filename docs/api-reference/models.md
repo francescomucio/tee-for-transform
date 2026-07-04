@@ -11,7 +11,7 @@ Decorator for marking Python functions as SQL models.
 **Usage:**
 
 ```python
-from tee.parser.processing.model import model
+from t4t.parser.processing.model import model
 
 @model(
     table_name="users",
@@ -55,7 +55,7 @@ Dynamically create a model without using a decorator. Useful for creating multip
 **Usage:**
 
 ```python
-from tee.parser.processing.model import create_model
+from t4t.parser.processing.model import create_model
 
 # Simple example
 create_model(
@@ -123,7 +123,7 @@ For Python files that define a `metadata` variable and have a companion `.sql` f
 
 ```python
 # models/my_schema/my_view.py
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "materialization": "view",
@@ -161,7 +161,7 @@ SELECT id, name FROM my_schema.my_first_table
 **Explicit instantiation still works:**
 If you prefer explicit control, you can still use:
 ```python
-from tee.parser.processing.model_builder import SqlModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
 
 metadata: ModelMetadata = {...}
 model = SqlModelMetadata(metadata)  # Explicit instantiation

@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from tee.cli.commands.run import cmd_run
+from t4t.cli.commands.run import cmd_run
 
 
 class TestRunCommand:
@@ -18,7 +18,7 @@ class TestRunCommand:
     @pytest.fixture(autouse=True)
     def mock_lookup_generation(self):
         """Prevent lookup generator side effects in unit tests."""
-        with patch("tee.cli.commands.run.generate_lookups"):
+        with patch("t4t.cli.commands.run.generate_lookups"):
             yield
 
     @pytest.fixture
@@ -44,9 +44,9 @@ class TestRunCommand:
         args.exclude = None
         return args
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_success(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):
@@ -92,9 +92,9 @@ class TestRunCommand:
             project_config=mock_ctx.config,
         )
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_with_failures(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):
@@ -129,9 +129,9 @@ class TestRunCommand:
         assert "Successful: 1 table" in output or "✅ Successful: 1 table" in output
         assert "Failed: 1 table" in output or "❌ Failed: 1 table" in output
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_with_warnings(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):
@@ -165,9 +165,9 @@ class TestRunCommand:
         # New format includes emoji and proper pluralization: "⚠️  Warnings: 1 warning"
         assert "Warnings: 1 warning" in output or "⚠️  Warnings: 1 warning" in output
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_verbose_mode(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):
@@ -202,9 +202,9 @@ class TestRunCommand:
         output = fake_out.getvalue()
         assert "Analysis info:" in output
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_with_variables(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):
@@ -238,9 +238,9 @@ class TestRunCommand:
         call_args = mock_execute_models.call_args
         assert call_args.kwargs["variables"] == {"env": "production", "debug": "true"}
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_with_selection_patterns(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):
@@ -275,9 +275,9 @@ class TestRunCommand:
         assert call_args.kwargs["select_patterns"] == ["schema1.*"]
         assert call_args.kwargs["exclude_patterns"] == ["*.temp"]
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_handles_exceptions(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):
@@ -305,9 +305,9 @@ class TestRunCommand:
         # Verify error was handled
         mock_ctx.handle_error.assert_called_once()
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_cleanup_connection_manager(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):
@@ -340,9 +340,9 @@ class TestRunCommand:
         # Verify cleanup was called
         mock_connection_manager.cleanup.assert_called_once()
 
-    @patch("tee.cli.commands.run.execute_models")
-    @patch("tee.cli.commands.run.ConnectionManager")
-    @patch("tee.cli.commands.run.CommandContext")
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
     def test_cmd_run_cleanup_on_exception(
         self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
     ):

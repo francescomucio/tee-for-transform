@@ -6,9 +6,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.engine.materialization.incremental_executor import IncrementalExecutor
-from tee.engine.model_state import ModelStateManager
-from tee.typing.metadata import (
+from t4t.engine.materialization.incremental_executor import IncrementalExecutor
+from t4t.engine.model_state import ModelStateManager
+from t4t.typing.metadata import (
     IncrementalAppendConfig,
     IncrementalConfig,
     IncrementalDeleteInsertConfig,

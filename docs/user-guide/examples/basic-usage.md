@@ -7,7 +7,7 @@ This page demonstrates common usage patterns with t4t, from simple single-model 
 Execute a single SQL model:
 
 ```python
-from tee.engine import ModelExecutor, load_database_config
+from t4t.engine import ModelExecutor, load_database_config
 
 # Load configuration
 config = load_database_config()
@@ -35,8 +35,8 @@ print(f"Created table with {result['table_info']['row_count']} rows")
 Execute multiple models with dependencies:
 
 ```python
-from tee.engine import ModelExecutor, load_database_config
-from tee.parser import ProjectParser
+from t4t.engine import ModelExecutor, load_database_config
+from t4t.parser import ProjectParser
 
 # Load configuration
 config = load_database_config()
@@ -90,7 +90,7 @@ result = executor.execute_single_model("yearly_users", sql)
 Test your database configuration:
 
 ```python
-from tee.engine import ModelExecutor, load_database_config
+from t4t.engine import ModelExecutor, load_database_config
 
 config = load_database_config()
 executor = ModelExecutor("/path/to/project", config)
@@ -136,7 +136,7 @@ except Exception as e:
 
 ```toml
 # pyproject.toml
-[tool.tee.database]
+[tool.t4t.database]
 type = "duckdb"
 path = "dev.db"
 source_dialect = "postgresql"
@@ -146,7 +146,7 @@ source_dialect = "postgresql"
 
 ```toml
 # pyproject.toml
-[tool.tee.database]
+[tool.t4t.database]
 type = "snowflake"
 host = "prod.snowflakecomputing.com"
 user = "prod_user"
@@ -161,19 +161,19 @@ source_dialect = "postgresql"
 
 ```toml
 # pyproject.toml
-[tool.tee.databases]
+[tool.t4t.databases]
 
-[tool.tee.databases.dev]
+[tool.t4t.databases.dev]
 type = "duckdb"
 path = "dev.db"
 source_dialect = "postgresql"
 
-[tool.tee.databases.staging]
+[tool.t4t.databases.staging]
 type = "snowflake"
 host = "staging.snowflakecomputing.com"
 # ... other config
 
-[tool.tee.databases.prod]
+[tool.t4t.databases.prod]
 type = "snowflake"
 host = "prod.snowflakecomputing.com"
 # ... other config

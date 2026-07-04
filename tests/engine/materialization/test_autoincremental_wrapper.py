@@ -8,7 +8,7 @@ import pytest
 import sqlglot
 from sqlglot import expressions as exp
 
-from tee.engine.materialization.auto_incremental_wrapper import AutoIncrementalWrapper
+from t4t.engine.materialization.auto_incremental_wrapper import AutoIncrementalWrapper
 
 
 class TestAutoIncrementalWrapper:

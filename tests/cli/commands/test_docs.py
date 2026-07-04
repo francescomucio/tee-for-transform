@@ -7,17 +7,17 @@ from unittest.mock import Mock, patch
 
 from typer.testing import CliRunner
 
-from tee.cli.commands.docs import cmd_docs
-from tee.cli.main import app
+from t4t.cli.commands.docs import cmd_docs
+from t4t.cli.main import app
 
 
 class TestDocsCommand:
     """Test cases for docs command."""
 
-    @patch("tee.cli.commands.docs.DocsGenerator")
-    @patch("tee.cli.commands.docs.ProjectParser")
-    @patch("tee.cli.commands.docs.generate_lookups")
-    @patch("tee.cli.commands.docs.CommandContext")
+    @patch("t4t.cli.commands.docs.DocsGenerator")
+    @patch("t4t.cli.commands.docs.ProjectParser")
+    @patch("t4t.cli.commands.docs.generate_lookups")
+    @patch("t4t.cli.commands.docs.CommandContext")
     def test_cmd_docs_generates_lookups_by_default(
         self,
         mock_context_class,
@@ -61,11 +61,11 @@ class TestDocsCommand:
         )
         mock_generator.generate.assert_called_once()
 
-    @patch("tee.cli.commands.docs.DocsGenerator")
-    @patch("tee.cli.commands.docs.ProjectParser")
-    @patch("tee.cli.commands.docs.generate_lookups")
-    @patch("tee.cli.commands.docs._clean_generated_lookup_dirs")
-    @patch("tee.cli.commands.docs.CommandContext")
+    @patch("t4t.cli.commands.docs.DocsGenerator")
+    @patch("t4t.cli.commands.docs.ProjectParser")
+    @patch("t4t.cli.commands.docs.generate_lookups")
+    @patch("t4t.cli.commands.docs._clean_generated_lookup_dirs")
+    @patch("t4t.cli.commands.docs.CommandContext")
     def test_cmd_docs_skips_lookup_generation_when_requested(
         self,
         mock_context_class,
@@ -138,10 +138,10 @@ class TestDocsCommand:
         assert generator_kwargs["dependency_graph"]["nodes"] == [{"id": "dwh.dim_shop"}]
         assert generator_kwargs["dimensional_graph"]["dimensions"] == ["dwh.dim_shop"]
 
-    @patch("tee.cli.commands.docs.DocsGenerator")
-    @patch("tee.cli.commands.docs.ProjectParser")
-    @patch("tee.cli.commands.docs.generate_lookups")
-    @patch("tee.cli.commands.docs.CommandContext")
+    @patch("t4t.cli.commands.docs.DocsGenerator")
+    @patch("t4t.cli.commands.docs.ProjectParser")
+    @patch("t4t.cli.commands.docs.generate_lookups")
+    @patch("t4t.cli.commands.docs.CommandContext")
     def test_cmd_docs_forwards_inference_flag_to_builder(
         self,
         mock_context_class,
@@ -183,7 +183,7 @@ class TestDocsCliWiring:
     def test_docs_cli_forwards_skip_lookups_flag(self):
         """The --skip-lookups CLI option should be forwarded to cmd_docs."""
         runner = CliRunner()
-        with patch("tee.cli.main.cmd_docs") as mock_cmd_docs:
+        with patch("t4t.cli.main.cmd_docs") as mock_cmd_docs:
             result = runner.invoke(app, ["docs", "/tmp/test_project", "--skip-lookups"])
 
         assert result.exit_code == 0
@@ -193,7 +193,7 @@ class TestDocsCliWiring:
     def test_docs_cli_forwards_infer_dimensional_flag(self):
         """The inference CLI option should be forwarded to cmd_docs."""
         runner = CliRunner()
-        with patch("tee.cli.main.cmd_docs") as mock_cmd_docs:
+        with patch("t4t.cli.main.cmd_docs") as mock_cmd_docs:
             result = runner.invoke(
                 app,
                 ["docs", "/tmp/test_project", "--infer-dim-from-column-names"],

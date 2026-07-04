@@ -4,8 +4,8 @@ End-to-end integration tests for function workflow.
 Tests the complete workflow: discovery → parsing → dependency graph → OTS export.
 """
 
-from tee.parser.core.orchestrator import ParserOrchestrator
-from tee.parser.output.ots.transformer import OTSTransformer
+from t4t.parser.core.orchestrator import ParserOrchestrator
+from t4t.parser.output.ots.transformer import OTSTransformer
 
 
 class TestFunctionEndToEnd:

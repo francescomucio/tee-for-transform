@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from tee.parser.parsers.function_python_parser import (
+from t4t.parser.parsers.function_python_parser import (
     FunctionPythonParser,
     FunctionPythonParsingError,
 )
-from tee.parser.shared.registry import FunctionRegistry
+from t4t.parser.shared.registry import FunctionRegistry
 
 
 class TestFunctionPythonParser:
@@ -44,8 +44,8 @@ $$;
 """)
 
             content = """
-from tee.parser.processing.function_builder import SQLFunctionMetadata
-from tee.typing import FunctionMetadata
+from t4t.parser.processing.function_builder import SQLFunctionMetadata
+from t4t.typing import FunctionMetadata
 
 metadata: FunctionMetadata = {
     "function_name": "calculate_percentage",
@@ -87,7 +87,7 @@ function = SQLFunctionMetadata(metadata)
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(
     function_name="calculate_metric",
@@ -122,7 +122,7 @@ def generate_calc_sql(adapter_type: str) -> str:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.python(
     function_name="python_calculator",
@@ -151,7 +151,7 @@ def python_calculator(x: float) -> float:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(function_name="func1", return_type="INT")
 def generate_func1(adapter_type: str) -> str:
@@ -182,7 +182,7 @@ def func3(x: int) -> int:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(function_name="test_func", return_type="INT")
 def generate_sql(adapter_type: str) -> str:
@@ -200,7 +200,7 @@ def generate_sql(adapter_type: str) -> str:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(function_name="test_func", return_type="FLOAT")
 def generate_sql(adapter_type: str, value: float, count: int = 10) -> str:
@@ -269,7 +269,7 @@ def test(): return "SELECT 1"
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(
     function_name="test_func",
@@ -292,7 +292,7 @@ def generate_sql(adapter_type: str) -> str:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(
     function_name="test_func",
@@ -313,7 +313,7 @@ def generate_sql(adapter_type: str) -> str:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(
     function_name="get_users",
@@ -339,7 +339,7 @@ def generate_sql(adapter_type: str) -> str:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(
     function_name="custom_sum",
@@ -360,7 +360,7 @@ def generate_sql(adapter_type: str) -> str:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(
     function_name="test_func",
@@ -381,7 +381,7 @@ def generate_sql_snowflake(adapter_type: str) -> str:
         parser = FunctionPythonParser()
 
         content = """
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(
     function_name="test_func",

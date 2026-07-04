@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from tee.engine.materialization.schema_comparator import SchemaComparator
+from t4t.engine.materialization.schema_comparator import SchemaComparator
 
 
 class TestSchemaComparator:

@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import yaml
 
-from tee.compiler import CompilationError
-from tee.importer.dbt.importer import import_dbt_project
+from t4t.compiler import CompilationError
+from t4t.importer.dbt.importer import import_dbt_project
 
 
 class TestOtsFormatImport:
@@ -31,7 +31,7 @@ class TestOtsFormatImport:
         model_file = models_dir / "customers.sql"
         model_file.write_text("SELECT 1 as id, 'test' as name")
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_called_when_format_is_ots(self, mock_compile):
         """Test that compile_project is called when output_format is 'ots'."""
         mock_compile.return_value = {
@@ -64,7 +64,7 @@ class TestOtsFormatImport:
             assert "connection_config" in call_args.kwargs
             assert call_args.kwargs["format"] == "json"
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_not_called_when_format_is_t4t(self, mock_compile):
         """Test that compile_project is NOT called when output_format is 't4t'."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -86,7 +86,7 @@ class TestOtsFormatImport:
             # Verify compile_project was NOT called
             assert not mock_compile.called
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_skipped_in_dry_run(self, mock_compile):
         """Test that OTS compilation is skipped in dry-run mode."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -109,7 +109,7 @@ class TestOtsFormatImport:
             # Verify compile_project was NOT called in dry-run
             assert not mock_compile.called
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_success_included_in_reports(self, mock_compile):
         """Test that successful OTS compilation results are included in reports."""
         mock_compile.return_value = {
@@ -156,7 +156,7 @@ class TestOtsFormatImport:
             assert log_data["ots_compilation"]["success"] is True
             assert log_data["ots_compilation"]["ots_modules_count"] == 2
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_error_handled_gracefully(self, mock_compile):
         """Test that OTS compilation errors are handled gracefully."""
         mock_compile.side_effect = CompilationError("Test compilation error")
@@ -196,7 +196,7 @@ class TestOtsFormatImport:
             assert log_data["ots_compilation"]["success"] is False
             assert "error" in log_data["ots_compilation"]
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_generic_error_handled(self, mock_compile):
         """Test that generic exceptions during OTS compilation are handled."""
         mock_compile.side_effect = ValueError("Unexpected error")
@@ -226,7 +226,7 @@ class TestOtsFormatImport:
             assert "ots_compilation" in log_data
             assert log_data["ots_compilation"]["success"] is False
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_uses_connection_config(self, mock_compile):
         """Test that connection_config is passed to compile_project."""
         mock_compile.return_value = {
@@ -259,7 +259,7 @@ class TestOtsFormatImport:
             connection_config = call_args.kwargs["connection_config"]
             assert "type" in connection_config
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_loads_project_config(self, mock_compile):
         """Test that project.toml is loaded and passed to compile_project."""
         mock_compile.return_value = {
@@ -290,7 +290,7 @@ class TestOtsFormatImport:
             assert "project_config" in call_args.kwargs
             # project_config can be None if project.toml doesn't exist, which is fine
 
-    @patch("tee.compiler.compile_project")
+    @patch("t4t.compiler.compile_project")
     def test_ots_compilation_summary_in_report(self, mock_compile):
         """Test that OTS compilation summary is included in the summary section."""
         mock_compile.return_value = {

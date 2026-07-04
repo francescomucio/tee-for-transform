@@ -9,8 +9,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.adapters.base import DatabaseAdapter
-from tee.typing.metadata import (
+from t4t.adapters.base import DatabaseAdapter
+from t4t.typing.metadata import (
     IncrementalAppendConfig,
     IncrementalDeleteInsertConfig,
     IncrementalMergeConfig,

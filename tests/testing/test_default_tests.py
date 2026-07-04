@@ -1,4 +1,4 @@
-from tee.testing.default_tests import inject_default_tests
+from t4t.testing.default_tests import inject_default_tests
 
 
 class TestInjectDefaultTests:

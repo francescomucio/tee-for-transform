@@ -4,7 +4,7 @@ Tests for function-related exceptions.
 
 import pytest
 
-from tee.parser.shared.exceptions import (
+from t4t.parser.shared.exceptions import (
     FunctionExecutionError,
     FunctionMetadataError,
     FunctionParsingError,

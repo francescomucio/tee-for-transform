@@ -1,27 +1,26 @@
 {
   "nodes": [
-    "test:my_schema.my_first_table.id.unique",
-    "my_schema.my_auto_table_one",
-    "my_schema.recent_users",
-    "my_schema.my_third_table",
-    "my_schema.my_first_table",
-    "my_schema.incremental_example",
-    "my_schema.my_forth_table",
-    "my_schema.my_view",
     "test:my_schema.my_first_table.test_my_first_table",
     "my_schema.my_first_table_from_loop",
-    "my_schema.my_third_table_from_loop",
-    "my_schema.calculate_percentage",
-    "test:my_schema.my_second_table.unique",
+    "my_schema.my_second_table_from_loop",
+    "test:my_schema.my_first_table.name.not_null",
+    "test:my_schema.my_second_table.name.not_null",
     "test:my_schema.my_first_table.id.not_null",
-    "my_schema.complex_join",
+    "my_schema.my_forth_table",
+    "test:my_schema.my_second_table.unique",
     "test:my_schema.my_first_table.row_count_gt_0",
     "test:my_schema.my_second_table.row_count_gt_0",
-    "my_schema.my_second_table_from_loop",
-    "test:my_schema.my_second_table.name.not_null",
+    "my_schema.my_third_table_from_loop",
+    "my_schema.users_summary",
+    "my_schema.complex_join",
+    "test:my_schema.my_first_table.id.unique",
+    "my_schema.incremental_example",
+    "my_schema.my_third_table",
+    "my_schema.my_first_table",
     "my_schema.my_second_table",
-    "test:my_schema.my_first_table.name.not_null",
-    "my_schema.users_summary"
+    "my_schema.recent_users",
+    "my_schema.my_view",
+    "my_schema.calculate_percentage"
   ],
   "edges": [
     [
@@ -51,10 +50,6 @@
     [
       "my_schema.my_first_table",
       "my_schema.incremental_example"
-    ],
-    [
-      "my_schema.my_first_table",
-      "my_schema.my_auto_table_one"
     ],
     [
       "my_schema.my_first_table",
@@ -140,10 +135,6 @@
     ],
     [
       "my_schema.my_first_table",
-      "my_schema.my_auto_table_one"
-    ],
-    [
-      "my_schema.my_first_table",
       "my_schema.my_second_table"
     ],
     [
@@ -186,9 +177,6 @@
     "my_schema.incremental_example": [
       "my_schema.my_first_table"
     ],
-    "my_schema.my_auto_table_one": [
-      "my_schema.my_first_table"
-    ],
     "my_schema.my_first_table": [],
     "my_schema.my_second_table": [
       "my_schema.my_first_table"
@@ -229,9 +217,23 @@
     ]
   },
   "dependents": {
+    "test:my_schema.my_first_table.test_my_first_table": [],
+    "my_schema.my_first_table_from_loop": [],
+    "my_schema.my_second_table_from_loop": [],
+    "test:my_schema.my_first_table.name.not_null": [],
+    "test:my_schema.my_second_table.name.not_null": [],
+    "test:my_schema.my_first_table.id.not_null": [],
+    "my_schema.my_forth_table": [
+      "my_schema.my_view"
+    ],
+    "test:my_schema.my_second_table.unique": [],
+    "test:my_schema.my_first_table.row_count_gt_0": [],
+    "test:my_schema.my_second_table.row_count_gt_0": [],
+    "my_schema.my_third_table_from_loop": [],
+    "my_schema.users_summary": [],
+    "my_schema.complex_join": [],
     "test:my_schema.my_first_table.id.unique": [],
-    "my_schema.my_auto_table_one": [],
-    "my_schema.recent_users": [],
+    "my_schema.incremental_example": [],
     "my_schema.my_third_table": [
       "my_schema.my_third_table_from_loop"
     ],
@@ -241,7 +243,6 @@
       "my_schema.complex_join",
       "my_schema.my_first_table_from_loop",
       "my_schema.incremental_example",
-      "my_schema.my_auto_table_one",
       "my_schema.my_second_table",
       "my_schema.my_forth_table",
       "my_schema.my_third_table",
@@ -251,22 +252,6 @@
       "test:my_schema.my_first_table.row_count_gt_0",
       "test:my_schema.my_first_table.test_my_first_table"
     ],
-    "my_schema.incremental_example": [],
-    "my_schema.my_forth_table": [
-      "my_schema.my_view"
-    ],
-    "my_schema.my_view": [],
-    "test:my_schema.my_first_table.test_my_first_table": [],
-    "my_schema.my_first_table_from_loop": [],
-    "my_schema.my_third_table_from_loop": [],
-    "my_schema.calculate_percentage": [],
-    "test:my_schema.my_second_table.unique": [],
-    "test:my_schema.my_first_table.id.not_null": [],
-    "my_schema.complex_join": [],
-    "test:my_schema.my_first_table.row_count_gt_0": [],
-    "test:my_schema.my_second_table.row_count_gt_0": [],
-    "my_schema.my_second_table_from_loop": [],
-    "test:my_schema.my_second_table.name.not_null": [],
     "my_schema.my_second_table": [
       "my_schema.my_second_table_from_loop",
       "my_schema.my_third_table",
@@ -274,8 +259,9 @@
       "test:my_schema.my_second_table.row_count_gt_0",
       "test:my_schema.my_second_table.unique"
     ],
-    "test:my_schema.my_first_table.name.not_null": [],
-    "my_schema.users_summary": []
+    "my_schema.recent_users": [],
+    "my_schema.my_view": [],
+    "my_schema.calculate_percentage": []
   },
   "execution_order": [
     "my_schema.calculate_percentage",
@@ -285,7 +271,6 @@
     "my_schema.complex_join",
     "my_schema.my_first_table_from_loop",
     "my_schema.incremental_example",
-    "my_schema.my_auto_table_one",
     "my_schema.my_second_table",
     "my_schema.my_forth_table",
     "test:my_schema.my_first_table.id.not_null",

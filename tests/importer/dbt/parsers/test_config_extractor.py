@@ -2,7 +2,7 @@
 Tests for config extractor.
 """
 
-from tee.importer.dbt.parsers import ConfigExtractor
+from t4t.importer.dbt.parsers import ConfigExtractor
 
 
 class TestConfigExtractor:

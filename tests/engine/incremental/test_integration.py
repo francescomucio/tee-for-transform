@@ -5,7 +5,7 @@ Integration test cases for incremental executor.
 from datetime import datetime
 from unittest.mock import Mock
 
-from tee.engine.model_state import ModelState
+from t4t.engine.model_state import ModelState
 from tests.engine.incremental.test_executor_base import TestIncrementalExecutor
 
 

@@ -64,7 +64,7 @@ Schema comparison and change detection for incremental materialization.
 import logging
 from typing import Any
 
-from tee.adapters.base.core import DatabaseAdapter
+from t4t.adapters.base.core import DatabaseAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -135,8 +135,8 @@ Handles schema changes based on on_schema_change configuration.
 import logging
 from typing import Any
 
-from tee.adapters.base.core import DatabaseAdapter
-from tee.typing.metadata import OnSchemaChange
+from t4t.adapters.base.core import DatabaseAdapter
+from t4t.typing.metadata import OnSchemaChange
 
 logger = logging.getLogger(__name__)
 

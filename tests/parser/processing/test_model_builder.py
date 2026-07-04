@@ -14,9 +14,9 @@ from pathlib import Path
 
 import pytest
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.parser.shared.registry import ModelRegistry
-from tee.typing import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.parser.shared.registry import ModelRegistry
+from t4t.typing import ModelMetadata
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -47,8 +47,8 @@ class TestSqlModelMetadata:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {{
     "schema": [
@@ -115,8 +115,8 @@ with open(result_file, 'w') as f:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {{
     "schema": [{{"name": "id", "datatype": "number"}}]
@@ -178,8 +178,8 @@ with open(result_file, 'w') as f:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {{"schema": [{{"name": "answer", "datatype": "number"}}]}}
 model = SqlModelMetadata(metadata)
@@ -235,8 +235,8 @@ with open(result_file, 'w') as f:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {{"schema": [{{"name": "col", "datatype": "number"}}]}}
 model = SqlModelMetadata(metadata)
@@ -286,8 +286,8 @@ with open(result_file, 'w') as f:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {{"schema": [{{"name": "id", "datatype": "number"}}]}}
 model = SqlModelMetadata(metadata)
@@ -339,9 +339,9 @@ with open(result_file, 'w') as f:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.parser.shared.registry import ModelRegistry
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.parser.shared.registry import ModelRegistry
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {{"schema": [{{"name": "id", "datatype": "number"}}]}}
 model = SqlModelMetadata(metadata)
@@ -385,7 +385,7 @@ with open(result_file, 'w') as f:
         Note: Full cross-file conflict testing requires subprocess execution which
         resets the registry. This test verifies the conflict detection code path exists.
         """
-        from tee.parser.shared.registry import ModelRegistry
+        from t4t.parser.shared.registry import ModelRegistry
 
         # Create SQL file
         sql_file = tmp_path / "conflict_test.sql"
@@ -396,8 +396,8 @@ with open(result_file, 'w') as f:
             os.chdir(tmp_path)
 
             # Register a model manually to simulate a conflict scenario
-            from tee.parser.parsers.sql_parser import SQLParser
-            from tee.parser.shared.model_utils import standardize_parsed_model
+            from t4t.parser.parsers.sql_parser import SQLParser
+            from t4t.parser.shared.model_utils import standardize_parsed_model
 
             file1 = tmp_path / "file1.py"
             file1.write_text("# First file")
@@ -469,8 +469,8 @@ with open(result_file, 'w') as f:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 # Minimal metadata - just empty dict
 metadata: ModelMetadata = {{}}
@@ -521,8 +521,8 @@ with open(result_file, 'w') as f:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 # Complex metadata with all fields
 metadata: ModelMetadata = {{
@@ -587,8 +587,8 @@ with open(result_file, 'w') as f:
 
     def test_sql_model_metadata_integration_with_python_parser(self, tmp_path):
         """Test that SqlModelMetadata works correctly when executed by PythonParser."""
-        from tee.parser.parsers.python_parser import PythonParser
-        from tee.parser.shared.registry import ModelRegistry
+        from t4t.parser.parsers.python_parser import PythonParser
+        from t4t.parser.shared.registry import ModelRegistry
 
         py_file = tmp_path / "parser_integration.py"
         sql_file = tmp_path / "parser_integration.sql"
@@ -597,8 +597,8 @@ with open(result_file, 'w') as f:
 
         # Create Python file with SqlModelMetadata
         py_content = """
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [
@@ -684,8 +684,8 @@ model = SqlModelMetadata(metadata)
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {{"schema": [{{"name": "id", "datatype": "number"}}]}}
 
@@ -746,8 +746,8 @@ except Exception as e:
 import sys
 sys.path.insert(0, r'{REPO_ROOT}')
 
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {{"schema": [{{"name": "id", "datatype": "number"}}]}}
 model = SqlModelMetadata(metadata)
@@ -789,8 +789,8 @@ with open(result_file, 'w') as f:
 
     def test_auto_instantiation_of_metadata_variable(self, tmp_path):
         """Test that PythonParser auto-instantiates SqlModelMetadata when metadata variable exists."""
-        from tee.parser.parsers.python_parser import PythonParser
-        from tee.parser.shared.registry import ModelRegistry
+        from t4t.parser.parsers.python_parser import PythonParser
+        from t4t.parser.shared.registry import ModelRegistry
 
         py_file = tmp_path / "auto_metadata.py"
         sql_file = tmp_path / "auto_metadata.sql"
@@ -799,7 +799,7 @@ with open(result_file, 'w') as f:
 
         # Create Python file with ONLY metadata variable (no explicit SqlModelMetadata instantiation)
         py_content = """
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [
@@ -849,8 +849,8 @@ metadata: ModelMetadata = {
 
     def test_auto_instantiation_skips_if_already_registered(self, tmp_path):
         """Test that auto-instantiation doesn't double-register if user explicitly instantiates."""
-        from tee.parser.parsers.python_parser import PythonParser
-        from tee.parser.shared.registry import ModelRegistry
+        from t4t.parser.parsers.python_parser import PythonParser
+        from t4t.parser.shared.registry import ModelRegistry
 
         py_file = tmp_path / "explicit_instantiation.py"
         sql_file = tmp_path / "explicit_instantiation.sql"
@@ -859,8 +859,8 @@ metadata: ModelMetadata = {
 
         # Create Python file with BOTH metadata variable AND explicit SqlModelMetadata instantiation
         py_content = """
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [{"name": "id", "datatype": "number"}]
@@ -891,14 +891,14 @@ model = SqlModelMetadata(metadata)
 
     def test_auto_instantiation_requires_companion_sql_file(self, tmp_path):
         """Test that auto-instantiation only works when companion SQL file exists."""
-        from tee.parser.parsers.python_parser import PythonParser
-        from tee.parser.shared.registry import ModelRegistry
+        from t4t.parser.parsers.python_parser import PythonParser
+        from t4t.parser.shared.registry import ModelRegistry
 
         py_file = tmp_path / "no_sql_companion.py"
         # Intentionally don't create the SQL file
 
         py_content = """
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [{"name": "id", "datatype": "number"}]
@@ -926,8 +926,8 @@ metadata: ModelMetadata = {
 
     def test_auto_instantiation_with_view_materialization(self, tmp_path):
         """Test that auto-instantiation works with view materialization."""
-        from tee.parser.parsers.python_parser import PythonParser
-        from tee.parser.shared.registry import ModelRegistry
+        from t4t.parser.parsers.python_parser import PythonParser
+        from t4t.parser.shared.registry import ModelRegistry
 
         py_file = tmp_path / "auto_view.py"
         sql_file = tmp_path / "auto_view.sql"
@@ -935,7 +935,7 @@ metadata: ModelMetadata = {
         sql_file.write_text("SELECT 1 as id FROM my_schema.my_first_table")
 
         py_content = """
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "materialization": "view"
@@ -961,8 +961,8 @@ metadata: ModelMetadata = {
 
     def test_auto_instantiation_handles_model_conflict_error(self, tmp_path, caplog):
         """Test that auto-instantiation logs ModelConflictError as warning."""
-        from tee.parser.parsers.python_parser import PythonParser
-        from tee.parser.shared.registry import ModelRegistry
+        from t4t.parser.parsers.python_parser import PythonParser
+        from t4t.parser.shared.registry import ModelRegistry
 
         # First, register a model with a specific name
         # Use a shared table name to ensure conflict
@@ -971,8 +971,8 @@ metadata: ModelMetadata = {
         sql_file1.write_text("SELECT 1 as id")
 
         py_content1 = """
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing.metadata import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [{"name": "id", "datatype": "number"}]
@@ -1000,7 +1000,7 @@ model = SqlModelMetadata(metadata)
         sql_file2.write_text("SELECT 2 as id")
 
         py_content2 = """
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [{"name": "id", "datatype": "number"}]
@@ -1028,7 +1028,7 @@ metadata: ModelMetadata = {
 
     def test_auto_instantiation_handles_sql_parsing_error(self, tmp_path, caplog):
         """Test that auto-instantiation logs SQLParsingError as warning."""
-        from tee.parser.parsers.python_parser import PythonParser
+        from t4t.parser.parsers.python_parser import PythonParser
 
         py_file = tmp_path / "invalid_sql.py"
         sql_file = tmp_path / "invalid_sql.sql"
@@ -1037,7 +1037,7 @@ metadata: ModelMetadata = {
         sql_file.write_text("SELECT FROM WHERE INVALID SQL SYNTAX")
 
         py_content = """
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [{"name": "id", "datatype": "number"}]

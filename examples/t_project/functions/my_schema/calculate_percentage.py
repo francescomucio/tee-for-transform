@@ -5,8 +5,8 @@ This function calculates the percentage of a numerator over a denominator,
 handling edge cases like division by zero.
 """
 
-from tee.parser.processing.function_builder import SQLFunctionMetadata
-from tee.typing import FunctionMetadata
+from t4t.parser.processing.function_builder import SQLFunctionMetadata
+from t4t.typing import FunctionMetadata
 
 metadata: FunctionMetadata = {
     "function_name": "calculate_percentage",

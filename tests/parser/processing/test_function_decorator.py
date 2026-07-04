@@ -4,7 +4,7 @@ Unit tests for function decorators.
 
 import pytest
 
-from tee.parser.processing.function_decorator import FunctionDecoratorError, functions
+from t4t.parser.processing.function_decorator import FunctionDecoratorError, functions
 
 
 class TestFunctionDecorators:

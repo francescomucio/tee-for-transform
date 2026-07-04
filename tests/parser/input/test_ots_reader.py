@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from tee.parser.input import OTSModuleReader, OTSModuleReaderError
+from t4t.parser.input import OTSModuleReader, OTSModuleReaderError
 
 
 class TestOTSModuleReader:

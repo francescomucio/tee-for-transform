@@ -4,7 +4,7 @@ Test using create_test() function pattern.
 This demonstrates dynamic test creation for multiple tables.
 """
 
-from tee.testing import create_test
+from t4t.testing import create_test
 
 # Dynamically create tests for common validations
 TABLES_TO_TEST = ["my_first_table"]

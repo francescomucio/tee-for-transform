@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 
-from tee.importer.dbt.converters import SeedConverter
+from t4t.importer.dbt.converters import SeedConverter
 
 
 class TestSeedConverter:

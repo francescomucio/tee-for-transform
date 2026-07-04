@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
-from tee.engine.execution_engine import ExecutionEngine
-from tee.parser.core.orchestrator import ParserOrchestrator
+from t4t.engine.execution_engine import ExecutionEngine
+from t4t.parser.core.orchestrator import ParserOrchestrator
 
 
 @pytest.mark.integration

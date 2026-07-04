@@ -24,7 +24,7 @@ try:
 except ImportError:
     duckdb = None
 
-from tee.adapters.duckdb.adapter import DuckDBAdapter
+from t4t.adapters.duckdb.adapter import DuckDBAdapter
 
 
 def _get_config_file_path() -> Path:

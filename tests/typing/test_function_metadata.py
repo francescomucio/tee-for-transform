@@ -2,7 +2,7 @@
 Tests for function metadata type definitions.
 """
 
-from tee.typing.metadata import (
+from t4t.typing.metadata import (
     FunctionMetadata,
     FunctionParameter,
     FunctionType,

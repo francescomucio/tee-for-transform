@@ -2,7 +2,7 @@
 Unit tests for function orchestration and integration.
 """
 
-from tee.parser.core.orchestrator import ParserOrchestrator
+from t4t.parser.core.orchestrator import ParserOrchestrator
 
 
 class TestFunctionOrchestration:
@@ -84,7 +84,7 @@ class TestFunctionOrchestration:
         # Create Python function file
         python_file = schema_folder / "test_func.py"
         python_file.write_text("""
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql(
     function_name="test_func",
@@ -128,7 +128,7 @@ def generate_sql(adapter_type: str) -> str:
         # Create companion metadata file
         metadata_file = schema_folder / "test_func.py"
         metadata_file.write_text("""
-from tee.typing.metadata import FunctionMetadata
+from t4t.typing.metadata import FunctionMetadata
 
 metadata: FunctionMetadata = {
     "function_name": "test_func",
@@ -206,7 +206,7 @@ metadata: FunctionMetadata = {
 
         metadata_file = schema_folder / "test_func.py"
         metadata_file.write_text("""
-from tee.typing.metadata import FunctionMetadata
+from t4t.typing.metadata import FunctionMetadata
 
 metadata: FunctionMetadata = {
     "function_name": "test_func",

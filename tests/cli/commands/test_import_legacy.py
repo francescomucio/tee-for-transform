@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import pytest
 import typer
 
-legacy_import_module = import_module("tee.cli.commands.import")
+legacy_import_module = import_module("t4t.cli.commands.import")
 cmd_import = legacy_import_module.cmd_import
 
 
@@ -29,12 +29,12 @@ def test_cmd_import_legacy_dry_run_unknown_project_type(monkeypatch, tmp_path: P
 
     project_type = SimpleNamespace(UNKNOWN=SimpleNamespace(value="unknown"))
     monkeypatch.setattr(
-        "tee.importer.detector.ProjectType",
+        "t4t.importer.detector.ProjectType",
         project_type,
         raising=True,
     )
     monkeypatch.setattr(
-        "tee.importer.detector.detect_project_type",
+        "t4t.importer.detector.detect_project_type",
         lambda _: project_type.UNKNOWN,
         raising=True,
     )
@@ -58,14 +58,14 @@ def test_cmd_import_legacy_calls_dbt_importer(monkeypatch, tmp_path: Path) -> No
     def _fake_import_dbt_project(**kwargs):
         called.update(kwargs)
 
-    monkeypatch.setattr("tee.importer.detector.ProjectType", project_type, raising=True)
+    monkeypatch.setattr("t4t.importer.detector.ProjectType", project_type, raising=True)
     monkeypatch.setattr(
-        "tee.importer.detector.detect_project_type",
+        "t4t.importer.detector.detect_project_type",
         lambda _: project_type.DBT,
         raising=True,
     )
     monkeypatch.setattr(
-        "tee.importer.dbt.importer.import_dbt_project",
+        "t4t.importer.dbt.importer.import_dbt_project",
         _fake_import_dbt_project,
         raising=True,
     )

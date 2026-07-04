@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tee.adapters.duckdb.adapter import DuckDBAdapter
+from t4t.adapters.duckdb.adapter import DuckDBAdapter
 
 
 class TestDuckDBSchemaChangeMethods:

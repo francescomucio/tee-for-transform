@@ -2,8 +2,8 @@
 Test cases for tag extraction in execution engine.
 """
 
-from tee.engine.execution_engine import ExecutionEngine
-from tee.engine.metadata import MetadataExtractor
+from t4t.engine.execution_engine import ExecutionEngine
+from t4t.engine.metadata import MetadataExtractor
 
 
 class TestTagExtraction:

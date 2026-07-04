@@ -5,7 +5,7 @@ This module contains test data and helper functions for metadata testing.
 Note: TestMetadataModels is not a test class - it's a collection of helper functions.
 """
 
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 # Metadata fixtures for testing
 USERS_METADATA: ModelMetadata = {

@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import yaml
 
-from tee.importer.dbt.infrastructure import PackagesHandler
+from t4t.importer.dbt.infrastructure import PackagesHandler
 
 
 class TestPackagesHandler:
@@ -285,8 +285,8 @@ class TestPackagesHandler:
             sha = handler._get_git_commit_sha(non_git_dir)
             assert sha is None
 
-    @patch("tee.importer.dbt.infrastructure.packages_handler.subprocess.run")
-    @patch("tee.importer.dbt.infrastructure.packages_handler.PackagesHandler._get_git_commit_sha")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.subprocess.run")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.PackagesHandler._get_git_commit_sha")
     def test_clone_packages_hub_package_with_tag(self, mock_get_sha, mock_subprocess):
         """Test cloning Hub package with version tag."""
         handler = PackagesHandler(verbose=False)
@@ -326,8 +326,8 @@ class TestPackagesHandler:
             assert len(cloned) == 1
             assert "dbt_utils" in cloned
 
-    @patch("tee.importer.dbt.infrastructure.packages_handler.subprocess.run")
-    @patch("tee.importer.dbt.infrastructure.packages_handler.PackagesHandler._get_git_commit_sha")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.subprocess.run")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.PackagesHandler._get_git_commit_sha")
     def test_clone_packages_git_branch(self, mock_get_sha, mock_subprocess):
         """Test cloning Git package with branch (main/master)."""
         handler = PackagesHandler(verbose=False)
@@ -368,8 +368,8 @@ class TestPackagesHandler:
             # Verify package was cloned
             assert len(cloned) == 1
 
-    @patch("tee.importer.dbt.infrastructure.packages_handler.subprocess.run")
-    @patch("tee.importer.dbt.infrastructure.packages_handler.PackagesHandler._get_git_commit_sha")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.subprocess.run")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.PackagesHandler._get_git_commit_sha")
     def test_clone_packages_git_with_tag(self, mock_get_sha, mock_subprocess):
         """Test cloning Git package with tag."""
         handler = PackagesHandler(verbose=False)
@@ -411,7 +411,7 @@ class TestPackagesHandler:
             # Verify package was cloned
             assert len(cloned) == 1
 
-    @patch("tee.importer.dbt.infrastructure.packages_handler.subprocess.run")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.subprocess.run")
     def test_clone_packages_creates_packages_directory(self, mock_subprocess):
         """Test that clone_packages creates .packages directory."""
         handler = PackagesHandler(verbose=False)
@@ -437,8 +437,8 @@ class TestPackagesHandler:
             # Directory should be created
             assert packages_dir.exists()
 
-    @patch("tee.importer.dbt.infrastructure.packages_handler.subprocess.run")
-    @patch("tee.importer.dbt.infrastructure.packages_handler.PackagesHandler._get_git_commit_sha")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.subprocess.run")
+    @patch("t4t.importer.dbt.infrastructure.packages_handler.PackagesHandler._get_git_commit_sha")
     def test_clone_packages_writes_lock_file(self, mock_get_sha, mock_subprocess):
         """Test that clone_packages writes packages.lock file with commit SHA."""
         handler = PackagesHandler(verbose=False)

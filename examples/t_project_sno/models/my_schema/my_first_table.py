@@ -1,6 +1,6 @@
 # Metadata for my_first_table.sql
-from tee.parser.processing.model_builder import SqlModelMetadata
-from tee.typing import ModelMetadata
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [

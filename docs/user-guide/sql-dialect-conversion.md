@@ -122,7 +122,7 @@ export TEE_DB_SOURCE_DIALECT=postgresql
 ### Programmatic Configuration
 
 ```python
-from tee.adapters import AdapterConfig
+from t4t.adapters import AdapterConfig
 
 config = AdapterConfig(
     type="duckdb",

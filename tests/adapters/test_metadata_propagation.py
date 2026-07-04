@@ -17,9 +17,9 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from tee.adapters.duckdb.adapter import DuckDBAdapter  # noqa: E402
-from tee.adapters.snowflake.adapter import SnowflakeAdapter  # noqa: E402
-from tee.executor import execute_models  # noqa: E402
+from t4t.adapters.duckdb.adapter import DuckDBAdapter  # noqa: E402
+from t4t.adapters.snowflake.adapter import SnowflakeAdapter  # noqa: E402
+from t4t.executor import execute_models  # noqa: E402
 from tests.adapters.fixtures.metadata_fixtures import (  # noqa: E402
     INVALID_SCHEMA_TYPE_METADATA,
 )
@@ -116,7 +116,7 @@ class TestMetadataPropagation:
 
         # Create a mock adapter for testing
         config_dict = {"type": "duckdb", "path": ":memory:"}
-        from tee.adapters.duckdb.adapter import DuckDBAdapter
+        from t4t.adapters.duckdb.adapter import DuckDBAdapter
 
         adapter = DuckDBAdapter(config_dict)
 
@@ -210,7 +210,7 @@ class TestMetadataPropagation:
                 # Create a Python model file with decorator metadata
                 model_file = models_dir / "test_model.py"
                 model_file.write_text("""
-from tee.parser.processing.model import model
+from t4t.parser.processing.model import model
 
 @model(
     table_name="test_schema.priority_test",
@@ -248,7 +248,7 @@ path = "{db_path}"
                 # Execute models
                 config = {"type": "duckdb", "path": db_path}
                 # Load project config if available
-                from tee.cli.utils import load_project_config
+                from t4t.cli.utils import load_project_config
 
                 project_config = None
                 try:
@@ -316,7 +316,7 @@ path = "{db_path}"
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (0,)  # Schema doesn't exist
 
-        with patch("tee.adapters.snowflake.adapter.snowflake.connector.connect") as mock_connect:
+        with patch("t4t.adapters.snowflake.adapter.snowflake.connector.connect") as mock_connect:
             mock_connect.return_value = mock_conn
             adapter = SnowflakeAdapter(snowflake_config)
             adapter.connection = mock_conn

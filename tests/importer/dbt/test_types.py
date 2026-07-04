@@ -2,7 +2,7 @@
 Coverage tests for dbt importer TypedDict definitions.
 """
 
-from tee.importer.dbt import types
+from t4t.importer.dbt import types
 
 
 def test_typed_dict_shapes_are_instantiable() -> None:

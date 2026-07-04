@@ -90,7 +90,7 @@ class TestTimeFilterCondition(TestIncrementalExecutor):
         """Test default 7-day lookback when no start_value specified."""
         config = {"filter_column": "created_at"}
 
-        with patch("tee.engine.materialization.incremental_executor.datetime") as mock_datetime:
+        with patch("t4t.engine.materialization.incremental_executor.datetime") as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 1, 15)
             mock_datetime.timedelta = timedelta
 

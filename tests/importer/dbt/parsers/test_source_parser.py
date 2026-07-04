@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from tee.importer.dbt.parsers import SourceParser
+from t4t.importer.dbt.parsers import SourceParser
 
 
 class TestSourceParser:

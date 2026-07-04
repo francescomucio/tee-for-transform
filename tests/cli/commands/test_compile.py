@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from tee.cli.commands.compile import cmd_compile
+from t4t.cli.commands.compile import cmd_compile
 
 
 class TestCompileCommand:
@@ -37,8 +37,8 @@ class TestCompileCommand:
         args.format = "json"
         return args
 
-    @patch("tee.cli.commands.compile.compile_project")
-    @patch("tee.cli.commands.compile.CommandContext")
+    @patch("t4t.cli.commands.compile.compile_project")
+    @patch("t4t.cli.commands.compile.CommandContext")
     def test_cmd_compile_success(self, mock_context_class, mock_compile, mock_args):
         """Test successful compile command execution."""
         # Setup mocks
@@ -81,8 +81,8 @@ class TestCompileCommand:
             format="json",
         )
 
-    @patch("tee.cli.commands.compile.compile_project")
-    @patch("tee.cli.commands.compile.CommandContext")
+    @patch("t4t.cli.commands.compile.compile_project")
+    @patch("t4t.cli.commands.compile.CommandContext")
     def test_cmd_compile_yaml_format(self, mock_context_class, mock_compile, mock_args):
         """Test compile command with YAML format."""
         # Setup mocks
@@ -119,11 +119,11 @@ class TestCompileCommand:
             format="yaml",
         )
 
-    @patch("tee.cli.commands.compile.compile_project")
-    @patch("tee.cli.commands.compile.CommandContext")
+    @patch("t4t.cli.commands.compile.compile_project")
+    @patch("t4t.cli.commands.compile.CommandContext")
     def test_cmd_compile_error_handling(self, mock_context_class, mock_compile, mock_args):
         """Test compile command error handling."""
-        from tee.compiler import CompilationError
+        from t4t.compiler import CompilationError
 
         # Setup mocks
         mock_ctx = Mock()

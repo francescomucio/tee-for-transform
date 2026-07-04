@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from tee.cli.commands.debug import cmd_debug
+from t4t.cli.commands.debug import cmd_debug
 
 
 class TestDebugCommand:
@@ -36,8 +36,8 @@ class TestDebugCommand:
         args.verbose = False
         return args
 
-    @patch("tee.cli.commands.debug.ConnectionManager")
-    @patch("tee.cli.commands.debug.CommandContext")
+    @patch("t4t.cli.commands.debug.ConnectionManager")
+    @patch("t4t.cli.commands.debug.CommandContext")
     def test_cmd_debug_success(self, mock_context_class, mock_connection_manager_class, mock_args):
         """Test successful debug command execution."""
         # Setup mocks
@@ -77,8 +77,8 @@ class TestDebugCommand:
         mock_connection_manager.get_database_info.assert_called_once()
         mock_connection_manager.get_supported_materializations.assert_called_once()
 
-    @patch("tee.cli.commands.debug.ConnectionManager")
-    @patch("tee.cli.commands.debug.CommandContext")
+    @patch("t4t.cli.commands.debug.ConnectionManager")
+    @patch("t4t.cli.commands.debug.CommandContext")
     def test_cmd_debug_connection_failure(
         self, mock_context_class, mock_connection_manager_class, mock_args
     ):
@@ -107,8 +107,8 @@ class TestDebugCommand:
         assert "Database connection failed!" in output
         assert "Please check your connection configuration" in output
 
-    @patch("tee.cli.commands.debug.ConnectionManager")
-    @patch("tee.cli.commands.debug.CommandContext")
+    @patch("t4t.cli.commands.debug.ConnectionManager")
+    @patch("t4t.cli.commands.debug.CommandContext")
     def test_cmd_debug_with_database_info(
         self, mock_context_class, mock_connection_manager_class, mock_args
     ):
@@ -151,8 +151,8 @@ class TestDebugCommand:
         assert "warehouse: MY_WAREHOUSE" in output
         assert "role: MY_ROLE" in output
 
-    @patch("tee.cli.commands.debug.ConnectionManager")
-    @patch("tee.cli.commands.debug.CommandContext")
+    @patch("t4t.cli.commands.debug.ConnectionManager")
+    @patch("t4t.cli.commands.debug.CommandContext")
     def test_cmd_debug_handles_exceptions(
         self, mock_context_class, mock_connection_manager_class, mock_args
     ):
@@ -178,8 +178,8 @@ class TestDebugCommand:
         # Verify error was handled
         mock_ctx.handle_error.assert_called_once()
 
-    @patch("tee.cli.commands.debug.ConnectionManager")
-    @patch("tee.cli.commands.debug.CommandContext")
+    @patch("t4t.cli.commands.debug.ConnectionManager")
+    @patch("t4t.cli.commands.debug.CommandContext")
     def test_cmd_debug_cleanup_connection_manager(
         self, mock_context_class, mock_connection_manager_class, mock_args
     ):
@@ -206,8 +206,8 @@ class TestDebugCommand:
         # Verify cleanup was called
         mock_connection_manager.cleanup.assert_called_once()
 
-    @patch("tee.cli.commands.debug.ConnectionManager")
-    @patch("tee.cli.commands.debug.CommandContext")
+    @patch("t4t.cli.commands.debug.ConnectionManager")
+    @patch("t4t.cli.commands.debug.CommandContext")
     def test_cmd_debug_cleanup_on_exception(
         self, mock_context_class, mock_connection_manager_class, mock_args
     ):
@@ -233,8 +233,8 @@ class TestDebugCommand:
         # Verify cleanup was still called
         mock_connection_manager.cleanup.assert_called_once()
 
-    @patch("tee.cli.commands.debug.ConnectionManager")
-    @patch("tee.cli.commands.debug.CommandContext")
+    @patch("t4t.cli.commands.debug.ConnectionManager")
+    @patch("t4t.cli.commands.debug.CommandContext")
     def test_cmd_debug_with_variables(
         self, mock_context_class, mock_connection_manager_class, mock_args
     ):

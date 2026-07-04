@@ -4,7 +4,7 @@ Unit tests for incremental state manager.
 
 from pathlib import Path
 
-from tee.engine.incremental_state import IncrementalState, IncrementalStateManager
+from t4t.engine.incremental_state import IncrementalState, IncrementalStateManager
 
 
 def test_state_manager_round_trip_and_list_delete(tmp_path: Path) -> None:

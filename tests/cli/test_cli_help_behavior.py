@@ -28,7 +28,7 @@ class TestCLIHelpBehavior:
         """Run a CLI command and return exit code, stdout, stderr."""
         try:
             result = subprocess.run(
-                [sys.executable, "-m", "tee.cli.main"] + command,
+                [sys.executable, "-m", "t4t.cli.main"] + command,
                 capture_output=True,
                 text=True,
                 cwd=Path(__file__).parent.parent.parent,

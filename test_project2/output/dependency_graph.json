@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    "test"
+  ],
+  "edges": [],
+  "sql_edges": [],
+  "dependencies": {
+    "test": []
+  },
+  "dependents": {
+    "test": []
+  },
+  "execution_order": [
+    "test"
+  ],
+  "cycles": []
+}

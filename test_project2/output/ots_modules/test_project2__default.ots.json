@@ -1,0 +1,43 @@
+{
+  "ots_version": "0.2.2",
+  "module_name": "test_project2.default",
+  "module_description": "Transformations for default schema",
+  "target": {
+    "database": "test_project2",
+    "schema": "default",
+    "sql_dialect": "duckdb"
+  },
+  "transformations": [
+    {
+      "transformation_id": "test",
+      "description": "SQL model for test",
+      "transformation_type": "sql",
+      "sql_dialect": "duckdb",
+      "code": {
+        "sql": {
+          "original_sql": "SELECT 1 AS test",
+          "resolved_sql": "SELECT 1 AS test",
+          "operation_type": "select",
+          "source_tables": [],
+          "source_functions": []
+        }
+      },
+      "schema": {
+        "columns": [
+          {
+            "name": "test",
+            "datatype": "string",
+            "description": null
+          }
+        ],
+        "partitioning": []
+      },
+      "materialization": {
+        "type": "table"
+      },
+      "metadata": {
+        "file_path": "/opt/data/tee-for-transform/test_project2/models/test.sql"
+      }
+    }
+  ]
+}

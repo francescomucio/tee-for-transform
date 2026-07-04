@@ -22,7 +22,7 @@ t_project/
 
 **`models/my_schema/users.py`:**
 ```python
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "description": "Users table",
@@ -80,7 +80,7 @@ WHERE deleted_at IS NULL
 
 **`models/my_schema/orders.py`:**
 ```python
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "description": "Orders table",

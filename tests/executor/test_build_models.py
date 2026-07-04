@@ -9,8 +9,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from tee.executor import build_models
-from tee.testing.base import TestResult, TestSeverity
+from t4t.executor import build_models
+from t4t.testing.base import TestResult, TestSeverity
 
 
 class TestBuildModels:
@@ -97,7 +97,7 @@ class TestBuildModels:
             model_file.write_text(sql)
 
         # Actually compile the project to create real OTS modules
-        from tee.compiler import compile_project
+        from t4t.compiler import compile_project
 
         compile_project(
             project_folder=str(temp_dir),
@@ -108,10 +108,10 @@ class TestBuildModels:
 
         return temp_dir
 
-    @patch("tee.executor_helpers.build_helpers.ModelExecutor")
-    @patch("tee.executor_helpers.build_helpers.ProjectParser")
-    @patch("tee.executor_helpers.build_helpers.TestExecutor")
-    @patch("tee.engine.execution_engine.ExecutionEngine")
+    @patch("t4t.executor_helpers.build_helpers.ModelExecutor")
+    @patch("t4t.executor_helpers.build_helpers.ProjectParser")
+    @patch("t4t.executor_helpers.build_helpers.TestExecutor")
+    @patch("t4t.engine.execution_engine.ExecutionEngine")
     def test_build_models_success(
         self,
         mock_execution_engine_class,
@@ -183,10 +183,10 @@ class TestBuildModels:
         assert len(results["failed_tables"]) == 0
         assert results["test_results"]["total"] == 0
 
-    @patch("tee.executor_helpers.build_helpers.ModelExecutor")
-    @patch("tee.executor_helpers.build_helpers.ProjectParser")
-    @patch("tee.executor_helpers.build_helpers.TestExecutor")
-    @patch("tee.engine.execution_engine.ExecutionEngine")
+    @patch("t4t.executor_helpers.build_helpers.ModelExecutor")
+    @patch("t4t.executor_helpers.build_helpers.ProjectParser")
+    @patch("t4t.executor_helpers.build_helpers.TestExecutor")
+    @patch("t4t.engine.execution_engine.ExecutionEngine")
     def test_build_models_stops_on_test_failure(
         self,
         mock_execution_engine_class,
@@ -269,10 +269,10 @@ class TestBuildModels:
         # Verify that second model was not executed
         assert mock_execution_engine.execute_models.call_count == 1
 
-    @patch("tee.executor_helpers.build_helpers.ModelExecutor")
-    @patch("tee.executor_helpers.build_helpers.ProjectParser")
-    @patch("tee.executor_helpers.build_helpers.TestExecutor")
-    @patch("tee.engine.execution_engine.ExecutionEngine")
+    @patch("t4t.executor_helpers.build_helpers.ModelExecutor")
+    @patch("t4t.executor_helpers.build_helpers.ProjectParser")
+    @patch("t4t.executor_helpers.build_helpers.TestExecutor")
+    @patch("t4t.engine.execution_engine.ExecutionEngine")
     def test_build_models_continues_on_warning(
         self,
         mock_execution_engine_class,
@@ -355,10 +355,10 @@ class TestBuildModels:
         # Warning count should be at least 1 (may include other warnings)
         assert results["test_results"]["warnings"] >= 1
 
-    @patch("tee.executor_helpers.build_helpers.ModelExecutor")
-    @patch("tee.executor_helpers.build_helpers.ProjectParser")
-    @patch("tee.executor_helpers.build_helpers.TestExecutor")
-    @patch("tee.engine.execution_engine.ExecutionEngine")
+    @patch("t4t.executor_helpers.build_helpers.ModelExecutor")
+    @patch("t4t.executor_helpers.build_helpers.ProjectParser")
+    @patch("t4t.executor_helpers.build_helpers.TestExecutor")
+    @patch("t4t.engine.execution_engine.ExecutionEngine")
     def test_build_models_stops_on_model_failure(
         self,
         mock_execution_engine_class,
@@ -425,10 +425,10 @@ class TestBuildModels:
         assert len(results["failed_tables"]) > 0
         assert any(f["table"] == "schema1.table1" for f in results["failed_tables"])
 
-    @patch("tee.executor_helpers.build_helpers.ModelExecutor")
-    @patch("tee.executor_helpers.build_helpers.ProjectParser")
-    @patch("tee.executor_helpers.build_helpers.TestExecutor")
-    @patch("tee.engine.execution_engine.ExecutionEngine")
+    @patch("t4t.executor_helpers.build_helpers.ModelExecutor")
+    @patch("t4t.executor_helpers.build_helpers.ProjectParser")
+    @patch("t4t.executor_helpers.build_helpers.TestExecutor")
+    @patch("t4t.engine.execution_engine.ExecutionEngine")
     def test_build_models_skips_dependents_on_failure(
         self,
         mock_execution_engine_class,
@@ -496,10 +496,10 @@ class TestBuildModels:
         # Only the first model should have been attempted (dependents skipped)
         assert mock_execution_engine_instance.execute_models.call_count == 1
 
-    @patch("tee.executor_helpers.build_helpers.ModelExecutor")
-    @patch("tee.executor_helpers.build_helpers.ProjectParser")
-    @patch("tee.executor_helpers.build_helpers.TestExecutor")
-    @patch("tee.engine.execution_engine.ExecutionEngine")
+    @patch("t4t.executor_helpers.build_helpers.ModelExecutor")
+    @patch("t4t.executor_helpers.build_helpers.ProjectParser")
+    @patch("t4t.executor_helpers.build_helpers.TestExecutor")
+    @patch("t4t.engine.execution_engine.ExecutionEngine")
     def test_build_models_interleaves_tests(
         self,
         mock_execution_engine_class,
@@ -606,10 +606,10 @@ class TestBuildModels:
         assert results["test_results"]["total"] == 2
         assert results["test_results"]["passed"] == 2
 
-    @patch("tee.executor_helpers.build_helpers.ModelExecutor")
-    @patch("tee.executor_helpers.build_helpers.ProjectParser")
-    @patch("tee.executor_helpers.build_helpers.TestExecutor")
-    @patch("tee.engine.execution_engine.ExecutionEngine")
+    @patch("t4t.executor_helpers.build_helpers.ModelExecutor")
+    @patch("t4t.executor_helpers.build_helpers.ProjectParser")
+    @patch("t4t.executor_helpers.build_helpers.TestExecutor")
+    @patch("t4t.engine.execution_engine.ExecutionEngine")
     def test_build_models_skips_test_nodes(
         self,
         mock_execution_engine_class,

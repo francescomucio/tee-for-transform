@@ -13,8 +13,8 @@ from typing import Any
 
 import pytest
 
-from tee.engine.materialization.incremental_executor import IncrementalExecutor
-from tee.engine.materialization.materialization_handler import MaterializationHandler
+from t4t.engine.materialization.incremental_executor import IncrementalExecutor
+from t4t.engine.materialization.materialization_handler import MaterializationHandler
 
 
 @pytest.mark.integration

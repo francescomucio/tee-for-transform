@@ -8,9 +8,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.testing.base import TestRegistry, TestSeverity
-from tee.testing.executor import TestExecutor
-from tee.testing.standard_tests import NotNullTest
+from t4t.testing.base import TestRegistry, TestSeverity
+from t4t.testing.executor import TestExecutor
+from t4t.testing.standard_tests import NotNullTest
 
 
 class TestTestExecutor:
@@ -69,7 +69,7 @@ class TestTestExecutor:
 
     def test_execute_tests_for_model_table_level(self, executor, mock_adapter):
         """Test execution of table-level tests."""
-        from tee.testing.standard_tests import RowCountGreaterThanZeroTest
+        from t4t.testing.standard_tests import RowCountGreaterThanZeroTest
 
         # Clear registry first
         TestRegistry.clear()
@@ -102,7 +102,7 @@ class TestTestExecutor:
 
     def test_execute_all_tests(self, executor, mock_adapter):
         """Test execute_all_tests with multiple models."""
-        from tee.testing.standard_tests import NotNullTest, RowCountGreaterThanZeroTest
+        from t4t.testing.standard_tests import NotNullTest, RowCountGreaterThanZeroTest
 
         # Clear registry first to ensure clean state
         TestRegistry.clear()
@@ -151,7 +151,7 @@ class TestTestExecutor:
 
     def test_execute_all_tests_with_failures(self, executor, mock_adapter):
         """Test execute_all_tests with test failures."""
-        from tee.testing.standard_tests import NotNullTest
+        from t4t.testing.standard_tests import NotNullTest
 
         # Clear registry first
         TestRegistry.clear()
@@ -234,7 +234,7 @@ class TestTestExecutor:
         TestExecutor(mock_adapter, project_folder=str(temp_dir))
 
         # Verify SQL test was discovered and registered
-        from tee.testing.sql_test import SqlTest
+        from t4t.testing.sql_test import SqlTest
 
         discovered_test = TestRegistry.get("my_custom_test")
         assert discovered_test is not None
@@ -355,7 +355,7 @@ WHERE {{ column_name }} < 0
 
     def test_execute_all_tests_with_sql_tests(self, mock_adapter, temp_dir):
         """Test execute_all_tests with both standard and SQL tests."""
-        from tee.testing.standard_tests import NotNullTest
+        from t4t.testing.standard_tests import NotNullTest
 
         tests_folder = temp_dir / "tests"
         tests_folder.mkdir()

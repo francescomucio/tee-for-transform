@@ -5,8 +5,8 @@ Targeted tests for ParserOrchestrator dimensional graph branches.
 from pathlib import Path
 from unittest.mock import Mock
 
-from tee.parser.core.orchestrator import ParserOrchestrator
-from tee.parser.shared.dimension_registry import build_dimension_registry_from_models
+from t4t.parser.core.orchestrator import ParserOrchestrator
+from t4t.parser.shared.dimension_registry import build_dimension_registry_from_models
 
 
 def _orchestrator(tmp_path):

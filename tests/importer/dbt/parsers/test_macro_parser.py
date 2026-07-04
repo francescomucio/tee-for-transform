@@ -5,7 +5,7 @@ Unit tests for MacroParser.
 from pathlib import Path
 
 
-from tee.importer.dbt.parsers import MacroParser
+from t4t.importer.dbt.parsers import MacroParser
 
 
 class TestMacroParser:

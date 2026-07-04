@@ -35,7 +35,7 @@ materialization_change_behavior = "warn"
 ### Model Configuration (`incremental_example.py`)
 
 ```python
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 # Example 1: Append strategy
 metadata_append: ModelMetadata = {
@@ -124,7 +124,7 @@ uv run t4t run ./t_project
 **Output:**
 ```
 INFO - ExecutionEngine - Executing model: my_schema.incremental_example
-INFO - tee.engine.incremental_executor - Running incremental merge for my_schema.incremental_example with auto start_value
+INFO - t4t.engine.incremental_executor - Running incremental merge for my_schema.incremental_example with auto start_value
 INFO - DuckDBAdapter - Executed incremental merge
 INFO - ExecutionEngine - Successfully executed my_schema.incremental_example with 256 rows
 ```
@@ -138,8 +138,8 @@ uv run t4t run ./t_project --vars '{"start_date": "2024-01-01"}'
 **Output:**
 ```
 INFO - ExecutionEngine - Executing model: my_schema.incremental_example
-INFO - tee.engine.incremental_executor - Running incremental delete_insert for my_schema.incremental_example with @start_date start_value
-INFO - tee.engine.incremental_executor - Resolved variable @start_date to 2024-01-01
+INFO - t4t.engine.incremental_executor - Running incremental delete_insert for my_schema.incremental_example with @start_date start_value
+INFO - t4t.engine.incremental_executor - Resolved variable @start_date to 2024-01-01
 INFO - DuckDBAdapter - Executed delete for table: my_schema.incremental_example
 INFO - DuckDBAdapter - Executed insert for table: my_schema.incremental_example
 INFO - ExecutionEngine - Successfully executed my_schema.incremental_example with 256 rows

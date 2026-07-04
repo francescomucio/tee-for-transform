@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tee.adapters.snowflake.adapter import SnowflakeAdapter
+from t4t.adapters.snowflake.adapter import SnowflakeAdapter
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def snowflake_config():
 @pytest.fixture
 def mock_snowflake_adapter(snowflake_config):
     """Create a mocked Snowflake adapter for unit testing."""
-    with patch("tee.adapters.snowflake.adapter.snowflake") as mock_snowflake:
+    with patch("t4t.adapters.snowflake.adapter.snowflake") as mock_snowflake:
         # Mock the connector
         mock_connector = MagicMock()
         mock_snowflake.connector = mock_connector
@@ -100,7 +100,7 @@ class TestSnowflakeSchemaChangeMethods:
 
     def test_describe_query_schema_not_connected(self, snowflake_config):
         """Test describe_query_schema raises error when not connected."""
-        with patch("tee.adapters.snowflake.adapter.snowflake"):
+        with patch("t4t.adapters.snowflake.adapter.snowflake"):
             adapter = SnowflakeAdapter(snowflake_config)
             # Don't connect
 
@@ -137,7 +137,7 @@ class TestSnowflakeSchemaChangeMethods:
 
     def test_add_column_not_connected(self, snowflake_config):
         """Test add_column raises error when not connected."""
-        with patch("tee.adapters.snowflake.adapter.snowflake"):
+        with patch("t4t.adapters.snowflake.adapter.snowflake"):
             adapter = SnowflakeAdapter(snowflake_config)
             # Don't connect
 
@@ -159,7 +159,7 @@ class TestSnowflakeSchemaChangeMethods:
 
     def test_drop_column_not_connected(self, snowflake_config):
         """Test drop_column raises error when not connected."""
-        with patch("tee.adapters.snowflake.adapter.snowflake"):
+        with patch("t4t.adapters.snowflake.adapter.snowflake"):
             adapter = SnowflakeAdapter(snowflake_config)
             # Don't connect
 

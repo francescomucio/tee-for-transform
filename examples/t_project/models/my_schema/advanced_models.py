@@ -1,4 +1,4 @@
-from tee.parser.processing import create_model, model
+from t4t.parser.processing import create_model, model
 
 
 @model(table_name="users_summary", description="Summary of user data")

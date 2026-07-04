@@ -162,8 +162,8 @@ import typer
 from pydantic import BaseModel
 
 # Local
-from tee.parser import ProjectParser
-from tee.engine import ExecutionEngine
+from t4t.parser import ProjectParser
+from t4t.engine import ExecutionEngine
 ```
 
 ## Testing Guidelines
@@ -180,11 +180,11 @@ from tee.engine import ExecutionEngine
 ```python
 import pytest
 from unittest.mock import Mock, patch
-from tee.cli.commands import cmd_run
+from t4t.cli.commands import cmd_run
 
 def test_cmd_run_success():
     """Test successful model execution."""
-    with patch('tee.cli.commands.run.ProjectParser') as mock_parser:
+    with patch('t4t.cli.commands.run.ProjectParser') as mock_parser:
         # Setup
         mock_parser.return_value.collect_models.return_value = []
         

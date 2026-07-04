@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from tee.parser.shared import model_builder_options as mbo
+from t4t.parser.shared import model_builder_options as mbo
 
 
 @pytest.fixture(autouse=True)

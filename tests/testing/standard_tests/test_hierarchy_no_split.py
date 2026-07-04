@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.testing.standard_tests import HierarchyNoSplitTest
+from t4t.testing.standard_tests import HierarchyNoSplitTest
 
 
 class TestHierarchyNoSplitTest:

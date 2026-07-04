@@ -41,7 +41,7 @@ Core dependencies (including DuckDB and the Snowflake connector) are already lis
 
 ```python
 import tee
-from tee.adapters import list_available_adapters
+from t4t.adapters import list_available_adapters
 
 print("t4t import OK")
 print("Adapters:", ", ".join(sorted(list_available_adapters())))

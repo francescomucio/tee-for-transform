@@ -53,7 +53,7 @@ A Python function that generates SQL:
 
 ```python
 # functions/my_schema/format_currency.py
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql()
 def format_currency(amount: float, currency: str = "USD") -> str:

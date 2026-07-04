@@ -1,5 +1,5 @@
 # Metadata for incremental_example.sql
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 # Example 1: Append-only incremental
 metadata_append: ModelMetadata = {

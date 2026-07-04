@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from tee.parser import ProjectParser
-from tee.parser.analysis import TableResolver
+from t4t.parser import ProjectParser
+from t4t.parser.analysis import TableResolver
 
 
 class TestProjectParser:

@@ -7,9 +7,9 @@ from unittest.mock import patch
 
 import pytest
 
-from tee.parser.parsers import PythonParser
-from tee.parser.processing import model
-from tee.parser.shared.registry import ModelRegistry
+from t4t.parser.parsers import PythonParser
+from t4t.parser.processing import model
+from t4t.parser.shared.registry import ModelRegistry
 
 
 class TestPythonVariableSupport:
@@ -53,7 +53,7 @@ class TestPythonVariableSupport:
         # Create a test Python file with a model that uses variables
         test_file = Path("test_variable_injection.py")
         test_content = """
-from tee.parser.processing import model
+from t4t.parser.processing import model
 
 @model(variables=["env", "debug"])
 def test_model():
@@ -116,7 +116,7 @@ def test_model():
         # Create a test Python file with nested variable access
         test_file = Path("test_nested_variables.py")
         test_content = """
-from tee.parser.processing import model
+from t4t.parser.processing import model
 
 @model(variables=["config"])
 def test_nested_model():

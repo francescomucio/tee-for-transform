@@ -1,5 +1,5 @@
 # Metadata for my_second_table.sql
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [

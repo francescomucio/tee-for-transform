@@ -2,8 +2,8 @@
 Unit tests for function dependency graph integration.
 """
 
-from tee.parser.analysis.dependency_graph import DependencyGraphBuilder
-from tee.parser.analysis.table_resolver import TableResolver
+from t4t.parser.analysis.dependency_graph import DependencyGraphBuilder
+from t4t.parser.analysis.table_resolver import TableResolver
 
 
 class TestFunctionDependencyGraph:

@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 import typer
 
-from tee.cli.commands.import_cmd import cmd_import
+from t4t.cli.commands.import_cmd import cmd_import
 
 
 class TestImportCommand:
@@ -84,7 +84,7 @@ class TestImportCommand:
 
             assert exc_info.value.exit_code == 1
 
-    @patch("tee.importer.dbt.importer.import_dbt_project")
+    @patch("t4t.importer.dbt.importer.import_dbt_project")
     def test_import_dbt_project(self, mock_import):
         """Test import of dbt project."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -118,7 +118,7 @@ class TestImportCommand:
             assert call_args.kwargs["validate_execution"] is False
             assert call_args.kwargs["verbose"] is False
 
-    @patch("tee.importer.dbt.importer.import_dbt_project")
+    @patch("t4t.importer.dbt.importer.import_dbt_project")
     def test_import_dbt_project_with_options(self, mock_import):
         """Test import of dbt project with all options."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -152,7 +152,7 @@ class TestImportCommand:
             assert call_args.kwargs["validate_execution"] is True
             assert call_args.kwargs["verbose"] is True
 
-    @patch("tee.importer.dbt.importer.import_dbt_project")
+    @patch("t4t.importer.dbt.importer.import_dbt_project")
     def test_import_dbt_project_with_default_schema_and_dialect(self, mock_import):
         """Test import of dbt project with default_schema and target_dialect options."""
         with tempfile.TemporaryDirectory() as tmpdir:

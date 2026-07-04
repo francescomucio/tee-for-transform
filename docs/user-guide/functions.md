@@ -31,7 +31,7 @@ Python functions can generate SQL or define actual Python UDFs (for databases th
 
 ```python
 # functions/my_schema/calculate_percentage.py
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql()
 def calculate_percentage(

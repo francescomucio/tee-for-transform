@@ -6,11 +6,11 @@ This report provides a comprehensive analysis of the SQL model dependencies.
 
 ## Statistics
 
-- **Total Tables**: 13
+- **Total Tables**: 12
 - **Total Functions**: 1
 - **Total Tests**: 8
-- **Total Nodes**: 22
-- **Total Dependencies**: 21
+- **Total Nodes**: 21
+- **Total Dependencies**: 20
 - **Circular Dependencies**: 0
 ## Visualization
 
@@ -31,21 +31,20 @@ Open `output/docs/index.html` (or your `--output-dir`) in a browser.
 5. `my_schema.complex_join`
 6. `my_schema.my_first_table_from_loop`
 7. `my_schema.incremental_example`
-8. `my_schema.my_auto_table_one`
-9. `my_schema.my_second_table`
-10. `my_schema.my_forth_table`
-11. `test:my_schema.my_first_table.id.not_null`
-12. `test:my_schema.my_first_table.id.unique`
-13. `test:my_schema.my_first_table.name.not_null`
-14. `test:my_schema.my_first_table.row_count_gt_0`
-15. `test:my_schema.my_first_table.test_my_first_table`
-16. `my_schema.my_second_table_from_loop`
-17. `my_schema.my_third_table`
-18. `test:my_schema.my_second_table.name.not_null`
-19. `test:my_schema.my_second_table.row_count_gt_0`
-20. `test:my_schema.my_second_table.unique`
-21. `my_schema.my_view`
-22. `my_schema.my_third_table_from_loop`
+8. `my_schema.my_second_table`
+9. `my_schema.my_forth_table`
+10. `test:my_schema.my_first_table.id.not_null`
+11. `test:my_schema.my_first_table.id.unique`
+12. `test:my_schema.my_first_table.name.not_null`
+13. `test:my_schema.my_first_table.row_count_gt_0`
+14. `test:my_schema.my_first_table.test_my_first_table`
+15. `my_schema.my_second_table_from_loop`
+16. `my_schema.my_third_table`
+17. `test:my_schema.my_second_table.name.not_null`
+18. `test:my_schema.my_second_table.row_count_gt_0`
+19. `test:my_schema.my_second_table.unique`
+20. `my_schema.my_view`
+21. `my_schema.my_third_table_from_loop`
 
 ## Tests Details
 
@@ -142,21 +141,13 @@ The following tests are defined and integrated into the dependency graph:
 
 **No dependents** (leaf table)
 
-### `my_schema.my_auto_table_one`
-
-**Type**: Table
-
-**Depends on**: `my_schema.my_first_table`
-
-**No dependents** (leaf table)
-
 ### `my_schema.my_first_table`
 
 **Type**: Table
 
 **No dependencies** (base table)
 
-**Used by**: `my_schema.users_summary`, `my_schema.recent_users`, `my_schema.complex_join`, `my_schema.my_first_table_from_loop`, `my_schema.incremental_example`, `my_schema.my_auto_table_one`, `my_schema.my_second_table`, `my_schema.my_forth_table`, `my_schema.my_third_table`
+**Used by**: `my_schema.users_summary`, `my_schema.recent_users`, `my_schema.complex_join`, `my_schema.my_first_table_from_loop`, `my_schema.incremental_example`, `my_schema.my_second_table`, `my_schema.my_forth_table`, `my_schema.my_third_table`
 
 **Tested by**: `my_schema.my_first_table.id.not_null`, `my_schema.my_first_table.id.unique`, `my_schema.my_first_table.name.not_null`, `my_schema.my_first_table.row_count_gt_0`, `my_schema.my_first_table.test_my_first_table`
 

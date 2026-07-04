@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 import pytest
 
-from tee.testing.base import TestRegistry
-from tee.testing.sql_test import SqlTest
-from tee.testing.test_discovery import TestDiscovery
+from t4t.testing.base import TestRegistry
+from t4t.testing.sql_test import SqlTest
+from t4t.testing.test_discovery import TestDiscovery
 
 
 class TestTestDiscovery:
@@ -150,7 +150,7 @@ class TestTestDiscovery:
         assert len(tests) == 1
         assert "test" in tests
         # The test should be a SqlTest (from the .sql file)
-        from tee.testing.sql_test import SqlTest
+        from t4t.testing.sql_test import SqlTest
 
         assert isinstance(tests["test"], SqlTest)
         assert tests["test"].sql_file_path.suffix == ".sql"
@@ -187,7 +187,7 @@ class TestTestDiscovery:
         invalid_file.write_text("SELECT 1")
 
         # Mock SqlTest to raise an error for invalid file
-        with patch("tee.testing.test_discovery.SqlTest") as mock_sql_test:
+        with patch("t4t.testing.test_discovery.SqlTest") as mock_sql_test:
             mock_sql_test.side_effect = Exception("Failed to load")
 
             discovery = TestDiscovery(temp_dir)
@@ -229,7 +229,7 @@ class TestTestDiscovery:
         (tests_folder / "test1.sql").write_text("SELECT 1 FROM {{ table_name }}")
 
         # Register a standard test with same name first
-        from tee.testing.standard_tests import NotNullTest
+        from t4t.testing.standard_tests import NotNullTest
 
         standard_test = NotNullTest()
         TestRegistry.register(standard_test)

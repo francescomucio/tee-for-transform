@@ -5,7 +5,7 @@ Unit tests for VariablesExtractor.
 from pathlib import Path
 
 
-from tee.importer.dbt.resolvers import VariablesExtractor
+from t4t.importer.dbt.resolvers import VariablesExtractor
 
 
 class TestVariablesExtractor:

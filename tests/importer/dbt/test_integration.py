@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from tee.importer.dbt.importer import import_dbt_project
-from tee.importer.detector import ProjectType, detect_project_type
+from t4t.importer.dbt.importer import import_dbt_project
+from t4t.importer.detector import ProjectType, detect_project_type
 
 
 class TestDbtImporterIntegration:

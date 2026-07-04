@@ -7,13 +7,13 @@ import tempfile
 
 import pytest
 
-from tee.parser.shared.metadata_schema import (
+from t4t.parser.shared.metadata_schema import (
     ColumnSchema,
     ValidatedModelMetadata,
     parse_metadata_from_python_file,
     validate_metadata_dict,
 )
-from tee.typing.metadata import (
+from t4t.typing.metadata import (
     ColumnDefinition,
     ModelMetadata,
 )

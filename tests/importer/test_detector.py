@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from tee.importer.detector import ProjectType, detect_project_type
+from t4t.importer.detector import ProjectType, detect_project_type
 
 
 class TestProjectTypeDetector:

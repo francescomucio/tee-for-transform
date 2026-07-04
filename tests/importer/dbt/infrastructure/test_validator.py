@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 
-from tee.importer.dbt.infrastructure import ProjectValidator, ValidationResult
+from t4t.importer.dbt.infrastructure import ProjectValidator, ValidationResult
 
 
 class TestProjectValidator:

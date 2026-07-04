@@ -57,18 +57,18 @@ Top-level `[flags]` in `project.toml` / `pyproject.toml` is passed through (e.g.
 
 ## `pyproject.toml` alternative (`[tool.tee]`)
 
-If you use **`pyproject.toml`** as the single config file, you can put the database section under **`[tool.tee.database]`**, or define multiple named configs under **`[tool.tee.databases.<name>]`** and load by name in code (`load_database_config("dev")`).
+If you use **`pyproject.toml`** as the single config file, you can put the database section under **`[tool.t4t.database]`**, or define multiple named configs under **`[tool.t4t.databases.<name>]`** and load by name in code (`load_database_config("dev")`).
 
 Example equivalent to a simple DuckDB `project.toml`:
 
 ```toml
-[tool.tee.database]
+[tool.t4t.database]
 type = "duckdb"
 path = "data/my_project.duckdb"
 source_sql_dialect = "postgresql"
 ```
 
-Precedence inside the file: `[tool.tee.database]` or a matching `[tool.tee.databases.<config_name>]` entry is used before a legacy **`[connection]`** block in the same file.
+Precedence inside the file: `[tool.t4t.database]` or a matching `[tool.t4t.databases.<config_name>]` entry is used before a legacy **`[connection]`** block in the same file.
 
 ## Environment variables
 
@@ -95,13 +95,13 @@ Use env vars for secrets and environment-specific overrides.
 ## Programmatic loading
 
 ```python
-from tee.engine.config import load_database_config
+from t4t.engine.config import load_database_config
 
 # Project root = directory containing project.toml or pyproject.toml
 config = load_database_config(project_root="/path/to/my_project")
 ```
 
-Named configs (from `[tool.tee.databases.*]` only):
+Named configs (from `[tool.t4t.databases.*]` only):
 
 ```python
 config = load_database_config("staging", project_root="/path/to/my_project")

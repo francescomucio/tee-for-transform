@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from tee.testing.base import TestRegistry, TestSeverity
-from tee.testing.python_test import PythonTest
-from tee.testing.test_builder import SqlTestMetadata, TestBuilderError
+from t4t.testing.base import TestRegistry, TestSeverity
+from t4t.testing.python_test import PythonTest
+from t4t.testing.test_builder import SqlTestMetadata, TestBuilderError
 
 
 class TestSqlTestMetadata:
@@ -39,7 +39,7 @@ class TestSqlTestMetadata:
 
         py_file.write_text(
             """
-from tee.testing import SqlTestMetadata
+from t4t.testing import SqlTestMetadata
 
 metadata = {
     "name": "check_minimum_rows",
@@ -105,7 +105,7 @@ HAVING COUNT(*) < 5
         py_file = tests_folder / "test.py"
         py_file.write_text(
             """
-from tee.testing import SqlTestMetadata
+from t4t.testing import SqlTestMetadata
 
 test = SqlTestMetadata(name="test", severity="error")
 """
@@ -143,7 +143,7 @@ test = SqlTestMetadata(name="test", severity="error")
 
         py_file.write_text(
             """
-from tee.testing import SqlTestMetadata
+from t4t.testing import SqlTestMetadata
 
 test = SqlTestMetadata(name="test", severity="error")
 """
@@ -177,7 +177,7 @@ test = SqlTestMetadata(name="test", severity="error")
         py_file, sql_file = test_files
 
         # Register a test with the same name first
-        from tee.testing.python_test import PythonTest
+        from t4t.testing.python_test import PythonTest
 
         existing_test = PythonTest(name="check_minimum_rows", sql="SELECT 1")
         TestRegistry.register(existing_test)
@@ -214,7 +214,7 @@ test = SqlTestMetadata(name="test", severity="error")
 
         py_file.write_text(
             """
-from tee.testing import SqlTestMetadata
+from t4t.testing import SqlTestMetadata
 
 test = SqlTestMetadata(name="test", severity="warning")
 """

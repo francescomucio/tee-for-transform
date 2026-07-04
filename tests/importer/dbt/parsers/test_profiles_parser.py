@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tee.importer.dbt.exceptions import DbtImporterError
-from tee.importer.dbt.parsers import ProfilesParser
+from t4t.importer.dbt.exceptions import DbtImporterError
+from t4t.importer.dbt.parsers import ProfilesParser
 
 
 class TestProfilesParser:

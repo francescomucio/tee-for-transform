@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tee.importer.dbt.exceptions import DbtProjectNotFoundError
-from tee.importer.dbt.importer import import_dbt_project
+from t4t.importer.dbt.exceptions import DbtProjectNotFoundError
+from t4t.importer.dbt.importer import import_dbt_project
 
 
 class TestDbtImporter:

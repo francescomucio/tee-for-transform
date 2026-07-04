@@ -7,8 +7,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
-from tee.engine.materialization.schema_comparator import SchemaComparator
+from t4t.engine.materialization.schema_change_handler import SchemaChangeHandler
+from t4t.engine.materialization.schema_comparator import SchemaComparator
 
 
 class TestSchemaChangeHandler:

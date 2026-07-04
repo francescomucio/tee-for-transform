@@ -2,9 +2,9 @@
 Test cases for OTS transformer tag extraction and merging functionality.
 """
 
-from tee.parser.output.ots.taggers import TagManager
-from tee.parser.output.ots.transformer import OTSTransformer
-from tee.typing import Model
+from t4t.parser.output.ots.taggers import TagManager
+from t4t.parser.output.ots.transformer import OTSTransformer
+from t4t.typing import Model
 
 
 class TestOTSTagExtraction:

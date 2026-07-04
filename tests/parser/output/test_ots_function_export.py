@@ -4,8 +4,8 @@ Unit tests for OTS function export functionality.
 
 import pytest
 
-from tee.parser.output.ots.transformer import OTSTransformer
-from tee.typing import Function, Model
+from t4t.parser.output.ots.transformer import OTSTransformer
+from t4t.typing import Function, Model
 
 
 class TestOTSFunctionExport:

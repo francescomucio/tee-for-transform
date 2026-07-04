@@ -4,9 +4,9 @@ Tests for tag extraction from multiple sources.
 
 from pathlib import Path
 
-from tee.importer.dbt.converters import MetadataConverter
-from tee.importer.dbt.parsers import ConfigExtractor
-from tee.importer.dbt.resolvers import SchemaResolver
+from t4t.importer.dbt.converters import MetadataConverter
+from t4t.importer.dbt.parsers import ConfigExtractor
+from t4t.importer.dbt.resolvers import SchemaResolver
 
 
 class TestTagsExtraction:

@@ -4,9 +4,9 @@ Unit tests for dimensional relationship graph builder.
 
 import pytest
 
-from tee.parser.analysis.dimensional_graph import DimensionalRelationshipGraphBuilder
-from tee.parser.shared.dimension_registry import build_dimension_registry_from_models
-from tee.parser.shared.exceptions import DimensionalGraphError
+from t4t.parser.analysis.dimensional_graph import DimensionalRelationshipGraphBuilder
+from t4t.parser.shared.dimension_registry import build_dimension_registry_from_models
+from t4t.parser.shared.exceptions import DimensionalGraphError
 
 
 def _model(table_type, schema=None, hierarchy=None, conformed_dimension=None):

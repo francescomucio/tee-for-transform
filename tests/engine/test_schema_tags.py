@@ -2,8 +2,8 @@
 Test cases for schema-level tag functionality in execution engine.
 """
 
-from tee.engine.execution_engine import ExecutionEngine
-from tee.engine.metadata import MetadataExtractor
+from t4t.engine.execution_engine import ExecutionEngine
+from t4t.engine.metadata import MetadataExtractor
 
 
 class TestSchemaTagExtraction:
@@ -113,7 +113,7 @@ tags = ["schema_tag"]
         )
 
         # Schema name extraction is now in executors, test via model executor
-        from tee.engine.executors.model_executor import ModelExecutor
+        from t4t.engine.executors.model_executor import ModelExecutor
 
         model_executor = ModelExecutor(
             engine.adapter,
@@ -147,7 +147,7 @@ tags = ["analytics"]
         )
 
         # Schema tag attachment is now in executors, test via model executor
-        from tee.engine.executors.model_executor import ModelExecutor
+        from t4t.engine.executors.model_executor import ModelExecutor
 
         model_executor = ModelExecutor(
             engine.adapter,

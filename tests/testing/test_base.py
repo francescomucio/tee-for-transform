@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.testing.base import StandardTest, TestRegistry, TestResult, TestSeverity
+from t4t.testing.base import StandardTest, TestRegistry, TestResult, TestSeverity
 
 
 @pytest.fixture(autouse=True)
@@ -21,7 +21,7 @@ def restore_test_registry():
     # Restore registry after test
     TestRegistry.clear()
     # Re-register standard tests
-    from tee.testing.standard_tests import (
+    from t4t.testing.standard_tests import (
         ACCEPTED_VALUES,
         NOT_NULL,
         ROW_COUNT_GT_0,

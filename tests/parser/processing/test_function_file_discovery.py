@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 
-from tee.parser.processing.file_discovery import FileDiscovery
+from t4t.parser.processing.file_discovery import FileDiscovery
 
 
 class TestFunctionFileDiscovery:

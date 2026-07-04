@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from tee.adapters.duckdb.adapter import DuckDBAdapter
-from tee.engine.materialization.materialization_handler import MaterializationHandler
-from tee.engine.model_state import ModelStateManager
+from t4t.adapters.duckdb.adapter import DuckDBAdapter
+from t4t.engine.materialization.materialization_handler import MaterializationHandler
+from t4t.engine.model_state import ModelStateManager
 
 
 class TestSchemaChangeIntegration:
@@ -97,13 +97,13 @@ class TestSchemaChangeIntegration:
 
         # This will fail because SQL changed, so it won't run incrementally
         # Instead, let's manually check schema changes by calling the executor directly
-        from tee.engine.materialization.incremental_executor import IncrementalExecutor
+        from t4t.engine.materialization.incremental_executor import IncrementalExecutor
 
         IncrementalExecutor(state_manager)
 
         # Manually trigger schema change check
-        from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
-        from tee.engine.materialization.schema_comparator import SchemaComparator
+        from t4t.engine.materialization.schema_change_handler import SchemaChangeHandler
+        from t4t.engine.materialization.schema_comparator import SchemaComparator
 
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
@@ -152,8 +152,8 @@ class TestSchemaChangeIntegration:
         metadata["incremental"]["on_schema_change"] = "ignore"
 
         # Test schema change handler directly (since SQL change prevents incremental run)
-        from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
-        from tee.engine.materialization.schema_comparator import SchemaComparator
+        from t4t.engine.materialization.schema_change_handler import SchemaChangeHandler
+        from t4t.engine.materialization.schema_comparator import SchemaComparator
 
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
@@ -207,8 +207,8 @@ class TestSchemaChangeIntegration:
         metadata["incremental"]["on_schema_change"] = "append_new_columns"
 
         # Test schema change handler directly
-        from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
-        from tee.engine.materialization.schema_comparator import SchemaComparator
+        from t4t.engine.materialization.schema_change_handler import SchemaChangeHandler
+        from t4t.engine.materialization.schema_comparator import SchemaComparator
 
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
@@ -319,8 +319,8 @@ class TestSchemaChangeIntegration:
         new_sql_query = "SELECT id, name, email FROM source_table"
 
         # Test schema change handler directly
-        from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
-        from tee.engine.materialization.schema_comparator import SchemaComparator
+        from t4t.engine.materialization.schema_change_handler import SchemaChangeHandler
+        from t4t.engine.materialization.schema_comparator import SchemaComparator
 
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
@@ -425,8 +425,8 @@ class TestSchemaChangeIntegration:
         new_sql_query = "SELECT CAST(1 AS VARCHAR) as id, 'test' as name"
 
         # Test schema change handler directly
-        from tee.engine.materialization.schema_change_handler import SchemaChangeHandler
-        from tee.engine.materialization.schema_comparator import SchemaComparator
+        from t4t.engine.materialization.schema_change_handler import SchemaChangeHandler
+        from t4t.engine.materialization.schema_comparator import SchemaComparator
 
         handler_schema = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)

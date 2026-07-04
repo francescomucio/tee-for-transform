@@ -12,7 +12,7 @@ import time
 
 import pytest
 
-from tee.adapters.duckdb.adapter import DuckDBAdapter
+from t4t.adapters.duckdb.adapter import DuckDBAdapter
 
 
 @pytest.mark.slow

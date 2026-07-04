@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tee.parser.output import JSONExporter
-from tee.typing import Function, Model
+from t4t.parser.output import JSONExporter
+from t4t.typing import Function, Model
 
 
 class TestJSONExporterYAML:
@@ -182,7 +182,7 @@ class TestTestLibraryExporterYAML:
 
     def test_export_test_library_yaml(self, temp_dir):
         """Test exporting test library in YAML format."""
-        from tee.parser.output import TestLibraryExporter
+        from t4t.parser.output import TestLibraryExporter
 
         # Create test file
         tests_dir = temp_dir / "tests"

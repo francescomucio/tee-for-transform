@@ -4,13 +4,13 @@ Tests for SQL variable substitution functionality.
 
 import pytest
 
-from tee.parser.processing.variable_substitution import (
+from t4t.parser.processing.variable_substitution import (
     _format_sql_value,
     get_nested_value,
     substitute_sql_variables,
     validate_sql_variables,
 )
-from tee.parser.shared.exceptions import VariableSubstitutionError
+from t4t.parser.shared.exceptions import VariableSubstitutionError
 
 
 class TestSQLVariableSubstitution:

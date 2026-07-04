@@ -60,7 +60,7 @@ Welcome to the Tee for Transform (t4t) documentation. t4t is a powerful Python f
 ## Quick Example
 
 ```python
-from tee.engine import load_database_config
+from t4t.engine import load_database_config
 
 config = load_database_config(project_root="/path/to/my_project")
 print(config.type)  # e.g. duckdb — see Configuration guide for precedence

@@ -238,7 +238,7 @@ Every SQL model gets a corresponding Python metadata file (`.py`) created automa
 **Structure:**
 ```python
 # Model metadata converted from dbt
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "table_name": "schema.table_name",  # Always included

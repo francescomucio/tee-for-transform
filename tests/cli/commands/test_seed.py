@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from click.exceptions import Exit as ClickExit
 
-from tee.cli.commands.seed import cmd_seed
+from t4t.cli.commands.seed import cmd_seed
 
 
 class TestSeedCommand:
@@ -45,8 +45,8 @@ class TestSeedCommand:
             verbose=False,
         )
 
-    @patch("tee.cli.commands.seed.CommandContext")
-    @patch("tee.cli.commands.seed.ExecutionEngine")
+    @patch("t4t.cli.commands.seed.CommandContext")
+    @patch("t4t.cli.commands.seed.ExecutionEngine")
     def test_cmd_seed_loads_seeds(self, mock_engine_class, mock_context_class, temp_project_dir):
         """Test seed command loads seeds successfully."""
         seeds_folder = temp_project_dir / "seeds"
@@ -100,7 +100,7 @@ class TestSeedCommand:
         csv_file.write_text("id,name\n1,Alice\n")
 
         # Make ExecutionEngine raise an error during initialization
-        with patch("tee.cli.commands.seed.ExecutionEngine") as mock_engine_class:
+        with patch("t4t.cli.commands.seed.ExecutionEngine") as mock_engine_class:
             mock_engine_class.side_effect = Exception("Connection failed")
 
             # Should handle error gracefully (CommandContext will handle it)
@@ -114,10 +114,10 @@ class TestSeedCommand:
                 # CommandContext.handle_error raises typer.Exit(1) which is click.exceptions.Exit
                 pass
 
-    @patch("tee.cli.commands.seed.SeedLoader")
-    @patch("tee.cli.commands.seed.SeedDiscovery")
-    @patch("tee.cli.commands.seed.CommandContext")
-    @patch("tee.cli.commands.seed.ExecutionEngine")
+    @patch("t4t.cli.commands.seed.SeedLoader")
+    @patch("t4t.cli.commands.seed.SeedDiscovery")
+    @patch("t4t.cli.commands.seed.CommandContext")
+    @patch("t4t.cli.commands.seed.ExecutionEngine")
     def test_cmd_seed_with_schema(
         self,
         mock_engine_class,
@@ -183,10 +183,10 @@ class TestSeedCommand:
         output = fake_out.getvalue()
         assert "my_schema.orders" in output
 
-    @patch("tee.cli.commands.seed.SeedLoader")
-    @patch("tee.cli.commands.seed.SeedDiscovery")
-    @patch("tee.cli.commands.seed.CommandContext")
-    @patch("tee.cli.commands.seed.ExecutionEngine")
+    @patch("t4t.cli.commands.seed.SeedLoader")
+    @patch("t4t.cli.commands.seed.SeedDiscovery")
+    @patch("t4t.cli.commands.seed.CommandContext")
+    @patch("t4t.cli.commands.seed.ExecutionEngine")
     def test_cmd_seed_with_failures(
         self,
         mock_engine_class,
@@ -252,10 +252,10 @@ class TestSeedCommand:
         assert "Failed to load" in output
         assert "bad.csv" in output
 
-    @patch("tee.cli.commands.seed.SeedLoader")
-    @patch("tee.cli.commands.seed.SeedDiscovery")
-    @patch("tee.cli.commands.seed.CommandContext")
-    @patch("tee.cli.commands.seed.ExecutionEngine")
+    @patch("t4t.cli.commands.seed.SeedLoader")
+    @patch("t4t.cli.commands.seed.SeedDiscovery")
+    @patch("t4t.cli.commands.seed.CommandContext")
+    @patch("t4t.cli.commands.seed.ExecutionEngine")
     def test_cmd_seed_table_info_exception(
         self,
         mock_engine_class,

@@ -8,9 +8,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.testing.checkers.unused_test_checker import UnusedTestChecker
-from tee.testing.sql_test import SqlTest
-from tee.testing.test_discovery import TestDiscovery
+from t4t.testing.checkers.unused_test_checker import UnusedTestChecker
+from t4t.testing.sql_test import SqlTest
+from t4t.testing.test_discovery import TestDiscovery
 
 
 class TestUnusedTestChecker:

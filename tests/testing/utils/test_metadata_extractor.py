@@ -2,7 +2,7 @@
 Unit tests for MetadataExtractor.
 """
 
-from tee.testing.utils.metadata_extractor import MetadataExtractor
+from t4t.testing.utils.metadata_extractor import MetadataExtractor
 
 
 class TestMetadataExtractor:

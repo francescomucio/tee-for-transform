@@ -239,7 +239,7 @@ uv run pytest tests/engine/incremental/test_should_run.py::TestShouldRunIncremen
 uv run pytest tests/engine/incremental/test_should_run.py::TestShouldRunIncremental::test_no_state_exists_runs_full_load -v
 
 # Run with coverage
-uv run pytest tests/ --cov=tee.engine.incremental_executor --cov-report=html
+uv run pytest tests/ --cov=t4t.engine.incremental_executor --cov-report=html
 
 # Run only unit tests
 uv run pytest tests/ -m unit -v

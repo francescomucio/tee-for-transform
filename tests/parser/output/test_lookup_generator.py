@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from tee.parser.output.lookup_generator import generate_lookups
+from t4t.parser.output.lookup_generator import generate_lookups
 
 
 class TestLookupGenerator:

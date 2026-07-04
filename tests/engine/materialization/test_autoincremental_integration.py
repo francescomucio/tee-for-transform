@@ -7,8 +7,8 @@ with all three incremental strategies in a real database environment.
 
 import pytest
 
-from tee.engine.materialization.incremental_executor import IncrementalExecutor
-from tee.typing.metadata import (
+from t4t.engine.materialization.incremental_executor import IncrementalExecutor
+from t4t.typing.metadata import (
     IncrementalAppendConfig,
     IncrementalDeleteInsertConfig,
     IncrementalMergeConfig,

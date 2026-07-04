@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 import yaml
 
-from tee.compiler import CompilationError, _merge_test_libraries, compile_project
+from t4t.compiler import CompilationError, _merge_test_libraries, compile_project
 
 
 class TestCompileProject:

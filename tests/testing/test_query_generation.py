@@ -4,7 +4,7 @@ Unit tests for test query generation in adapters.
 
 import pytest
 
-from tee.adapters.base.testing import TestQueryGenerator
+from t4t.adapters.base.testing import TestQueryGenerator
 
 
 class TestQueryGeneratorImpl(TestQueryGenerator):

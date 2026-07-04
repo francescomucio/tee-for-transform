@@ -8,8 +8,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.testing.base import TestResult, TestSeverity
-from tee.testing.sql_test import SqlTest
+from t4t.testing.base import TestResult, TestSeverity
+from t4t.testing.sql_test import SqlTest
 
 
 class TestSqlTest:

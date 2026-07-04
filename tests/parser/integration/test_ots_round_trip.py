@@ -8,10 +8,10 @@ import json
 
 import pytest
 
-from tee.parser.core.orchestrator import ParserOrchestrator
-from tee.parser.input.ots_converter import OTSConverter
-from tee.parser.input.ots_reader import OTSModuleReader
-from tee.parser.output.ots.transformer import OTSTransformer
+from t4t.parser.core.orchestrator import ParserOrchestrator
+from t4t.parser.input.ots_converter import OTSConverter
+from t4t.parser.input.ots_reader import OTSModuleReader
+from t4t.parser.output.ots.transformer import OTSTransformer
 
 
 class TestOTSRoundTrip:

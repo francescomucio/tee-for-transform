@@ -8,7 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.engine.seeds import SeedDiscovery, SeedLoader
+from t4t.engine.seeds import SeedDiscovery, SeedLoader
 
 
 class TestSeedDiscovery:

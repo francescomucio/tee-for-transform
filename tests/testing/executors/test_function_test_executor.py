@@ -7,9 +7,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from tee.testing.base import TestRegistry, TestSeverity
-from tee.testing.executors.function_test_executor import FunctionTestExecutor
-from tee.testing.sql_test import SqlTest
+from t4t.testing.base import TestRegistry, TestSeverity
+from t4t.testing.executors.function_test_executor import FunctionTestExecutor
+from t4t.testing.sql_test import SqlTest
 
 
 class TestFunctionTestExecutor:

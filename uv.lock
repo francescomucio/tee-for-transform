@@ -844,7 +844,7 @@ wheels = [
 ]
 
 [[package]]
-name = "tee"
+name = "t4t"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

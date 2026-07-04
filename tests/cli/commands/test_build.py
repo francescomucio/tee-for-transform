@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 import pytest
 from click.exceptions import Exit as ClickExit
 
-from tee.cli.commands.build import cmd_build
+from t4t.cli.commands.build import cmd_build
 
 
 class TestBuildCommand:
@@ -19,7 +19,7 @@ class TestBuildCommand:
     @pytest.fixture(autouse=True)
     def mock_lookup_generation(self):
         """Prevent lookup generator side effects in unit tests."""
-        with patch("tee.cli.commands.build.generate_lookups"):
+        with patch("t4t.cli.commands.build.generate_lookups"):
             yield
 
     @pytest.fixture
@@ -49,9 +49,9 @@ class TestBuildCommand:
             }
         }
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_success(
         self,
         mock_context_class,
@@ -114,9 +114,9 @@ class TestBuildCommand:
             project_config=mock_ctx.config,
         )
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_with_test_failures(
         self,
         mock_context_class,
@@ -164,9 +164,9 @@ class TestBuildCommand:
         output = fake_out.getvalue()
         assert "Failed tests: 1" in output
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_with_model_failures(
         self,
         mock_context_class,
@@ -214,9 +214,9 @@ class TestBuildCommand:
         output = fake_out.getvalue()
         assert "Failed models: 1" in output
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_with_warnings(
         self,
         mock_context_class,
@@ -268,9 +268,9 @@ class TestBuildCommand:
             or "All 1 tables executed successfully!" in output
         )
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_handles_keyboard_interrupt(
         self,
         mock_context_class,
@@ -309,9 +309,9 @@ class TestBuildCommand:
         output = fake_out.getvalue()
         assert "Build interrupted by user" in output
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_handles_exceptions(
         self,
         mock_context_class,
@@ -348,9 +348,9 @@ class TestBuildCommand:
         # Verify error was handled
         mock_ctx.handle_error.assert_called_once()
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_cleanup_connection_manager(
         self,
         mock_context_class,
@@ -394,9 +394,9 @@ class TestBuildCommand:
         # Verify cleanup was called
         mock_connection_manager.cleanup.assert_called_once()
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_with_variables(
         self,
         mock_context_class,
@@ -443,9 +443,9 @@ class TestBuildCommand:
         call_args = mock_build_models.call_args
         assert call_args.kwargs["variables"] == {"env": "production", "debug": "true"}
 
-    @patch("tee.cli.commands.build.build_models")
-    @patch("tee.cli.commands.build.ConnectionManager")
-    @patch("tee.cli.commands.build.CommandContext")
+    @patch("t4t.cli.commands.build.build_models")
+    @patch("t4t.cli.commands.build.ConnectionManager")
+    @patch("t4t.cli.commands.build.CommandContext")
     def test_build_with_selection_patterns(
         self,
         mock_context_class,

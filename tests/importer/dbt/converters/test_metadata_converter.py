@@ -2,7 +2,7 @@
 Tests for the metadata converter.
 """
 
-from tee.importer.dbt.converters import MetadataConverter
+from t4t.importer.dbt.converters import MetadataConverter
 
 
 class TestMetadataConverter:

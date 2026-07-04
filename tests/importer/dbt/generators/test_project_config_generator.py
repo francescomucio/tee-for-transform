@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 
-from tee.importer.dbt.generators import ProjectConfigGenerator
+from t4t.importer.dbt.generators import ProjectConfigGenerator
 
 
 class TestProjectConfigGenerator:

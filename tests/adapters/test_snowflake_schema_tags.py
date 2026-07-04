@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tee.adapters.snowflake.adapter import SnowflakeAdapter
+from t4t.adapters.snowflake.adapter import SnowflakeAdapter
 
 
 class TestSnowflakeSchemaTagAttachment:
@@ -37,7 +37,7 @@ class TestSnowflakeSchemaTagAttachment:
         """Create Snowflake adapter with mocked connection."""
         mock_conn, mock_cursor = mock_snowflake_connection
 
-        with patch("tee.adapters.snowflake.adapter.snowflake.connector.connect") as mock_connect:
+        with patch("t4t.adapters.snowflake.adapter.snowflake.connector.connect") as mock_connect:
             mock_connect.return_value = mock_conn
             adapter = SnowflakeAdapter(snowflake_config)
             adapter.connection = mock_conn

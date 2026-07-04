@@ -6,7 +6,7 @@ from io import StringIO
 from unittest.mock import Mock, patch
 
 
-from tee.cli.commands.help import cmd_help
+from t4t.cli.commands.help import cmd_help
 
 
 class TestHelpCommand:

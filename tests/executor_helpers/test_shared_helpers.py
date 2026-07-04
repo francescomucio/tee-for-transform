@@ -4,7 +4,7 @@ Unit tests for shared_helpers module.
 
 import pytest
 
-from tee.executor_helpers.shared_helpers import (
+from t4t.executor_helpers.shared_helpers import (
     create_empty_build_results,
     create_empty_execution_results,
     validate_compile_results,

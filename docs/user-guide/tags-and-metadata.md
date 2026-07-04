@@ -22,7 +22,7 @@ Tags can be attached to individual tables and views through model metadata.
 
 ```python
 # models/users.py
-from tee.parser.processing.model import model
+from t4t.parser.processing.model import model
 
 @model(
     table_name="users",
@@ -44,7 +44,7 @@ For creating multiple similar models without code repetition, use `create_model(
 
 ```python
 # models/staging.py
-from tee.parser.processing.model import create_model
+from t4t.parser.processing.model import create_model
 
 # Define table names to create models for
 STAGING_TABLES = ["users", "orders", "products"]
@@ -73,7 +73,7 @@ for table_name in STAGING_TABLES:
 
 ```python
 # models/marts.py
-from tee.parser.processing.model import create_model
+from t4t.parser.processing.model import create_model
 
 MART_TABLES = [
     {"name": "daily_sales", "source": "sales", "tags": ["daily", "sales"]},
@@ -337,7 +337,7 @@ object_tags = {
 
 ```python
 # models/fct/orders.py
-from tee.parser.processing.model import model
+from t4t.parser.processing.model import model
 
 @model(
     table_name="orders",

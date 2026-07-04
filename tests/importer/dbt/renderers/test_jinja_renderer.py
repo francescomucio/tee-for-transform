@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tee.importer.dbt.renderers import JinjaRenderer
+from t4t.importer.dbt.renderers import JinjaRenderer
 
 
 class TestJinjaRenderer:

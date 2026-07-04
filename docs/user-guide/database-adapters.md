@@ -15,7 +15,7 @@ The adapter system allows you to:
 ### 1. Basic Usage
 
 ```python
-from tee.engine import ModelExecutor, load_database_config
+from t4t.engine import ModelExecutor, load_database_config
 
 # Load configuration from pyproject.toml or environment variables
 config = load_database_config("default")
@@ -32,7 +32,7 @@ results = executor.execute_models(parser)
 Add to your `pyproject.toml`:
 
 ```toml
-[tool.tee.database]
+[tool.t4t.database]
 type = "duckdb"
 path = "data/my_project.db"
 source_dialect = "postgresql"  # Write models in PostgreSQL, convert to DuckDB
@@ -121,7 +121,7 @@ Different databases support different materialization types:
 ### Custom Adapter Configuration
 
 ```python
-from tee.engine.adapters import AdapterConfig
+from t4t.engine.adapters import AdapterConfig
 
 config = AdapterConfig(
     type="snowflake",
@@ -140,14 +140,14 @@ executor = ModelExecutor("/path/to/project", config)
 ### Multiple Database Configurations
 
 ```toml
-[tool.tee.databases]
+[tool.t4t.databases]
 
-[tool.tee.databases.dev]
+[tool.t4t.databases.dev]
 type = "duckdb"
 path = "dev.db"
 source_dialect = "postgresql"
 
-[tool.tee.databases.prod]
+[tool.t4t.databases.prod]
 type = "snowflake"
 host = "prod.snowflakecomputing.com"
 # ... other config
@@ -162,8 +162,8 @@ executor = ModelExecutor("/path/to/project", config)
 ### Testing Adapters
 
 ```python
-from tee.engine.adapters.testing import test_adapter
-from tee.engine.adapters import get_adapter
+from t4t.engine.adapters.testing import test_adapter
+from t4t.engine.adapters import get_adapter
 
 # Test adapter
 adapter = get_adapter(config)
@@ -180,7 +180,7 @@ To create a custom adapter:
 1. Inherit from `DatabaseAdapter`:
 
 ```python
-from tee.engine.adapters.base import DatabaseAdapter, MaterializationType
+from t4t.engine.adapters.base import DatabaseAdapter, MaterializationType
 
 class MyDatabaseAdapter(DatabaseAdapter):
     def get_default_dialect(self):
@@ -199,7 +199,7 @@ class MyDatabaseAdapter(DatabaseAdapter):
 2. Register the adapter:
 
 ```python
-from tee.engine.adapters.registry import register_adapter
+from t4t.engine.adapters.registry import register_adapter
 
 register_adapter("mydb", MyDatabaseAdapter)
 ```
@@ -214,11 +214,11 @@ The new system is backward compatible. To migrate:
 
 ```python
 # Old way
-from tee.engine import ModelExecutor
+from t4t.engine import ModelExecutor
 executor = ModelExecutor("/path/to/project", {"type": "duckdb"})
 
 # New way
-from tee.engine import ModelExecutor, load_database_config
+from t4t.engine import ModelExecutor, load_database_config
 config = load_database_config()
 executor = ModelExecutor("/path/to/project", config)
 ```

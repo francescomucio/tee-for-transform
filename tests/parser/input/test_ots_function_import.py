@@ -2,8 +2,8 @@
 Tests for OTS function import functionality.
 """
 
-from tee.parser.input import OTSConverter
-from tee.typing.metadata import OTSModule
+from t4t.parser.input import OTSConverter
+from t4t.typing.metadata import OTSModule
 
 
 class TestOTSFunctionImport:

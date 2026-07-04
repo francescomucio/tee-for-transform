@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 import typer
 
-from tee.cli.commands.test import cmd_test
+from t4t.cli.commands.test import cmd_test
 
 
 class TestTestCommand:
@@ -73,7 +73,7 @@ class TestTestCommand:
             model_file.write_text(sql)
 
         # Actually compile the project to create real OTS modules
-        from tee.compiler import compile_project
+        from t4t.compiler import compile_project
 
         compile_project(
             project_folder=str(temp_dir),
@@ -84,10 +84,10 @@ class TestTestCommand:
 
         return temp_dir
 
-    @patch("tee.cli.commands.test.TestExecutor")
-    @patch("tee.cli.commands.test.ExecutionEngine")
-    @patch("tee.cli.commands.test.ProjectParser")
-    @patch("tee.cli.commands.test.CommandContext")
+    @patch("t4t.cli.commands.test.TestExecutor")
+    @patch("t4t.cli.commands.test.ExecutionEngine")
+    @patch("t4t.cli.commands.test.ProjectParser")
+    @patch("t4t.cli.commands.test.CommandContext")
     def test_cmd_test_success(
         self,
         mock_context_class,
@@ -158,10 +158,10 @@ class TestTestCommand:
         assert "Failed: 0" in output
         assert "All tests passed!" in output
 
-    @patch("tee.cli.commands.test.TestExecutor")
-    @patch("tee.cli.commands.test.ExecutionEngine")
-    @patch("tee.cli.commands.test.ProjectParser")
-    @patch("tee.cli.commands.test.CommandContext")
+    @patch("t4t.cli.commands.test.TestExecutor")
+    @patch("t4t.cli.commands.test.ExecutionEngine")
+    @patch("t4t.cli.commands.test.ProjectParser")
+    @patch("t4t.cli.commands.test.CommandContext")
     def test_cmd_test_with_failures(
         self,
         mock_context_class,
@@ -233,10 +233,10 @@ class TestTestCommand:
         assert "Errors (1):" in output
         assert "Test execution failed with errors" in output
 
-    @patch("tee.cli.commands.test.TestExecutor")
-    @patch("tee.cli.commands.test.ExecutionEngine")
-    @patch("tee.cli.commands.test.ProjectParser")
-    @patch("tee.cli.commands.test.CommandContext")
+    @patch("t4t.cli.commands.test.TestExecutor")
+    @patch("t4t.cli.commands.test.ExecutionEngine")
+    @patch("t4t.cli.commands.test.ProjectParser")
+    @patch("t4t.cli.commands.test.CommandContext")
     def test_cmd_test_with_warnings(
         self,
         mock_context_class,
@@ -302,11 +302,11 @@ class TestTestCommand:
         assert "Warnings (1):" in output
         assert "Test execution completed with warnings" in output
 
-    @patch("tee.cli.commands.test.TestExecutor")
-    @patch("tee.cli.commands.test.ExecutionEngine")
-    @patch("tee.cli.commands.test.ProjectParser")
-    @patch("tee.cli.commands.test.ModelSelector")
-    @patch("tee.cli.commands.test.CommandContext")
+    @patch("t4t.cli.commands.test.TestExecutor")
+    @patch("t4t.cli.commands.test.ExecutionEngine")
+    @patch("t4t.cli.commands.test.ProjectParser")
+    @patch("t4t.cli.commands.test.ModelSelector")
+    @patch("t4t.cli.commands.test.CommandContext")
     def test_cmd_test_with_selection_patterns(
         self,
         mock_context_class,
@@ -382,10 +382,10 @@ class TestTestCommand:
         output = fake_out.getvalue()
         assert "Filtered to 1 models" in output
 
-    @patch("tee.cli.commands.test.TestExecutor")
-    @patch("tee.cli.commands.test.ExecutionEngine")
-    @patch("tee.cli.commands.test.ProjectParser")
-    @patch("tee.cli.commands.test.CommandContext")
+    @patch("t4t.cli.commands.test.TestExecutor")
+    @patch("t4t.cli.commands.test.ExecutionEngine")
+    @patch("t4t.cli.commands.test.ProjectParser")
+    @patch("t4t.cli.commands.test.CommandContext")
     def test_cmd_test_verbose_mode(
         self,
         mock_context_class,
@@ -451,10 +451,10 @@ class TestTestCommand:
         output = fake_out.getvalue()
         assert "Detailed Results:" in output
 
-    @patch("tee.cli.commands.test.TestExecutor")
-    @patch("tee.cli.commands.test.ExecutionEngine")
-    @patch("tee.cli.commands.test.ProjectParser")
-    @patch("tee.cli.commands.test.CommandContext")
+    @patch("t4t.cli.commands.test.TestExecutor")
+    @patch("t4t.cli.commands.test.ExecutionEngine")
+    @patch("t4t.cli.commands.test.ProjectParser")
+    @patch("t4t.cli.commands.test.CommandContext")
     def test_cmd_test_handles_exceptions(
         self,
         mock_context_class,
@@ -495,10 +495,10 @@ class TestTestCommand:
         # Verify error was handled
         mock_ctx.handle_error.assert_called_once()
 
-    @patch("tee.cli.commands.test.TestExecutor")
-    @patch("tee.cli.commands.test.ExecutionEngine")
-    @patch("tee.cli.commands.test.ProjectParser")
-    @patch("tee.cli.commands.test.CommandContext")
+    @patch("t4t.cli.commands.test.TestExecutor")
+    @patch("t4t.cli.commands.test.ExecutionEngine")
+    @patch("t4t.cli.commands.test.ProjectParser")
+    @patch("t4t.cli.commands.test.CommandContext")
     def test_cmd_test_cleanup_execution_engine(
         self,
         mock_context_class,
@@ -563,10 +563,10 @@ class TestTestCommand:
         # Verify disconnect was called
         mock_engine.disconnect.assert_called_once()
 
-    @patch("tee.cli.commands.test.TestExecutor")
-    @patch("tee.cli.commands.test.ExecutionEngine")
-    @patch("tee.cli.commands.test.ProjectParser")
-    @patch("tee.cli.commands.test.CommandContext")
+    @patch("t4t.cli.commands.test.TestExecutor")
+    @patch("t4t.cli.commands.test.ExecutionEngine")
+    @patch("t4t.cli.commands.test.ProjectParser")
+    @patch("t4t.cli.commands.test.CommandContext")
     def test_cmd_test_relative_path_resolution(
         self,
         mock_context_class,

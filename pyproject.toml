@@ -1,5 +1,5 @@
 [project]
-name = "tee"
+name = "t4t"
 version = "0.1.0"
 description = "Tee - Transform, Extract, Execute (and t-shirts!)"
 readme = "README.md"
@@ -16,14 +16,14 @@ dependencies = [
 ]
 
 [project.scripts]
-t4t = "tee.cli.main:main"
+t4t = "t4t.cli.main:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["tee*"]
+include = ["t4t*"]
 exclude = ["tests*", "examples*", "test_project*", "site*"]
 
 [dependency-groups]
@@ -37,7 +37,7 @@ dev = [
 ]
 
 [tool.coverage.run]
-source = ["tee"]
+source = ["t4t"]
 omit = [
     "*/tests/*",
     "*/test_*",
@@ -61,7 +61,7 @@ exclude_lines = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--cov=tee --cov-report=term-missing --cov-report=html"
+addopts = "--cov=t4t --cov-report=term-missing --cov-report=html"
 # Exclude project directories from test discovery (these are example/demo projects, not test suites)
 testpaths = ["tests"]
 norecursedirs = ["examples", "test_project", ".venv", "venv", "__pycache__", ".git", "htmlcov", "site"]

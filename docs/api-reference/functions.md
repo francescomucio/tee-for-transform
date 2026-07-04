@@ -11,7 +11,7 @@ Decorator for SQL-generating functions. The decorated function should return a S
 **Usage:**
 
 ```python
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.sql()
 def calculate_percentage(numerator: float, denominator: float) -> float:
@@ -36,7 +36,7 @@ Decorator for actual Python UDFs (for databases that support them, like Snowflak
 **Usage:**
 
 ```python
-from tee.parser.processing.function_decorator import functions
+from t4t.parser.processing.function_decorator import functions
 
 @functions.python()
 def calculate_percentage(numerator: float, denominator: float) -> float:
@@ -158,7 +158,7 @@ SELECT
 Parses SQL function definitions:
 
 ```python
-from tee.parser.parsers import FunctionSQLParser
+from t4t.parser.parsers import FunctionSQLParser
 
 parser = FunctionSQLParser(connection={"type": "duckdb"})
 
@@ -181,7 +181,7 @@ result = parser.parse(
 Parses Python function files:
 
 ```python
-from tee.parser.parsers import FunctionPythonParser
+from t4t.parser.parsers import FunctionPythonParser
 
 parser = FunctionPythonParser()
 result = parser.parse(
@@ -196,7 +196,7 @@ result = parser.parse(
 Execute functions in dependency order:
 
 ```python
-from tee.engine import ExecutionEngine
+from t4t.engine import ExecutionEngine
 
 engine = ExecutionEngine(config=connection_config)
 results = engine.execute_functions(

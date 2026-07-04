@@ -8,7 +8,7 @@ All three options allow you to have **just the import and metadata** - no functi
 
 ```python
 from model_builder_options import ModelBuilder
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [
@@ -41,7 +41,7 @@ ModelBuilder()  # That's it! Auto-executes when script is run as main
 
 ```python
 from model_builder_options import build
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "schema": [
@@ -74,7 +74,7 @@ build()  # Finds metadata automatically
 
 ```python
 from model_builder_options import setup_auto_build
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 setup_auto_build()  # Set up auto-execution at top
 

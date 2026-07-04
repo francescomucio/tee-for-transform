@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from tee.testing.base import TestRegistry
-from tee.testing.python_test import PythonTest
-from tee.testing.sql_test import SqlTest
-from tee.testing.test_discovery import TestDiscovery, TestDiscoveryError
+from t4t.testing.base import TestRegistry
+from t4t.testing.python_test import PythonTest
+from t4t.testing.sql_test import SqlTest
+from t4t.testing.test_discovery import TestDiscovery, TestDiscoveryError
 
 
 class TestPythonTestDiscovery:
@@ -37,7 +37,7 @@ class TestPythonTestDiscovery:
         py_file = tests_folder / "check_null.py"
         py_file.write_text(
             """
-from tee.testing import test
+from t4t.testing import test
 
 @test(name="check_null", severity="error")
 def check_null():
@@ -61,7 +61,7 @@ def check_null():
         py_file = tests_folder / "generate_tests.py"
         py_file.write_text(
             """
-from tee.testing import create_test
+from t4t.testing import create_test
 
 create_test(
     name="check_not_empty",
@@ -88,7 +88,7 @@ create_test(
 
         py_file.write_text(
             """
-from tee.testing import SqlTestMetadata
+from t4t.testing import SqlTestMetadata
 
 metadata = {
     "name": "check_minimum",
@@ -119,7 +119,7 @@ test = SqlTestMetadata(**metadata)
         py_file = tests_folder / "python_test.py"
         py_file.write_text(
             """
-from tee.testing import test
+from t4t.testing import test
 
 @test(name="python_test")
 def python_test():
@@ -150,7 +150,7 @@ def python_test():
 
         py_file.write_text(
             """
-from tee.testing import test
+from t4t.testing import test
 
 @test(name="test")
 def test_func():
@@ -179,7 +179,7 @@ def test_func():
 
         py_file.write_text(
             """
-from tee.testing import SqlTestMetadata
+from t4t.testing import SqlTestMetadata
 
 test = SqlTestMetadata(name="test", severity="error")
 """
@@ -204,7 +204,7 @@ test = SqlTestMetadata(name="test", severity="error")
         # Create a file with actual syntax error
         py_file.write_text(
             """
-from tee.testing import test
+from t4t.testing import test
 
 @test(name="test")
 def test_func():
@@ -231,7 +231,7 @@ def test_func():
         py_file = tests_folder / "multiple_tests.py"
         py_file.write_text(
             """
-from tee.testing import test, create_test
+from t4t.testing import test, create_test
 
 @test(name="test1")
 def test1():
@@ -264,7 +264,7 @@ create_test(name="test3", sql="SELECT 3")
         py_file = subfolder / "test.py"
         py_file.write_text(
             """
-from tee.testing import test
+from t4t.testing import test
 
 @test(name="my_schema__test__test_func")
 def test_func():
@@ -286,7 +286,7 @@ def test_func():
         py_file = tests_folder / "check_minimum_rows.py"
         py_file.write_text(
             """
-from tee.testing import test
+from t4t.testing import test
 
 @test()  # No explicit name
 def check_minimum_rows():

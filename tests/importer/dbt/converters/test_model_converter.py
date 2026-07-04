@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 
-from tee.importer.dbt.converters import ModelConverter
+from t4t.importer.dbt.converters import ModelConverter
 
 
 class TestModelConverter:

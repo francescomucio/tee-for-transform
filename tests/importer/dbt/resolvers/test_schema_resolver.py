@@ -5,7 +5,7 @@ Tests for schema resolver.
 from pathlib import Path
 
 
-from tee.importer.dbt.resolvers import SchemaResolver
+from t4t.importer.dbt.resolvers import SchemaResolver
 
 
 class TestSchemaResolver:

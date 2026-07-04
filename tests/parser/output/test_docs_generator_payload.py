@@ -5,7 +5,7 @@ Fast integration-style tests for docs payload generation.
 import json
 import re
 
-from tee.parser.output.docs_generator import DocsGenerator
+from t4t.parser.output.docs_generator import DocsGenerator
 
 
 def _model(metadata: dict, sql: str = "select 1"):

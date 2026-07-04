@@ -1,5 +1,5 @@
 # Example of typed metadata with full IDE support
-from tee.typing.metadata import ModelMetadata
+from t4t.typing.metadata import ModelMetadata
 
 # This provides full type checking, autocomplete, and IDE support
 metadata: ModelMetadata = {

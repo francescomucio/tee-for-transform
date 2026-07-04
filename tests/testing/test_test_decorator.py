@@ -4,10 +4,10 @@ Unit tests for test decorator and create_test function.
 
 import pytest
 
-from tee.testing.base import TestRegistry, TestSeverity
-from tee.testing.python_test import PythonTest
-from tee.testing.test_decorator import TestDecoratorError, create_test
-from tee.testing.test_decorator import test as test_decorator  # Rename to avoid pytest collection
+from t4t.testing.base import TestRegistry, TestSeverity
+from t4t.testing.python_test import PythonTest
+from t4t.testing.test_decorator import TestDecoratorError, create_test
+from t4t.testing.test_decorator import test as test_decorator  # Rename to avoid pytest collection
 
 
 class TestTestDecorator:

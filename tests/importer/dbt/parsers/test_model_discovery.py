@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 
-from tee.importer.dbt.parsers import ModelFileDiscovery
+from t4t.importer.dbt.parsers import ModelFileDiscovery
 
 
 class TestModelFileDiscovery:

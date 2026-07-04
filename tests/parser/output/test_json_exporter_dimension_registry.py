@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from tee.parser.output.json_exporter import JSONExporter
+from t4t.parser.output.json_exporter import JSONExporter
 
 
 def test_export_dimension_registry_writes_sorted_json(tmp_path: Path) -> None:

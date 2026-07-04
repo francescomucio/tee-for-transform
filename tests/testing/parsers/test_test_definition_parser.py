@@ -2,8 +2,8 @@
 Unit tests for TestDefinitionParser.
 """
 
-from tee.testing.base import TestSeverity
-from tee.testing.parsers.test_definition_parser import TestDefinitionParser
+from t4t.testing.base import TestSeverity
+from t4t.testing.parsers.test_definition_parser import TestDefinitionParser
 
 
 class TestTestDefinitionParser:

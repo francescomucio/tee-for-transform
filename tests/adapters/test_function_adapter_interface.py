@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.adapters.base import DatabaseAdapter
+from t4t.adapters.base import DatabaseAdapter
 
 
 class TestFunctionAdapterInterface:

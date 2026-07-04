@@ -4,7 +4,7 @@ Unit tests for ModelSelector.
 
 import pytest
 
-from tee.cli.selection import ModelSelector
+from t4t.cli.selection import ModelSelector
 
 
 class TestModelSelector:

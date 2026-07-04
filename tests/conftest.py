@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from tee.adapters.duckdb.adapter import DuckDBAdapter
-from tee.engine.model_state import ModelStateManager
+from t4t.adapters.duckdb.adapter import DuckDBAdapter
+from t4t.engine.model_state import ModelStateManager
 
 
 @pytest.fixture

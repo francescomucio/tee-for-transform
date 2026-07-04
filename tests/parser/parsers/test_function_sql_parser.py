@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from tee.parser.parsers.function_sql_parser import FunctionSQLParser, FunctionSQLParsingError
-from tee.parser.parsers.function_sql_parser.dialect import DialectInferencer
+from t4t.parser.parsers.function_sql_parser import FunctionSQLParser, FunctionSQLParsingError
+from t4t.parser.parsers.function_sql_parser.dialect import DialectInferencer
 
 
 class TestFunctionSQLParser:
@@ -193,7 +193,7 @@ class TestFunctionSQLParser:
         # Create a temporary metadata file
         metadata_file = Path("test.py")
         metadata_content = """
-from tee.typing.metadata import FunctionMetadata
+from t4t.typing.metadata import FunctionMetadata
 
 metadata: FunctionMetadata = {
     "function_name": "calculate_percentage",

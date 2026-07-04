@@ -6,8 +6,8 @@ These tests verify that functions are correctly created and executed in DuckDB.
 
 import pytest
 
-from tee.engine.execution_engine import ExecutionEngine
-from tee.parser.core.orchestrator import ParserOrchestrator
+from t4t.engine.execution_engine import ExecutionEngine
+from t4t.parser.core.orchestrator import ParserOrchestrator
 
 
 @pytest.mark.integration
@@ -379,7 +379,7 @@ schema = "my_schema"
 
     def test_full_workflow_seeds_functions_models(self, temp_project_full, duckdb_config):
         """Test complete workflow: Seeds → Functions → Models."""
-        from tee.executor import build_models
+        from t4t.executor import build_models
 
         # Create project config
         project_config = {

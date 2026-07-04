@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 from click.exceptions import Exit as ClickExit
 
-from tee.cli.commands.init import _generate_project_toml, _get_default_connection_config, cmd_init
+from t4t.cli.commands.init import _generate_project_toml, _get_default_connection_config, cmd_init
 
 
 class TestInitCommand:

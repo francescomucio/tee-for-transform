@@ -6,8 +6,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from tee.testing.base import TestResult, TestSeverity
-from tee.testing.python_test import PythonTest
+from t4t.testing.base import TestResult, TestSeverity
+from t4t.testing.python_test import PythonTest
 
 
 class TestPythonTest:

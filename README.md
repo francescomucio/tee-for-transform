@@ -40,7 +40,7 @@ uv run t4t run my_project
 Python models live under `models/` too. With the **`@model`** decorator (`my_project/models/hello_py.py`):
 
 ```python
-from tee.parser.processing.model import model
+from t4t.parser.processing.model import model
 
 @model(description="Hello from a decorated function")
 def hello_py():
@@ -50,7 +50,7 @@ def hello_py():
 Without a decorator, register at import time using **`create_model()`** (`my_project/models/hello_factory.py`):
 
 ```python
-from tee.parser.processing.model import create_model
+from t4t.parser.processing.model import create_model
 
 create_model(
     table_name="hello_factory",

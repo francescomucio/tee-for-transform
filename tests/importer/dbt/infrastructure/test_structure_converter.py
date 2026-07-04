@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 
-from tee.importer.dbt.infrastructure import StructureConverter
+from t4t.importer.dbt.infrastructure import StructureConverter
 
 
 class TestStructureConverter:

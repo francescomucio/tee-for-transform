@@ -2,7 +2,7 @@
 Tests for the Jinja converter.
 """
 
-from tee.importer.dbt.converters import JinjaConverter
+from t4t.importer.dbt.converters import JinjaConverter
 
 
 class TestJinjaConverter:

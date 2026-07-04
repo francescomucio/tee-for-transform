@@ -21,7 +21,7 @@ Incremental materialization is configured through model metadata. You can define
 
 ```python
 # models/my_schema/incremental_example.py
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 # Append strategy
 metadata_append: ModelMetadata = {
@@ -254,7 +254,7 @@ WHERE e.brand_name IS NULL  -- Only new records
 
 ```python
 # generate_dimension_tables.py
-from tee.parser.processing import create_model
+from t4t.parser.processing import create_model
 
 dimensions = ["brand", "category"]
 source_table = "my_schema.national_articles"
@@ -641,7 +641,7 @@ This will show:
 
 ```python
 # models/my_schema/user_events.py
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "description": "Incremental user events table",

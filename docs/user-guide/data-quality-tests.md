@@ -21,7 +21,7 @@ Tests are defined in your model metadata files:
 
 ```python
 # models/my_table.py
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "description": "My first table",
@@ -768,7 +768,7 @@ Tests are categorized into:
 
 ```python
 # models/orders.py
-from tee.typing import ModelMetadata
+from t4t.typing import ModelMetadata
 
 metadata: ModelMetadata = {
     "description": "Orders table",
@@ -934,8 +934,8 @@ For large tables, tests use `COUNT(*)` queries for better performance:
 To add a custom Python test class, create a class inheriting from `StandardTest`:
 
 ```python
-from tee.testing.base import StandardTest, TestSeverity
-from tee.testing import TestRegistry
+from t4t.testing.base import StandardTest, TestSeverity
+from t4t.testing import TestRegistry
 
 class MyCustomTest(StandardTest):
     def __init__(self):

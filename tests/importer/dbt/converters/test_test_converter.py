@@ -5,7 +5,7 @@ Unit tests for TestConverter.
 from pathlib import Path
 
 
-from tee.importer.dbt.converters import TestConverter
+from t4t.importer.dbt.converters import TestConverter
 
 
 class TestTestConverter:
