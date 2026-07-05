@@ -4,7 +4,6 @@ Unit tests for DbtModelSelector.
 
 from pathlib import Path
 
-
 from t4t.importer.dbt.infrastructure import DbtModelSelector
 
 

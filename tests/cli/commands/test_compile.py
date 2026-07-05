@@ -2,6 +2,7 @@
 Unit tests for the compile CLI command.
 """
 
+import contextlib
 import tempfile
 from io import StringIO
 from pathlib import Path
@@ -140,16 +141,14 @@ class TestCompileCommand:
         with (
             patch("sys.stdout", new=StringIO()) as fake_out,
             patch("sys.stderr", new=StringIO()) as fake_err,
-        ):
-            try:
-                cmd_compile(
-                    project_folder=mock_args.project_folder,
-                    vars=mock_args.vars,
-                    verbose=mock_args.verbose,
-                    format=mock_args.format,
-                )
-            except SystemExit:
-                pass  # Expected from handle_error
+            contextlib.suppress(SystemExit),
+        ):  # expected from handle_error
+            cmd_compile(
+                project_folder=mock_args.project_folder,
+                vars=mock_args.vars,
+                verbose=mock_args.verbose,
+                format=mock_args.format,
+            )
 
         output = fake_out.getvalue() + fake_err.getvalue()
         assert "Compilation failed:" in output

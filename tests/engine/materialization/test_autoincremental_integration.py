@@ -5,6 +5,8 @@ These tests verify that auto_incremental columns work correctly
 with all three incremental strategies in a real database environment.
 """
 
+import contextlib
+
 import pytest
 
 from t4t.engine.materialization.incremental_executor import IncrementalExecutor
@@ -55,10 +57,8 @@ class TestAutoIncrementalIntegration:
         yield
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             duckdb_adapter.execute_query("DROP TABLE IF EXISTS test_schema.source_articles")
-        except Exception:
-            pass
 
     @pytest.fixture
     def metadata_with_auto_incremental(self):

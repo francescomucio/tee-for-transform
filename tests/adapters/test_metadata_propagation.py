@@ -17,6 +17,8 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+import contextlib
+
 from t4t.adapters.duckdb.adapter import DuckDBAdapter  # noqa: E402
 from t4t.adapters.snowflake.adapter import SnowflakeAdapter  # noqa: E402
 from t4t.executor import execute_models  # noqa: E402
@@ -251,10 +253,8 @@ path = "{db_path}"
                 from t4t.cli.utils import load_project_config
 
                 project_config = None
-                try:
+                with contextlib.suppress(Exception):
                     project_config = load_project_config(str(project_dir))
-                except Exception:
-                    pass
 
                 results = execute_models(
                     project_folder=str(project_dir),

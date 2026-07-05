@@ -79,9 +79,12 @@ class SchemaChangeHandler:
             # Add auto_incremental flag to new columns if present in metadata
             for new_col in differences["new_columns"]:
                 col_name = new_col.get("name")
-                if col_name and col_name in metadata_col_map:
-                    if metadata_col_map[col_name].get("auto_incremental"):
-                        new_col["auto_incremental"] = True
+                if (
+                    col_name
+                    and col_name in metadata_col_map
+                    and metadata_col_map[col_name].get("auto_incremental")
+                ):
+                    new_col["auto_incremental"] = True
 
         # Log detected changes
         logger.info(

@@ -203,9 +203,8 @@ def pytest_collection_modifyitems(config, items):
         # Live Snowflake E2E (network + warehouse): exclude from default fast local runs
         fp = str(item.fspath)
         if (
-            ("adapters/snowflake/" in fp and "_e2e.py" in fp)
-            or "test_function_execution_snowflake.py" in fp
-        ):
+            "adapters/snowflake/" in fp and "_e2e.py" in fp
+        ) or "test_function_execution_snowflake.py" in fp:
             item.add_marker(pytest.mark.snowflake_e2e)
 
     # Remove items that shouldn't be collected as tests

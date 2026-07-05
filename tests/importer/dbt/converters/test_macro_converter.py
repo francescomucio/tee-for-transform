@@ -4,7 +4,6 @@ Unit tests for MacroConverter.
 
 from pathlib import Path
 
-
 from t4t.importer.dbt.converters import MacroConverter
 
 

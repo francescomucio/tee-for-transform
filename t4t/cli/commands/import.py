@@ -9,7 +9,6 @@ from typing import Literal
 
 import typer
 
-
 # Type alias for output format
 OutputFormat = Literal["t4t", "ots"]
 

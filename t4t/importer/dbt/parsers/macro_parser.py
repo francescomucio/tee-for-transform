@@ -178,8 +178,4 @@ class MacroParser:
         skip_dirs = {"__pycache__", ".git", "target", "dbt_packages", ".dbt"}
         parts = file_path.parts
 
-        for part in parts:
-            if part in skip_dirs:
-                return True
-
-        return False
+        return any(part in skip_dirs for part in parts)

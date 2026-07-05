@@ -3,7 +3,7 @@ name = "t4t"
 version = "0.1.3"
 description = "t4t - Transform, Extract, Execute (and t-shirts!)"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 license = "MIT"
 authors = [
     {name = "Francesco Mucio", email = "francescomucio@gmail.com"},
@@ -13,8 +13,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Database",
     "Topic :: Software Development :: Build Tools",
@@ -103,7 +101,7 @@ filterwarnings = [
 
 [tool.ruff]
 # Enable linting and formatting
-target-version = "py312"
+target-version = "py314"
 line-length = 100
 
 [tool.ruff.format]
@@ -132,7 +130,7 @@ select = [
 ignore = [
     "E501",  # line too long (handled by formatter)
     "B008",  # do not perform function calls in argument defaults
-    "C901",  # too complex
+    "C901",  # too complex — 80+ standing violations; complexity policy tracked in issue #62
 ]
 
 # Exclude common directories
@@ -163,5 +161,9 @@ exclude = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Tests: unused params are often pytest fixtures (injected by name) or mock protocol stubs.
-"tests/**" = ["ARG001", "ARG002"]
+# Tests: unused params are often pytest fixtures (injected by name), mock
+# protocol stubs, or mock lambdas; B017 (assert blind Exception) and E402
+# (late imports after sys.path setup) are accepted test patterns.
+"tests/**" = ["ARG", "B017", "E402"]
+# Deliberate re-export hub: star imports + __all__ curation.
+"t4t/parser/shared/__init__.py" = ["F403", "F405"]

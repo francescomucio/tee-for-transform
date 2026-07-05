@@ -2,6 +2,7 @@
 Tests for the seed CLI command.
 """
 
+import contextlib
 from unittest.mock import MagicMock, patch
 
 from click.exceptions import Exit as ClickExit
@@ -103,16 +104,14 @@ class TestSeedCommand:
         with patch("t4t.cli.commands.seed.ExecutionEngine") as mock_engine_class:
             mock_engine_class.side_effect = Exception("Connection failed")
 
-            # Should handle error gracefully (CommandContext will handle it)
-            try:
+            # Should handle error gracefully: CommandContext.handle_error raises
+            # typer.Exit(1) which is click.exceptions.Exit
+            with contextlib.suppress(SystemExit, ClickExit):
                 cmd_seed(
                     project_folder=str(temp_project_dir),
                     vars=None,
                     verbose=False,
                 )
-            except (SystemExit, ClickExit):
-                # CommandContext.handle_error raises typer.Exit(1) which is click.exceptions.Exit
-                pass
 
     @patch("t4t.cli.commands.seed.SeedLoader")
     @patch("t4t.cli.commands.seed.SeedDiscovery")

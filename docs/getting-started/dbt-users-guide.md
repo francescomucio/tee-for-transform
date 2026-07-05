@@ -128,7 +128,7 @@ t4t supports multiple backends with automatic SQL dialect conversion:
 pip install t4t
 ```
 
-> **Note**: t4t requires **Python 3.12+**. Make sure your environment meets this requirement.
+> **Note**: t4t requires **Python 3.14+**. Make sure your environment meets this requirement.
 
 ### Step 2: Import Your dbt Project
 

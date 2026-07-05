@@ -4,7 +4,6 @@ Unit tests for ReportGenerator.
 
 from pathlib import Path
 
-
 from t4t.importer.dbt.generators import ReportGenerator
 
 

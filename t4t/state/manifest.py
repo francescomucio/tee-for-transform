@@ -199,9 +199,7 @@ def results_to_manifest(
                     d in failed_names for d in deps if not str(d).startswith("test:")
                 )
                 reason = (
-                    "not_run:downstream_of_failure"
-                    if upstream_failed
-                    else "not_run:not_reached"
+                    "not_run:downstream_of_failure" if upstream_failed else "not_run:not_reached"
                 )
                 nodes_out.append(NodeResult(name=name, status="skipped", skip_reason=reason))
 

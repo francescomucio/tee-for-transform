@@ -67,7 +67,7 @@ class TestJSONExporterYAML:
         assert output_file.suffixes == [".ots", ".json"]
 
         # Verify JSON content
-        with open(output_file, "r") as f:
+        with open(output_file) as f:
             module_data = json.load(f)
             assert module_data["ots_version"] == "0.2.2"
             assert module_data["module_name"] == "test_project.schema1"
@@ -84,7 +84,7 @@ class TestJSONExporterYAML:
         assert output_file.suffixes == [".ots", ".yaml"]
 
         # Verify YAML content
-        with open(output_file, "r") as f:
+        with open(output_file) as f:
             module_data = yaml.safe_load(f)
             assert module_data["ots_version"] == "0.2.2"
             assert module_data["module_name"] == "test_project.schema1"
@@ -109,9 +109,9 @@ class TestJSONExporterYAML:
         assert yaml_file.exists()
 
         # Both should have same content structure
-        with open(json_file, "r") as f:
+        with open(json_file) as f:
             json_data = json.load(f)
-        with open(yaml_file, "r") as f:
+        with open(yaml_file) as f:
             yaml_data = yaml.safe_load(f)
 
         assert json_data["ots_version"] == yaml_data["ots_version"]
@@ -148,7 +148,7 @@ class TestJSONExporterYAML:
         assert output_file.exists()
 
         # Verify module contains functions
-        with open(output_file, "r") as f:
+        with open(output_file) as f:
             module_data = json.load(f)
             assert module_data["ots_version"] == "0.2.2"
             assert "functions" in module_data
@@ -165,7 +165,7 @@ class TestJSONExporterYAML:
         assert len(results) == 1
         output_file = results["test_project.schema1"]
 
-        with open(output_file, "r") as f:
+        with open(output_file) as f:
             module_data = json.load(f)
             assert module_data["ots_version"] == "0.2.2"
             assert "functions" not in module_data
@@ -206,7 +206,7 @@ HAVING COUNT(*) < @min_rows:10
         assert result.suffixes == [".ots", ".yaml"]
 
         # Verify YAML content
-        with open(result, "r") as f:
+        with open(result) as f:
             test_lib = yaml.safe_load(f)
             assert "test_library_version" in test_lib
             assert "generic_tests" in test_lib

@@ -10,21 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.3] - 2026-07-05
 
 ### Added
-- CI workflow with Python version matrix (3.12, 3.13, 3.14)
-- Release automation via GitHub Actions, gated on the test matrix and a
+- CI workflow running the test suite on every push/PR
+- Release automation via GitHub Actions, gated on tests passing and a
   tag/version consistency check
 
 ### Changed
-- Lowered minimum Python version from 3.14 to 3.12 (3.11 excluded: the code
-  uses PEP 701 f-string quote reuse, and 3.11 is close to end of support)
+- Python version policy: t4t deliberately tracks the newest stable Python
+  (currently 3.14). The brief floor-lowering to 3.11/3.12 is reverted; the
+  CI matrix is wired so future versions can be added as they release.
 
 ### Fixed
-- CI matrix now actually tests each Python version (uv previously pinned all
-  jobs to `.python-version`)
+- CI now tests the intended Python version (uv previously ignored the
+  workflow's Python setup in favor of `.python-version`)
+- Latent bug: `inspect.FrameType` → `types.FrameType` in
+  `parser/shared/inspect_utils.py` (the attribute does not exist; harmless
+  under lazy annotation evaluation, but wrong)
 - Quickstart: the "Add a Test" step now uses model metadata, which is how
   tests are attached to models (a bare SQL file in `tests/` is not discovered)
 - dbt users guide: snapshots map to t4t's SCD2 materialization (was listed
   as unsupported)
+- Lookup generator tests no longer depend on an out-of-repo project
 
 ## [0.1.2] - 2026-07-05
 

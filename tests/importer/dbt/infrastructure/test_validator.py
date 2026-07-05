@@ -5,7 +5,6 @@ Unit tests for dbt project validator.
 import tempfile
 from pathlib import Path
 
-
 from t4t.importer.dbt.infrastructure import ProjectValidator, ValidationResult
 
 

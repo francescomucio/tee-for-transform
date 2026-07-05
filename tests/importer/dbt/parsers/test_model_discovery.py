@@ -5,7 +5,6 @@ Tests for the model file discovery.
 import tempfile
 from pathlib import Path
 
-
 from t4t.importer.dbt.parsers import ModelFileDiscovery
 
 

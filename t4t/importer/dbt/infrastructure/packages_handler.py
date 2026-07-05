@@ -65,12 +65,11 @@ class PackagesHandler:
 
                         # Extract package names and versions
                         for pkg in packages_list:
-                            if isinstance(pkg, dict):
-                                if "package" in pkg:
-                                    pkg_name = pkg["package"]
-                                    pkg_version = pkg.get("version", "latest")
-                                    if self.verbose:
-                                        logger.info(f"  - {pkg_name} (version: {pkg_version})")
+                            if isinstance(pkg, dict) and "package" in pkg:
+                                pkg_name = pkg["package"]
+                                pkg_version = pkg.get("version", "latest")
+                                if self.verbose:
+                                    logger.info(f"  - {pkg_name} (version: {pkg_version})")
 
             except Exception as e:
                 error_msg = f"Error parsing {PACKAGES_FILE}: {e}"
@@ -192,10 +191,7 @@ class PackagesHandler:
                 if git_url:
                     # For Hub packages, versions are tags, not branches
                     # Use version as-is (e.g., "1.1.1")
-                    if version:
-                        pkg_ref = version
-                    else:
-                        pkg_ref = "main"
+                    pkg_ref = version or "main"
                     # Extract name from hub package (e.g., "dbt-labs/dbt_utils" -> "dbt_utils")
                     # Use the last part of the package name as the namespace
                     if "/" in hub_package:
@@ -364,7 +360,7 @@ class PackagesHandler:
                 with lock_file.open("w", encoding="utf-8") as f:
                     json.dump(lock_data, f, indent=2)
                 if self.verbose:
-                    logger.info(f"Updated packages.lock file")
+                    logger.info("Updated packages.lock file")
             except Exception as e:
                 logger.warning(f"Could not write packages.lock: {e}")
 

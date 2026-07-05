@@ -22,10 +22,7 @@ def group_models_by_schema(
     grouped = {}
     for model_id, model_data in parsed_models.items():
         # Extract schema from model_id (e.g., "my_schema.table_name" → "my_schema")
-        if "." in model_id:
-            schema = model_id.split(".")[0]
-        else:
-            schema = "default"
+        schema = model_id.split(".")[0] if "." in model_id else "default"
 
         if schema not in grouped:
             grouped[schema] = []
@@ -50,10 +47,7 @@ def group_functions_by_schema(
     grouped = {}
     for function_id, function_data in parsed_functions.items():
         # Extract schema from function_id (e.g., "my_schema.function_name" → "my_schema")
-        if "." in function_id:
-            schema = function_id.split(".")[0]
-        else:
-            schema = "default"
+        schema = function_id.split(".")[0] if "." in function_id else "default"
 
         if schema not in grouped:
             grouped[schema] = []

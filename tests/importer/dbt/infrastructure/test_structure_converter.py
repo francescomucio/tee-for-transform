@@ -5,7 +5,6 @@ Tests for the structure converter.
 import tempfile
 from pathlib import Path
 
-
 from t4t.importer.dbt.infrastructure import StructureConverter
 
 

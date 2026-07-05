@@ -5,7 +5,6 @@ Tests for project.toml generator.
 import tempfile
 from pathlib import Path
 
-
 from t4t.importer.dbt.generators import ProjectConfigGenerator
 
 

@@ -57,12 +57,9 @@ class SeedDiscovery:
                 relative_path = file_path.relative_to(self.seeds_folder)
                 parts = relative_path.parts
 
-                if len(parts) > 1:
-                    # File is in a subfolder, first part is the schema name
-                    schema_name = parts[0]
-                else:
-                    # File is directly in seeds folder, no schema
-                    schema_name = None
+                # In a subfolder: first part is the schema name; directly in
+                # the seeds folder: no schema
+                schema_name = parts[0] if len(parts) > 1 else None
 
                 seed_files.append((file_path, schema_name))
 
@@ -107,10 +104,7 @@ class SeedLoader:
             raise FileNotFoundError(f"Seed file not found: {file_path}")
 
         # Construct full table name
-        if schema_name:
-            full_table_name = f"{schema_name}.{table_name}"
-        else:
-            full_table_name = table_name
+        full_table_name = f"{schema_name}.{table_name}" if schema_name else table_name
 
         # Determine file type and load accordingly
         file_ext = file_path.suffix.lower()

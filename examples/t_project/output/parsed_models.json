@@ -17,7 +17,7 @@
       "description": "Summary of user data",
       "variables": [],
       "metadata": {},
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
     },
     "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07",
     "needs_evaluation": false
@@ -40,7 +40,7 @@
       "description": null,
       "variables": [],
       "metadata": {},
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
     },
     "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07",
     "needs_evaluation": false
@@ -63,7 +63,7 @@
       "description": null,
       "variables": [],
       "metadata": {},
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
     },
     "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07",
     "needs_evaluation": false
@@ -86,7 +86,7 @@
       "description": "Select from  my_schema.my_first_table",
       "variables": [],
       "metadata": {},
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
     },
     "sqlglot_hash": "4bbc220872f45df14551e0a9d8dd12c0bfacd0fc9887fe362ce12f6362fa2b07"
   },
@@ -108,7 +108,7 @@
       "description": "Select from  my_schema.my_second_table",
       "variables": [],
       "metadata": {},
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
     },
     "sqlglot_hash": "c631a5897c7d8164facaf39df4d434cc4bfdc5a743249b3601b695f4e7381382"
   },
@@ -130,7 +130,7 @@
       "description": "Select from  my_schema.my_third_table",
       "variables": [],
       "metadata": {},
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
     },
     "sqlglot_hash": "5d113606605b0563befa9443f3842146977ac11761f528123e20f9e7be151172"
   },
@@ -165,7 +165,7 @@
           }
         }
       },
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/incremental_example.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/incremental_example.py"
     },
     "sqlglot_hash": "9f97e2965f504ca16944fd759f428c715575cf30926165fef90dac6496c16e56"
   },
@@ -213,7 +213,7 @@
           "test_my_first_table"
         ]
       },
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_first_table.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_first_table.py"
     },
     "sqlglot_hash": "cf5d755536438a4884a5d23ecd12700d0565d907f945ae4a48709a3258e1ea15"
   },
@@ -256,7 +256,7 @@
           "unique"
         ]
       },
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_second_table.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_second_table.py"
     },
     "sqlglot_hash": "7bda040e8397f8974e0d3bcc4c85093fd1ec961835cdcfcffb66196fc49d177b"
   },
@@ -280,7 +280,7 @@
       "metadata": {
         "materialization": "view"
       },
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_view.py"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_view.py"
     },
     "sqlglot_hash": "5411f7ecf1931833c59ce4d1a8ca68cba40be26929d6e7c21f52c4a8c81af511"
   },
@@ -302,7 +302,7 @@
       "description": "SQL model for my_schema.my_forth_table",
       "variables": [],
       "metadata": {},
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_forth_table.sql"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_forth_table.sql"
     },
     "sqlglot_hash": "3b1ecd8d945c471109194ea08d8bba1f485fcdb8e739a6fc97f49c063e92f90d"
   },
@@ -325,7 +325,7 @@
       "description": "SQL model for my_schema.my_third_table",
       "variables": [],
       "metadata": {},
-      "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_third_table.sql"
+      "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_third_table.sql"
     },
     "sqlglot_hash": "a06a906e28d9ae187d4f47471a7862f6c743cb784380996e41422a2720a953d9"
   }

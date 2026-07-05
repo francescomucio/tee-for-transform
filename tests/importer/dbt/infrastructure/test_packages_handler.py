@@ -2,6 +2,7 @@
 Tests for dbt packages handler.
 """
 
+import contextlib
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -428,10 +429,8 @@ class TestPackagesHandler:
             }
 
             # Should create .packages directory even if cloning fails
-            try:
+            with contextlib.suppress(Exception):
                 handler.clone_packages(project_path, packages_info)
-            except Exception:
-                pass
 
             packages_dir = project_path / ".packages"
             # Directory should be created

@@ -74,7 +74,7 @@ class SchemaParser:
         """
         all_models = {}
 
-        for rel_path, schema_file in schema_files.items():
+        for _rel_path, schema_file in schema_files.items():
             models = self.parse_schema_file(schema_file)
             # Merge models (later files override earlier ones if same model name)
             all_models.update(models)

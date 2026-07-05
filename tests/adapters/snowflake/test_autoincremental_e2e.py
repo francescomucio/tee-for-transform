@@ -13,6 +13,7 @@ These tests require a Snowflake connection. They use credentials from:
 - Or environment variables as fallback
 """
 
+import contextlib
 import json
 import os
 from datetime import UTC, datetime
@@ -96,10 +97,8 @@ class TestAutoIncrementalSnowflakeE2E:
 
         yield adapter
 
-        try:
+        with contextlib.suppress(Exception):
             adapter.disconnect()
-        except Exception:
-            pass
 
     @pytest.fixture
     def state_manager(self):
@@ -110,10 +109,8 @@ class TestAutoIncrementalSnowflakeE2E:
         manager = ModelStateManager(state_database_path=temp_state_db)
         yield manager
         manager.close()
-        try:
+        with contextlib.suppress(Exception):
             os.unlink(temp_state_db)
-        except Exception:
-            pass
 
     @pytest.fixture
     def materialization_handler(self, adapter, state_manager):
@@ -127,10 +124,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.national_articles_test"
 
         # Drop table if exists
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         # Create source table with test data
         # Generate brands alphabetically to ensure predictable IDs
@@ -161,10 +156,8 @@ class TestAutoIncrementalSnowflakeE2E:
         yield table_name
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def _save_model_state(
         self, state_manager, table_name: str, sql_query: str, metadata: dict[str, Any]
@@ -193,10 +186,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_first_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         sql = f"""
         SELECT
@@ -256,10 +247,8 @@ class TestAutoIncrementalSnowflakeE2E:
         assert brand_id == 13, f"Expected BrandLA to have ID 13, got {brand_id}"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def test_id_stability_after_deletion(
         self, materialization_handler, adapter, state_manager, source_table, snowflake_config
@@ -269,10 +258,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         sql = f"""
         SELECT
@@ -346,10 +333,8 @@ class TestAutoIncrementalSnowflakeE2E:
         assert count == 20, f"Expected 20 rows after re-insertion, got {count}"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def test_incremental_run_only_adds_new_records(
         self, materialization_handler, adapter, state_manager, source_table, snowflake_config
@@ -359,10 +344,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_merge_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         # Use explicit mode (include ID column) to avoid SQL generation issues
         sql = f"""
@@ -417,10 +400,8 @@ class TestAutoIncrementalSnowflakeE2E:
         assert count == 20
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def test_delete_insert_strategy_with_auto_incremental(
         self, materialization_handler, adapter, state_manager, source_table, snowflake_config
@@ -430,10 +411,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_delete_insert_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         metadata = {
             "description": "Brand dimension table",
@@ -505,10 +484,8 @@ class TestAutoIncrementalSnowflakeE2E:
         assert first_run_ids == second_run_ids
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def test_empty_source_table(
         self, materialization_handler, adapter, state_manager, snowflake_config
@@ -596,10 +573,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_sequential_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         # Use explicit mode for delete_insert strategy
         sql = f"""
@@ -672,10 +647,8 @@ class TestAutoIncrementalSnowflakeE2E:
         assert first_run_ids == third_run_ids
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def test_append_strategy_with_auto_incremental(
         self, materialization_handler, adapter, state_manager, source_table, snowflake_config
@@ -685,10 +658,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_append_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         metadata = {
             "description": "Brand dimension table",
@@ -750,10 +721,8 @@ class TestAutoIncrementalSnowflakeE2E:
         assert max_id == 20
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def test_explicit_mode_merge_strategy(
         self, materialization_handler, adapter, state_manager, source_table, snowflake_config
@@ -763,10 +732,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_explicit_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         # Explicit mode: query includes the ID column
         sql = f"""
@@ -824,10 +791,8 @@ class TestAutoIncrementalSnowflakeE2E:
         assert count == 20
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def test_explicit_mode_id_stability_after_deletion(
         self, materialization_handler, adapter, state_manager, source_table, snowflake_config
@@ -837,10 +802,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_explicit_del_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         sql = f"""
         SELECT
@@ -899,10 +862,8 @@ class TestAutoIncrementalSnowflakeE2E:
         assert brand_id == 21
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     def test_all_records_already_exist(
         self, materialization_handler, adapter, state_manager, source_table, snowflake_config
@@ -912,10 +873,8 @@ class TestAutoIncrementalSnowflakeE2E:
         table_name = f"{schema}.dim_brand_all_exist_test"
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         # Use explicit mode for delete_insert strategy
         sql = f"""
@@ -983,7 +942,5 @@ class TestAutoIncrementalSnowflakeE2E:
         assert first_run_ids == second_run_ids
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass

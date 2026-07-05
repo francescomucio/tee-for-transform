@@ -70,12 +70,13 @@ class ModelSelector:
             # Support wildcard matching
             if fnmatch(model_name, pattern) or fnmatch(model_name.lower(), pattern.lower()):
                 return True
-            # Also support partial matches (e.g., "schema.table" matches "table")
+            # Also support partial matches (e.g., "schema.table" matches "table"):
+            # check if the pattern matches just the table name part
             parts = model_name.split(".")
-            if len(parts) > 1:
-                # Check if pattern matches just the table name part
-                if fnmatch(parts[-1], pattern) or fnmatch(parts[-1].lower(), pattern.lower()):
-                    return True
+            if len(parts) > 1 and (
+                fnmatch(parts[-1], pattern) or fnmatch(parts[-1].lower(), pattern.lower())
+            ):
+                return True
             # Exact match
             if model_name == pattern or model_name.lower() == pattern.lower():
                 return True
@@ -121,11 +122,7 @@ class ModelSelector:
         if not tags:
             return False
 
-        for tag in tags:
-            if self._has_tag(model_data, tag):
-                return True
-
-        return False
+        return any(self._has_tag(model_data, tag) for tag in tags)
 
     def is_selected(self, model_name: str, model_data: dict[str, Any]) -> bool:
         """
@@ -181,16 +178,11 @@ class ModelSelector:
         Returns:
             True if model should be excluded
         """
-        # Check name exclusion
-        if self.exclude_names:
-            if self._matches_name(model_name, self.exclude_names):
-                return True
-
-        # Check tag exclusion
-        if self.exclude_tags:
-            if self._matches_tags(model_data, self.exclude_tags):
-                return True
-
+        # Excluded when matching a name exclusion or a tag exclusion
+        if self.exclude_names and self._matches_name(model_name, self.exclude_names):
+            return True
+        if self.exclude_tags and self._matches_tags(model_data, self.exclude_tags):
+            return True
         return False
 
     def filter_models(

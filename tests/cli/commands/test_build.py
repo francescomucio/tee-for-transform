@@ -2,6 +2,7 @@
 Unit tests for build command.
 """
 
+import contextlib
 import tempfile
 from io import StringIO
 from pathlib import Path
@@ -385,11 +386,8 @@ class TestBuildCommand:
         }
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()):
-            try:
-                cmd_build(mock_args)
-            except SystemExit:
-                pass
+        with patch("sys.stdout", new=StringIO()), contextlib.suppress(SystemExit):
+            cmd_build(mock_args)
 
         # Verify cleanup was called
         mock_connection_manager.cleanup.assert_called_once()
@@ -433,11 +431,8 @@ class TestBuildCommand:
         }
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()):
-            try:
-                cmd_build(mock_args)
-            except SystemExit:
-                pass
+        with patch("sys.stdout", new=StringIO()), contextlib.suppress(SystemExit):
+            cmd_build(mock_args)
 
         # Verify variables were passed to build_models
         call_args = mock_build_models.call_args
@@ -482,11 +477,8 @@ class TestBuildCommand:
         }
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()):
-            try:
-                cmd_build(mock_args)
-            except SystemExit:
-                pass
+        with patch("sys.stdout", new=StringIO()), contextlib.suppress(SystemExit):
+            cmd_build(mock_args)
 
         # Verify selection patterns were passed
         call_args = mock_build_models.call_args

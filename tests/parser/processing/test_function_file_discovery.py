@@ -5,7 +5,6 @@ Tests for function file discovery.
 import tempfile
 from pathlib import Path
 
-
 from t4t.parser.processing.file_discovery import FileDiscovery
 
 

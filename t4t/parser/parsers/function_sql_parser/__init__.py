@@ -98,11 +98,10 @@ class FunctionSQLParser(BaseParser):
             if metadata_file:
                 try:
                     raw_metadata = parse_metadata_from_python_file(metadata_file)
-                    if raw_metadata and isinstance(raw_metadata, dict):
-                        # Check for dialect in metadata
-                        if "dialect" in raw_metadata:
-                            metadata_dialect = raw_metadata["dialect"]
-                            logger.debug(f"Found dialect override in metadata: {metadata_dialect}")
+                    # Check for dialect in metadata
+                    if isinstance(raw_metadata, dict) and "dialect" in raw_metadata:
+                        metadata_dialect = raw_metadata["dialect"]
+                        logger.debug(f"Found dialect override in metadata: {metadata_dialect}")
                 except Exception as e:
                     logger.warning(f"Failed to parse metadata from {metadata_file}: {str(e)}")
 

@@ -279,10 +279,9 @@ class ParserOrchestrator:
                     # Check if there's a database override for this function
                     sql_stem = sql_file.stem  # filename without extension
                     override_file = None
-                    if current_db_type and current_db_type in override_map:
-                        if sql_stem in override_map[current_db_type]:
-                            override_file = override_map[current_db_type][sql_stem]
-                            logger.debug(f"Found database override for {sql_stem}: {override_file}")
+                    if current_db_type and sql_stem in override_map.get(current_db_type, {}):
+                        override_file = override_map[current_db_type][sql_stem]
+                        logger.debug(f"Found database override for {sql_stem}: {override_file}")
 
                     # Use override file if available, otherwise use generic SQL file
                     file_to_parse = override_file if override_file else sql_file
@@ -319,7 +318,7 @@ class ParserOrchestrator:
             # Also process database override files that don't have a generic SQL file
             # (standalone database-specific functions)
             if current_db_type and current_db_type in override_map:
-                for base_name, override_file in override_map[current_db_type].items():
+                for override_file in override_map[current_db_type].values():
                     # Check if we already processed this function (from generic SQL file)
                     # We need to check by qualified name, so we'll parse it first
                     try:
@@ -388,7 +387,7 @@ class ParserOrchestrator:
             # After all Python files are processed, collect from FunctionRegistry
             # Filter functions by file_path to ensure only functions from this project are included
             all_registered_functions = FunctionRegistry.get_all()
-            for function_name, function_data in all_registered_functions.items():
+            for function_data in all_registered_functions.values():
                 function_file_path = function_data.get("function_metadata", {}).get("file_path")
                 if function_file_path and Path(function_file_path).is_relative_to(
                     self.functions_folder
@@ -426,10 +425,9 @@ class ParserOrchestrator:
                     # Check if there's a database override for this function
                     sql_stem = sql_file.stem  # filename without extension
                     override_file = None
-                    if current_db_type and current_db_type in override_map:
-                        if sql_stem in override_map[current_db_type]:
-                            override_file = override_map[current_db_type][sql_stem]
-                            logger.debug(f"Found database override for {sql_stem}: {override_file}")
+                    if current_db_type and sql_stem in override_map.get(current_db_type, {}):
+                        override_file = override_map[current_db_type][sql_stem]
+                        logger.debug(f"Found database override for {sql_stem}: {override_file}")
 
                     # Use override file if available, otherwise use generic SQL file
                     file_to_parse = override_file if override_file else sql_file

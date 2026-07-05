@@ -6,8 +6,9 @@ Supports @test decorator and create_test() function for defining tests in Python
 
 import inspect
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .base import TestRegistry, TestSeverity
 from .python_test import PythonTest

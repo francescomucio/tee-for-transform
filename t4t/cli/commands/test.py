@@ -2,6 +2,7 @@
 Test command implementation.
 """
 
+import contextlib
 from pathlib import Path
 
 import typer
@@ -107,13 +108,11 @@ def cmd_test(
             typer.echo("EXECUTING TESTS")
             typer.echo("=" * 50)
 
-            # Get parsed functions if available
+            # Get parsed functions if available; functions may not be
+            # available, in which case continue with model tests only
             parsed_functions = {}
-            try:
+            with contextlib.suppress(Exception):
                 parsed_functions = ctx.parser.orchestrator.discover_and_parse_functions()
-            except Exception:
-                # Functions may not be available, continue with model tests only
-                pass
 
             # Execute all tests (both models and functions)
             test_results = test_executor.execute_all_tests(

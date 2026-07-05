@@ -6,6 +6,7 @@ These tests require a Snowflake connection. They use credentials from:
 - Or environment variables as fallback
 """
 
+import contextlib
 import json
 import os
 from dataclasses import dataclass
@@ -251,10 +252,8 @@ class TestSnowflakeMaterializationEndToEnd:
 
         yield adapter
 
-        try:
+        with contextlib.suppress(Exception):
             adapter.disconnect()
-        except Exception:
-            pass
 
     @pytest.fixture
     def state_manager(self):
@@ -265,10 +264,8 @@ class TestSnowflakeMaterializationEndToEnd:
         manager = ModelStateManager(state_database_path=temp_state_db)
         yield manager
         manager.close()
-        try:
+        with contextlib.suppress(Exception):
             os.unlink(temp_state_db)
-        except Exception:
-            pass
 
     @pytest.fixture
     def handler(self, adapter, state_manager):
@@ -285,10 +282,8 @@ class TestSnowflakeMaterializationEndToEnd:
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
 
         # Drop table if exists (use qualified name)
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
         # Create source table with initial schema and more records
         # Explicitly cast event_id to INTEGER and event_name to VARCHAR to avoid Snowflake type inference issues
@@ -329,10 +324,8 @@ class TestSnowflakeMaterializationEndToEnd:
         yield
 
         # Cleanup - use qualified name
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -353,10 +346,8 @@ class TestSnowflakeMaterializationEndToEnd:
 
         # Cleanup before test - use qualified name
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
         initial_query = f"SELECT event_id, event_name, event_date FROM {source_table}"
         metadata = self._get_base_incremental_metadata()
@@ -393,10 +384,8 @@ class TestSnowflakeMaterializationEndToEnd:
 
         # Cleanup - use qualified name
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -419,10 +408,8 @@ class TestSnowflakeMaterializationEndToEnd:
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
 
         # Cleanup before test
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
         # Step 1: Create initial table with old schema including 'old_col'
         adapter.execute_query(
@@ -460,10 +447,8 @@ class TestSnowflakeMaterializationEndToEnd:
         assert row_list[1] == 100
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -483,10 +468,8 @@ class TestSnowflakeMaterializationEndToEnd:
         source_table = f"{schema}.source_events"
 
         # Cleanup before test
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         # Step 1: Create initial table with old schema
         adapter.execute_query(
@@ -526,10 +509,8 @@ class TestSnowflakeMaterializationEndToEnd:
         assert rows[2][1] == 300
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -549,10 +530,8 @@ class TestSnowflakeMaterializationEndToEnd:
         source_table = f"{schema}.source_events"
 
         # Cleanup before test
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         # Step 1: Create initial table with old schema
         adapter.execute_query(
@@ -587,10 +566,8 @@ class TestSnowflakeMaterializationEndToEnd:
         assert count >= 0  # At least schema is correct, may have incremental data
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -611,10 +588,8 @@ class TestSnowflakeMaterializationEndToEnd:
 
         # Cleanup before test - use qualified name
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
         initial_query = f"SELECT event_id, event_name, event_date FROM {source_table}"
         metadata = self._get_base_incremental_metadata()
@@ -650,10 +625,8 @@ class TestSnowflakeMaterializationEndToEnd:
         self._verify_table_schema(adapter, table_name, self.BASE_COLUMNS, ["value"])
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -676,10 +649,8 @@ class TestSnowflakeMaterializationEndToEnd:
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
 
         # Cleanup before test
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
         # Step 1: Create initial table
         initial_query = (
@@ -712,10 +683,8 @@ class TestSnowflakeMaterializationEndToEnd:
         assert row_list[1] == 100
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -730,10 +699,8 @@ class TestSnowflakeMaterializationEndToEnd:
         source_table = f"{schema}.source_events"
 
         # Cleanup before test
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         query = f"SELECT event_id, event_name, event_date, value FROM {source_table}"
         metadata = {"schema": []}
@@ -755,10 +722,8 @@ class TestSnowflakeMaterializationEndToEnd:
         assert rows[2][1] == 300
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -773,10 +738,8 @@ class TestSnowflakeMaterializationEndToEnd:
         source_table = f"{schema}.source_events"
 
         # Cleanup before test
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP VIEW IF EXISTS {view_name}")
-        except Exception:
-            pass
 
         query = f"SELECT event_id, event_name, value FROM {source_table} WHERE value > 150"
         metadata = {}
@@ -788,10 +751,8 @@ class TestSnowflakeMaterializationEndToEnd:
         self._verify_table_count(adapter, view_name, 14)  # Only events with value > 150
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP VIEW IF EXISTS {view_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -811,10 +772,8 @@ class TestSnowflakeMaterializationEndToEnd:
         source_table = f"{schema}.source_events"
 
         # Cleanup before test
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
         query = f"SELECT event_id, event_name, event_date, value FROM {source_table}"
         metadata = self._get_base_incremental_metadata()
@@ -838,10 +797,8 @@ class TestSnowflakeMaterializationEndToEnd:
         assert final_count >= initial_count
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -862,10 +819,8 @@ class TestSnowflakeMaterializationEndToEnd:
 
         # Cleanup before test - use qualified name
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
         initial_query = f"SELECT event_id, event_name, event_date FROM {source_table}"
         metadata = self._get_base_incremental_metadata()
@@ -889,10 +844,8 @@ class TestSnowflakeMaterializationEndToEnd:
         self._verify_table_schema(adapter, table_name, self.BASE_COLUMNS)
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass
 
     @pytest.mark.skipif(
         not _has_snowflake_credentials(),
@@ -913,10 +866,8 @@ class TestSnowflakeMaterializationEndToEnd:
 
         # Cleanup before test - use qualified name
         qualified_table_name = adapter.utils.qualify_object_name(table_name)
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {qualified_table_name}")
-        except Exception:
-            pass
 
         initial_query = f"SELECT event_id, event_name, event_date FROM {source_table}"
         metadata = self._get_base_incremental_metadata()
@@ -963,7 +914,5 @@ class TestSnowflakeMaterializationEndToEnd:
         assert row_list[1] == 100
 
         # Cleanup
-        try:
+        with contextlib.suppress(Exception):
             adapter.execute_query(f"DROP TABLE IF EXISTS {table_name}")
-        except Exception:
-            pass

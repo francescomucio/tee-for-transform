@@ -398,18 +398,11 @@ class RelationshipsTest(StandardTest):
 
         target_table = params["to"]
 
-        # Determine source and target columns
-        if "source_fields" in params:
-            source_columns = params["source_fields"]
-        else:
-            # Default: use column_name for single column, or wrap in list
-            source_columns = [column_name]
+        # Determine source columns (default: the tested column)
+        source_columns = params.get("source_fields", [column_name])
 
-        # Get target columns
-        if "field" in params:
-            target_columns = [params["field"]]
-        else:  # "fields" in params
-            target_columns = params["fields"]
+        # Get target columns from "field" (single) or "fields" (list)
+        target_columns = [params["field"]] if "field" in params else params["fields"]
 
         # Validate lengths match
         if len(source_columns) != len(target_columns):

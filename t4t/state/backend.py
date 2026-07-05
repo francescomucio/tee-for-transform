@@ -77,9 +77,7 @@ class LocalStateBackend:
 
         conn = sqlite3.connect(self._db_path)
         try:
-            cur = conn.execute(
-                "SELECT manifest_json FROM runs ORDER BY id DESC LIMIT 1"
-            )
+            cur = conn.execute("SELECT manifest_json FROM runs ORDER BY id DESC LIMIT 1")
             row = cur.fetchone()
             if not row:
                 return None

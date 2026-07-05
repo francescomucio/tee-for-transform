@@ -4,7 +4,6 @@ Unit tests for TestFileDiscovery.
 
 from pathlib import Path
 
-
 from t4t.importer.dbt.parsers import TestFileDiscovery
 
 

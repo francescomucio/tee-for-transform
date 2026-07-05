@@ -4,8 +4,6 @@ t4t Executor
 Handles the complete workflow of parsing and executing SQL models based on project configuration.
 """
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, Any
 
