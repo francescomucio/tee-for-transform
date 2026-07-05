@@ -158,7 +158,7 @@ uv run pytest tests/ -m "not snowflake_e2e"
 
 Add `-v` for verbose output.
 
-**Coverage (default):** `[tool.pytest.ini_options] addopts` in `pyproject.toml` turns on **`--cov=tee`** and HTML output under **`htmlcov/`**. For a **faster** feedback loop, pass **`--no-cov`** (especially with the full suite).
+**Coverage (default):** `[tool.pytest.ini_options] addopts` in `pyproject.toml` turns on **`--cov=t4t`** and HTML output under **`htmlcov/`**. For a **faster** feedback loop, pass **`--no-cov`** (especially with the full suite).
 
 **Combining markers:** For the **leanest** local run (no Snowflake E2E and no tests marked `slow`), use:
 
