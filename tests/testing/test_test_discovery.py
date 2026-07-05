@@ -4,7 +4,6 @@ Unit tests for TestDiscovery class.
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -174,27 +173,49 @@ class TestTestDiscovery:
         assert tests1 is tests2  # Same object
 
     def test_discover_tests_invalid_sql_file(self, temp_dir, caplog):
-        """Test handling of invalid SQL files (should skip gracefully)."""
+        """Test handling of SQL files with unusual content (should still be discovered)."""
         tests_folder = temp_dir / "tests"
         tests_folder.mkdir()
 
         # Create a valid file
         (tests_folder / "valid.sql").write_text("SELECT 1 FROM {{ table_name }}")
 
-        # Create a file that will cause an error when loading
-        # (e.g., permission denied or corrupted)
+        # Create a file with unusual content - SqlTest.__init__ doesn't read the file,
+        # so it will still be discovered. The error would only occur at execution time.
         invalid_file = tests_folder / "invalid.sql"
-        invalid_file.write_text("SELECT 1")
+        invalid_file.write_text("\x00\x01\x02\x03\xff\xfe")
 
-        # Mock SqlTest to raise an error for invalid file
-        with patch("t4t.testing.test_discovery.SqlTest") as mock_sql_test:
-            mock_sql_test.side_effect = Exception("Failed to load")
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_tests()
 
-            discovery = TestDiscovery(temp_dir)
-            discovery.discover_tests()
+        # Both files should be discovered (SqlTest doesn't read content at construction)
+        assert "valid" in tests
+        assert "invalid" in tests
+        assert isinstance(tests["invalid"], SqlTest)
 
-            # Should skip invalid file but continue
-            assert "Failed to load SQL test from" in caplog.text
+    def test_discover_tests_sql_file_read_failure(self, temp_dir, caplog):
+        """Test handling of SQL file read failures (should still be discovered, fail at execution)."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        # Create a valid file
+        (tests_folder / "valid.sql").write_text("SELECT 1 FROM {{ table_name }}")
+
+        # Create a file that can't be read (no permissions)
+        # SqlTest.__init__ doesn't read the file, so it will still be discovered
+        unreadable_file = tests_folder / "unreadable.sql"
+        unreadable_file.write_text("SELECT 1")
+        unreadable_file.chmod(0o000)  # Remove all permissions
+
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_tests()
+
+        # Both files should be discovered (SqlTest doesn't read content at construction)
+        assert "valid" in tests
+        assert "unreadable" in tests
+
+        # Restore permissions so cleanup works
+        unreadable_file.chmod(0o644)
 
     def test_register_discovered_tests(self, temp_dir):
         """Test registering discovered tests with TestRegistry."""
@@ -347,19 +368,22 @@ class TestTestDiscovery:
         assert tests1 is tests2  # Same object
 
     def test_discover_function_tests_invalid_file(self, temp_dir, caplog):
-        """Test handling of invalid function SQL files (should skip gracefully)."""
+        """Test handling of function SQL files with unusual content (should still be discovered)."""
         functions_folder = temp_dir / "tests" / "functions"
         functions_folder.mkdir(parents=True)
 
         (functions_folder / "valid.sql").write_text("SELECT 1")
 
-        with patch("t4t.testing.test_discovery.SqlTest") as mock_sql_test:
-            mock_sql_test.side_effect = Exception("Failed to load")
+        # Create a file with unusual content - SqlTest.__init__ doesn't read the file,
+        # so it will still be discovered. The error would only occur at execution time.
+        (functions_folder / "invalid.sql").write_text("\x00\x01\x02\x03\xff\xfe")
 
-            discovery = TestDiscovery(temp_dir)
-            discovery.discover_function_tests()
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_function_tests()
 
-            assert "Failed to load function SQL test from" in caplog.text
+        # Both files should be discovered
+        assert "valid" in tests
+        assert "invalid" in tests
 
     def test_discover_python_test_files(self, temp_dir):
         """Test discovering Python test files."""
@@ -474,6 +498,7 @@ create_test(name="my_test", sql="SELECT 1 FROM {{ table_name }}")
         assert len(tests) == 1
         assert "my_test" in tests
         from t4t.testing.python_test import PythonTest
+
         assert isinstance(tests["my_test"], PythonTest)
 
     def test_discover_tests_with_python_and_sql_companion(self, temp_dir):
@@ -500,6 +525,7 @@ create_test(name="my_test", sql="SELECT 1 FROM {{ table_name }}")
         assert len(tests) == 1
         assert "my_test" in tests
         from t4t.testing.python_test import PythonTest
+
         assert isinstance(tests["my_test"], PythonTest)
 
     def test_discover_tests_python_file_error_handling(self, temp_dir, caplog):

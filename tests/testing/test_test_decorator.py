@@ -67,18 +67,49 @@ class TestTestDecorator:
 
     def test_test_decorator_without_name_derives_from_function(self, tmp_path):
         """Test @test decorator without explicit name (should derive from function)."""
+        # Create a tests/ subfolder to match the expected project structure
+        import sys
 
-        # The decorator uses inspect to get caller file, which is tricky to mock
-        # Instead, test that it requires explicit name when file path can't be determined
-        # Or test with explicit name (which is the recommended approach)
-        @test_decorator(name="explicit_name", severity="error")
-        def check_something():
-            return "SELECT 1"
+        tests_folder = tmp_path / "tests"
+        tests_folder.mkdir()
+        test_file = tests_folder / "test_check_something.py"
+        # Don't import from t4t.testing in the file content - the module
+        # namespace already has 'test' injected by the discovery process
+        test_file.write_text(
+            """
+@test(severity="error")
+def check_something():
+    return "SELECT 1"
+"""
+        )
 
-        # With explicit name, it should work
-        registered_test = TestRegistry.get("explicit_name")
+        # Execute the file in an isolated module to trigger the decorator
+        import importlib.util
+
+        module_name = f"temp_derive_test_{hash(test_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        module.__file__ = str(test_file.absolute())
+
+        # Import test decorator into the module (as 'test' so the file content works)
+        from t4t.testing.test_decorator import test as test_decorator_func
+
+        test_decorator_func.__test__ = False
+        module.test = test_decorator_func
+
+        with open(test_file) as f:
+            content = f.read()
+        exec(content, module.__dict__)
+
+        # Name should be derived from file and function: {file_stem}__{function_name}
+        # Since the file is in tests/ (not a subfolder), no folder prefix
+        registered_test = TestRegistry.get("test_check_something__check_something")
         assert registered_test is not None
-        assert registered_test.name == "explicit_name"
+        assert registered_test.name == "test_check_something__check_something"
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
 
     def test_test_decorator_empty_sql_raises_error(self):
         """Test that @test decorator raises error for empty SQL."""
@@ -109,6 +140,15 @@ class TestTestDecorator:
             @test_decorator(name="duplicate_test")
             def test2():
                 return "SELECT 2"
+
+    def test_test_decorator_function_exception_raises_error(self):
+        """Test that @test decorator properly handles exceptions from decorated functions."""
+
+        with pytest.raises(TestDecoratorError, match="Failed to execute test function"):
+
+            @test_decorator(name="my_test")
+            def my_test():
+                raise ValueError("Something went wrong in the function")
 
 
 class TestCreateTest:
@@ -265,27 +305,21 @@ class TestDeriveTestName:
         """Test deriving test name with folder and function name."""
         from t4t.testing.test_decorator import _derive_test_name
 
-        result = _derive_test_name(
-            "/project/tests/my_schema/check_minimum_rows.py", "my_function"
-        )
+        result = _derive_test_name("/project/tests/my_schema/check_minimum_rows.py", "my_function")
         assert result == "my_schema__check_minimum_rows__my_function"
 
     def test_derive_test_name_with_folder_no_function(self):
         """Test deriving test name with folder but no function name."""
         from t4t.testing.test_decorator import _derive_test_name
 
-        result = _derive_test_name(
-            "/project/tests/my_schema/check_minimum_rows.py", None
-        )
+        result = _derive_test_name("/project/tests/my_schema/check_minimum_rows.py", None)
         assert result == "my_schema__check_minimum_rows"
 
     def test_derive_test_name_root_folder_with_function(self):
         """Test deriving test name from root tests/ folder with function."""
         from t4t.testing.test_decorator import _derive_test_name
 
-        result = _derive_test_name(
-            "/project/tests/check_minimum_rows.py", "my_function"
-        )
+        result = _derive_test_name("/project/tests/check_minimum_rows.py", "my_function")
         assert result == "check_minimum_rows__my_function"
 
     def test_derive_test_name_root_folder_no_function(self):
@@ -313,9 +347,7 @@ class TestDeriveTestName:
         """Test deriving test name from deeply nested folder."""
         from t4t.testing.test_decorator import _derive_test_name
 
-        result = _derive_test_name(
-            "/project/tests/schema/subfolder/check_test.py", "my_func"
-        )
+        result = _derive_test_name("/project/tests/schema/subfolder/check_test.py", "my_func")
         assert result == "subfolder__check_test__my_func"
 
     def test_derive_test_name_tests_folder_name_edge(self):
