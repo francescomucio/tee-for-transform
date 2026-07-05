@@ -226,9 +226,9 @@ metadata: ModelMetadata = {
 
 ## Code Locations
 
-- **Orchestrator**: `tee/parser/core/orchestrator.py` - `discover_and_parse_models()`
-- **SQL Parser**: `tee/parser/parsers/sql_parser.py` - `parse()`, `_parse_metadata()`
-- **Python Parser**: `tee/parser/parsers/python_parser.py` - `parse()`, `evaluate_model_function()`
-- **File Discovery**: `tee/parser/processing/file_discovery.py`
-- **Companion File Finder**: `tee/parser/shared/file_utils.py` - `find_metadata_file()`
+- **Orchestrator**: `t4t/parser/core/orchestrator.py` - `discover_and_parse_models()`
+- **SQL Parser**: `t4t/parser/parsers/sql_parser.py` - `parse()`, `_parse_metadata()`
+- **Python Parser**: `t4t/parser/parsers/python_parser.py` - `parse()`, `evaluate_model_function()`
+- **File Discovery**: `t4t/parser/processing/file_discovery.py`
+- **Companion File Finder**: `t4t/parser/shared/file_utils.py` - `find_metadata_file()`
 

@@ -88,12 +88,12 @@ def _iter_frames(
 
 def get_caller_file_and_main(max_frames: int = MAX_FRAME_WALK_DEPTH) -> tuple[str | None, bool]:
     """
-    Get caller file path and __main__ status using frame-walking with __tee_file_path__ support.
+    Get caller file path and __main__ status using frame-walking with __t4t_file_path__ support.
 
     This function walks up the frame stack to find the caller's file information,
-    prioritizing __tee_file_path__ (injected by the parser for executed modules) over __file__.
+    prioritizing __t4t_file_path__ (injected by the parser for executed modules) over __file__.
     This is more reliable than get_caller_file_info() when dealing with modules executed
-    by the parser, as it can detect the injected __tee_file_path__ variable.
+    by the parser, as it can detect the injected __t4t_file_path__ variable.
 
     Args:
         max_frames: Maximum number of frames to walk up (default: MAX_FRAME_WALK_DEPTH)
@@ -110,22 +110,22 @@ def get_caller_file_and_main(max_frames: int = MAX_FRAME_WALK_DEPTH) -> tuple[st
     caller_file: str | None = None
     caller_main = False
 
-    # Walk up the frame stack to find the module's __tee_file_path__ or __file__
+    # Walk up the frame stack to find the module's __t4t_file_path__ or __file__
     current_frame = start_frame
     for _ in range(max_frames):
         if current_frame and current_frame.f_back:
             current_frame = current_frame.f_back
             frame_globals = current_frame.f_globals
-            # Check for __tee_file_path__ first (most reliable, injected by parser)
-            if "__tee_file_path__" in frame_globals:
-                caller_file = frame_globals["__tee_file_path__"]
+            # Check for __t4t_file_path__ first (most reliable, injected by parser)
+            if "__t4t_file_path__" in frame_globals:
+                caller_file = frame_globals["__t4t_file_path__"]
                 caller_main = frame_globals.get("__name__") == "__main__"
                 break
             # Fall back to __file__
             if "__file__" in frame_globals:
                 caller_file = frame_globals["__file__"]
                 caller_main = frame_globals.get("__name__") == "__main__"
-                # Don't break here - keep looking for __tee_file_path__ in higher frames
+                # Don't break here - keep looking for __t4t_file_path__ in higher frames
         else:
             break
 

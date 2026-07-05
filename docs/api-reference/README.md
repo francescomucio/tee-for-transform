@@ -18,5 +18,5 @@ For now, please refer to:
 - [Engine API](engine/README.md), [Parser API](parser/README.md), [Adapters API](adapters/README.md) — module maps until full reference exists
 - [CLI Reference](../user-guide/cli-reference.md) — command-line interface
 - [User Guide](../user-guide/overview.md) — concepts and examples
-- Source — docstrings under `tee/`
+- Source — docstrings under `t4t/`
 

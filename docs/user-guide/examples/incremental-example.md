@@ -12,7 +12,7 @@ t_project/
 │       └── incremental_example.py
 ├── data/
 │   ├── t_project.duckdb
-│   └── tee_state.db
+│   └── t4t_state.db
 └── project.toml
 ```
 
@@ -220,7 +220,7 @@ AND updated_at >= '2024-01-01'
 
 ## State Management
 
-t4t automatically tracks the state of incremental models in `t_project/data/tee_state.db`:
+t4t automatically tracks the state of incremental models in `t_project/data/t4t_state.db`:
 
 ```sql
 -- Check model state
@@ -281,10 +281,10 @@ uv run t4t run ./t_project 2>&1 | grep -i "incremental\|merge\|append\|delete"
 
 ```bash
 # Check if state database exists
-ls -la t_project/data/tee_state.db
+ls -la t_project/data/t4t_state.db
 
 # Query state (requires DuckDB CLI)
-duckdb t_project/data/tee_state.db "SELECT * FROM tee_model_state;"
+duckdb t_project/data/t4t_state.db "SELECT * FROM tee_model_state;"
 ```
 
 ## Best Practices

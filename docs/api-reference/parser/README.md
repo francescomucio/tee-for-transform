@@ -10,13 +10,13 @@ Narrative API reference pages are not written yet. The parser is large; start fr
 
 | Area | Python package / module |
 |------|-------------------------|
-| Project discovery & model orchestration | `tee/parser/core/` (e.g. project parser, orchestration) |
-| SQL / Python model builders | `tee/parser/processing/`, `tee/parser/shared/` |
-| Function parsers (SQL/Python) | `tee/parser/parsers/` |
-| Analysis (dependencies, dimensions) | `tee/parser/analysis/` (e.g. dimensional graph) |
-| OTS compile pipeline | `tee/parser/output/ots/` |
-| Lookup SQL generation | `tee/parser/output/lookup_generator.py` |
-| Tests discovery (parser side) | overlaps with `tee/testing/` |
+| Project discovery & model orchestration | `t4t/parser/core/` (e.g. project parser, orchestration) |
+| SQL / Python model builders | `t4t/parser/processing/`, `t4t/parser/shared/` |
+| Function parsers (SQL/Python) | `t4t/parser/parsers/` |
+| Analysis (dependencies, dimensions) | `t4t/parser/analysis/` (e.g. dimensional graph) |
+| OTS compile pipeline | `t4t/parser/output/ots/` |
+| Lookup SQL generation | `t4t/parser/output/lookup_generator.py` |
+| Tests discovery (parser side) | overlaps with `t4t/testing/` |
 
 ## User-facing docs
 

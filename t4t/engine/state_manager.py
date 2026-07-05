@@ -55,7 +55,7 @@ class StateManager:
         if state_database_path:
             self.state_database_path = Path(state_database_path)
         else:
-            self.state_database_path = self.project_folder / "data" / "tee_state.db"
+            self.state_database_path = self.project_folder / "data" / "t4t_state.db"
 
         # Ensure parent directory exists
         self.state_database_path.parent.mkdir(parents=True, exist_ok=True)
