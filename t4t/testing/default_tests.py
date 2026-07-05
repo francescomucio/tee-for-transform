@@ -5,8 +5,6 @@ This module generates additional metadata (tests) for models at runtime
 without mutating the input metadata dict.
 """
 
-from __future__ import annotations
-
 from typing import Any, cast
 
 from t4t.parser.shared.dimension_registry import (

@@ -2,8 +2,6 @@
 Run manifest schema and conversion from executor result dicts.
 """
 
-from __future__ import annotations
-
 import hashlib
 import json
 import uuid

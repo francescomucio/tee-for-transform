@@ -6,7 +6,7 @@ Thank you for your interest in contributing to t4t! This guide will help you get
 
 ### Prerequisites
 
-- **Python 3.14+** - t4t requires Python 3.14 or higher
+- **Python 3.11+** - t4t requires Python 3.11 or higher
 - **uv** - Fast Python package manager (recommended)
 - **Git** - Version control
 

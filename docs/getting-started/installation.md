@@ -4,7 +4,7 @@ The **supported way to use t4t today** is to install from a clone of the GitHub 
 
 ## Prerequisites
 
-- Python 3.14+ (see `requires-python` in the repository `pyproject.toml`)
+- Python 3.11+ (see `requires-python` in the repository `pyproject.toml`)
 - [uv](https://github.com/astral-sh/uv) (recommended)
 
 ## Install from GitHub (recommended)

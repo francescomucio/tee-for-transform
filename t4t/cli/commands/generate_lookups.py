@@ -2,8 +2,6 @@
 CLI command: generate lookup tables.
 """
 
-from __future__ import annotations
-
 
 import typer
 
