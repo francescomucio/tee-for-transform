@@ -21,12 +21,15 @@ class DatabaseConfigManager:
         self.project_root = Path(project_root) if project_root else Path.cwd()
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def load_config(self, config_name: str = "default") -> AdapterConfig:
+    def load_config(
+        self, config_name: str = "default", env_name: str | None = None
+    ) -> AdapterConfig:
         """
         Load database configuration from pyproject.toml and environment variables.
 
         Args:
             config_name: Name of the configuration to load (default: "default")
+            env_name: Optional environment name to load from [environments.<name>]
 
         Returns:
             AdapterConfig object with merged configuration
@@ -35,7 +38,7 @@ class DatabaseConfigManager:
             ValueError: If configuration is invalid or missing
         """
         # Load from pyproject.toml
-        toml_config = self._load_toml_config(config_name)
+        toml_config = self._load_toml_config(config_name, env_name)
 
         # Load from environment variables
         env_config = self._load_env_config()
@@ -46,8 +49,16 @@ class DatabaseConfigManager:
         # Validate and create AdapterConfig
         return self._create_adapter_config(merged_config)
 
-    def _load_toml_config(self, config_name: str) -> dict[str, Any]:
-        """Load configuration from pyproject.toml or project.toml."""
+    def _load_toml_config(self, config_name: str, env_name: str | None = None) -> dict[str, Any]:
+        """Load configuration from pyproject.toml or project.toml.
+
+        Args:
+            config_name: Name of the database configuration (for legacy tool.t4t.databases)
+            env_name: Optional environment name to load from [environments.<name>]
+
+        Returns:
+            Dictionary containing the merged configuration
+        """
         # Try pyproject.toml first
         toml_file = self.project_root / "pyproject.toml"
         if not toml_file.exists():
@@ -65,9 +76,42 @@ class DatabaseConfigManager:
             t4t_config = data.get("tool", {}).get("t4t", {})
 
             # Start with flags if they exist
-            config = {}
+            config: dict[str, Any] = {}
             if "flags" in data:
                 config["extra"] = {"flags": data["flags"]}
+
+            # If an env_name is specified, look in [environments.<env_name>]
+            if env_name is not None:
+                environments = data.get("environments", {})
+                if not isinstance(environments, dict) or env_name not in environments:
+                    available = (
+                        ", ".join(sorted(environments.keys()))
+                        if isinstance(environments, dict)
+                        else ""
+                    )
+                    msg = f"Unknown environment '{env_name}'"
+                    if available:
+                        msg += f". Available environments: {available}"
+                    raise ValueError(msg)
+
+                env_section = environments[env_name]
+                if not isinstance(env_section, dict):
+                    raise ValueError(f"Environment '{env_name}' must be a table section")
+
+                # Load connection from [environments.<name>].connection
+                env_connection = env_section.get("connection", {})
+                if isinstance(env_connection, dict):
+                    config.update(env_connection)
+
+                # Load variables from [environments.<name>].variables
+                env_variables = env_section.get("variables", {})
+                if isinstance(env_variables, dict):
+                    config["_env_variables"] = env_variables
+
+                # Load protected flag
+                config["_protected"] = env_section.get("protected", False)
+
+                return config
 
             # Check for single database config in tool.t4t.database
             if "database" in t4t_config:
@@ -89,6 +133,8 @@ class DatabaseConfigManager:
             self.logger.debug(f"No database configuration '{config_name}' found in TOML file")
             return {}
 
+        except ValueError:
+            raise
         except Exception as e:
             self.logger.warning(f"Could not read pyproject.toml: {e}")
             return {}
@@ -169,7 +215,9 @@ class DatabaseConfigManager:
 
 
 def load_database_config(
-    config_name: str = "default", project_root: str | None = None
+    config_name: str = "default",
+    project_root: str | None = None,
+    env_name: str | None = None,
 ) -> AdapterConfig:
     """
     Convenience function to load database configuration.
@@ -177,9 +225,10 @@ def load_database_config(
     Args:
         config_name: Name of the configuration to load
         project_root: Project root directory (defaults to current directory)
+        env_name: Optional environment name to load from [environments.<name>]
 
     Returns:
         AdapterConfig object
     """
     manager = DatabaseConfigManager(project_root)
-    return manager.load_config(config_name)
+    return manager.load_config(config_name, env_name)

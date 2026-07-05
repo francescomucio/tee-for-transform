@@ -24,6 +24,7 @@ class CommandContext:
         verbose: bool = False,
         select: list[str] | None = None,
         exclude: list[str] | None = None,
+        env: str | None = None,
     ) -> None:
         """
         Initialize command context from parameters.
@@ -34,12 +35,16 @@ class CommandContext:
             verbose: Enable verbose output
             select: Selection patterns
             exclude: Exclusion patterns
+            env: Optional environment name to use
         """
         # Parse variables if provided
         self.vars = parse_vars(vars)
 
+        # Store environment name
+        self.env = env
+
         # Load project configuration
-        self.config = load_project_config(project_folder, self.vars)
+        self.config = load_project_config(project_folder, self.vars, self.env)
 
         # Set up logging
         self.verbose = verbose
