@@ -106,6 +106,7 @@ nav:
     - development/architecture.md
     - parser-model-flow.md
     - development/contributing.md
+    - development/code-review.md
     - development/migration-guides/index.md
 
 extra:
