@@ -10,7 +10,7 @@ import pytest
 
 from t4t.testing.base import TestRegistry
 from t4t.testing.sql_test import SqlTest
-from t4t.testing.test_discovery import TestDiscovery
+from t4t.testing.test_discovery import TestDiscovery, TestDiscoveryError
 
 
 class TestTestDiscovery:
@@ -261,3 +261,262 @@ class TestTestDiscovery:
         # Verify SQL content includes the emoji
         content = tests["test"]._load_sql_content()
         assert "🎉" in content or "émojis" in content
+
+    def test_discover_function_tests_no_folder(self, temp_dir):
+        """Test discover_function_tests when tests/functions/ folder doesn't exist."""
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_function_tests()
+
+        assert tests == {}
+
+    def test_discover_function_tests_empty_folder(self, temp_dir):
+        """Test discover_function_tests when tests/functions/ folder is empty."""
+        functions_folder = temp_dir / "tests" / "functions"
+        functions_folder.mkdir(parents=True)
+
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_function_tests()
+
+        assert tests == {}
+
+    def test_discover_function_tests_single_file(self, temp_dir):
+        """Test discovering a single function SQL test file."""
+        functions_folder = temp_dir / "tests" / "functions"
+        functions_folder.mkdir(parents=True)
+
+        sql_file = functions_folder / "calculate_percentage_test.sql"
+        sql_file.write_text("SELECT 1")
+
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_function_tests()
+
+        assert len(tests) == 1
+        assert "calculate_percentage_test" in tests
+        assert isinstance(tests["calculate_percentage_test"], SqlTest)
+        assert tests["calculate_percentage_test"].sql_file_path == sql_file
+
+    def test_discover_function_tests_multiple_files(self, temp_dir):
+        """Test discovering multiple function SQL test files."""
+        functions_folder = temp_dir / "tests" / "functions"
+        functions_folder.mkdir(parents=True)
+
+        (functions_folder / "test1.sql").write_text("SELECT 1")
+        (functions_folder / "test2.sql").write_text("SELECT 2")
+
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_function_tests()
+
+        assert len(tests) == 2
+        assert "test1" in tests
+        assert "test2" in tests
+
+    def test_discover_function_tests_duplicate_names(self, temp_dir, caplog):
+        """Test handling duplicate function test names."""
+        functions_folder = temp_dir / "tests" / "functions"
+        functions_folder.mkdir(parents=True)
+
+        subfolder = functions_folder / "subfolder"
+        subfolder.mkdir()
+
+        (functions_folder / "my_test.sql").write_text("SELECT 1")
+        (subfolder / "my_test.sql").write_text("SELECT 2")
+
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_function_tests()
+
+        assert len(tests) == 1
+        assert "my_test" in tests
+        assert "Duplicate function test name" in caplog.text
+
+    def test_discover_function_tests_caching(self, temp_dir):
+        """Test that discovered function tests are cached."""
+        functions_folder = temp_dir / "tests" / "functions"
+        functions_folder.mkdir(parents=True)
+        (functions_folder / "test.sql").write_text("SELECT 1")
+
+        discovery = TestDiscovery(temp_dir)
+        tests1 = discovery.discover_function_tests()
+
+        # Add another file
+        (functions_folder / "test2.sql").write_text("SELECT 2")
+
+        # Should return cached results
+        tests2 = discovery.discover_function_tests()
+
+        assert len(tests2) == 1  # Still only 1, not 2
+        assert tests1 is tests2  # Same object
+
+    def test_discover_function_tests_invalid_file(self, temp_dir, caplog):
+        """Test handling of invalid function SQL files (should skip gracefully)."""
+        functions_folder = temp_dir / "tests" / "functions"
+        functions_folder.mkdir(parents=True)
+
+        (functions_folder / "valid.sql").write_text("SELECT 1")
+
+        with patch("t4t.testing.test_discovery.SqlTest") as mock_sql_test:
+            mock_sql_test.side_effect = Exception("Failed to load")
+
+            discovery = TestDiscovery(temp_dir)
+            discovery.discover_function_tests()
+
+            assert "Failed to load function SQL test from" in caplog.text
+
+    def test_discover_python_test_files(self, temp_dir):
+        """Test discovering Python test files."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        (tests_folder / "test1.py").write_text("print('hello')")
+        (tests_folder / "test2.py").write_text("print('world')")
+
+        discovery = TestDiscovery(temp_dir)
+        python_files = discovery._discover_python_test_files()
+
+        assert len(python_files) == 2
+        assert any(f.name == "test1.py" for f in python_files)
+        assert any(f.name == "test2.py" for f in python_files)
+
+    def test_discover_python_test_files_no_folder(self, temp_dir):
+        """Test discovering Python test files when tests/ folder doesn't exist."""
+        discovery = TestDiscovery(temp_dir)
+        python_files = discovery._discover_python_test_files()
+
+        assert python_files == []
+
+    def test_discover_python_test_files_excludes_functions(self, temp_dir):
+        """Test that Python files in tests/functions/ are excluded."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+        functions_folder = temp_dir / "tests" / "functions"
+        functions_folder.mkdir()
+
+        (tests_folder / "test1.py").write_text("print('hello')")
+        (functions_folder / "func_test.py").write_text("print('function')")
+
+        discovery = TestDiscovery(temp_dir)
+        python_files = discovery._discover_python_test_files()
+
+        assert len(python_files) == 1
+        assert python_files[0].name == "test1.py"
+
+    def test_execute_python_test_file(self, temp_dir):
+        """Test executing a Python test file."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        py_file.write_text(
+            """
+from t4t.testing import create_test
+create_test(name="my_test", sql="SELECT 1")
+"""
+        )
+
+        discovery = TestDiscovery(temp_dir)
+        discovery._execute_python_test_file(py_file)
+
+        registered_test = TestRegistry.get("my_test")
+        assert registered_test is not None
+        assert registered_test.name == "my_test"
+
+    def test_execute_python_test_file_with_test_decorator(self, temp_dir):
+        """Test executing a Python test file with @test decorator."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        py_file.write_text(
+            """
+from t4t.testing import test
+
+@test(name="my_test", severity="error")
+def my_test():
+    return "SELECT 1"
+"""
+        )
+
+        discovery = TestDiscovery(temp_dir)
+        discovery._execute_python_test_file(py_file)
+
+        registered_test = TestRegistry.get("my_test")
+        assert registered_test is not None
+        assert registered_test.name == "my_test"
+
+    def test_execute_python_test_file_error_raises_discovery_error(self, temp_dir):
+        """Test that executing a broken Python file raises TestDiscoveryError."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        py_file.write_text("raise ValueError('broken')")
+
+        discovery = TestDiscovery(temp_dir)
+
+        with pytest.raises(TestDiscoveryError, match="Failed to execute Python test file"):
+            discovery._execute_python_test_file(py_file)
+
+    def test_discover_tests_with_python_file(self, temp_dir):
+        """Test discovering tests with a Python file that registers tests."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "my_test.py"
+        py_file.write_text(
+            """
+from t4t.testing import create_test
+create_test(name="my_test", sql="SELECT 1 FROM {{ table_name }}")
+"""
+        )
+
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_tests()
+
+        assert len(tests) == 1
+        assert "my_test" in tests
+        from t4t.testing.python_test import PythonTest
+        assert isinstance(tests["my_test"], PythonTest)
+
+    def test_discover_tests_with_python_and_sql_companion(self, temp_dir):
+        """Test discovering tests with companion .py and .sql files (SqlTestMetadata pattern)."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        # Create companion .py and .sql files
+        py_file = tests_folder / "my_test.py"
+        py_file.write_text(
+            """
+from t4t.testing import create_test
+create_test(name="my_test", sql="SELECT 1 FROM {{ table_name }}")
+"""
+        )
+
+        sql_file = tests_folder / "my_test.sql"
+        sql_file.write_text("SELECT 1 FROM {{ table_name }}")
+
+        discovery = TestDiscovery(temp_dir)
+        tests = discovery.discover_tests()
+
+        # Should only have the Python test (SQL companion is skipped)
+        assert len(tests) == 1
+        assert "my_test" in tests
+        from t4t.testing.python_test import PythonTest
+        assert isinstance(tests["my_test"], PythonTest)
+
+    def test_discover_tests_python_file_error_handling(self, temp_dir, caplog):
+        """Test that errors in Python files are handled during discovery."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "broken.py"
+        py_file.write_text("raise ValueError('broken')")
+
+        discovery = TestDiscovery(temp_dir)
+
+        with pytest.raises(TestDiscoveryError, match="Failed to execute Python test file"):
+            discovery.discover_tests()
+
+    def test_discovery_error_exception(self):
+        """Test that TestDiscoveryError is a proper exception."""
+        error = TestDiscoveryError("test error")
+        assert isinstance(error, Exception)
+        assert str(error) == "test error"

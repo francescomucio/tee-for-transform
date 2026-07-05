@@ -201,3 +201,126 @@ class TestCreateTest:
         assert TestRegistry.get("check_users_not_empty") is not None
         assert TestRegistry.get("check_orders_not_empty") is not None
         assert TestRegistry.get("check_products_not_empty") is not None
+
+    def test_create_test_with_severity_enum(self):
+        """Test create_test() with TestSeverity enum directly."""
+        create_test(name="my_test", sql="SELECT 1", severity=TestSeverity.WARNING)
+
+        registered_test = TestRegistry.get("my_test")
+        assert registered_test.severity == TestSeverity.WARNING
+
+    def test_create_test_with_metadata_kwargs(self):
+        """Test create_test() with additional metadata kwargs."""
+        create_test(
+            name="my_test",
+            sql="SELECT 1",
+            severity="error",
+            extra_param="value",
+        )
+
+        registered_test = TestRegistry.get("my_test")
+        assert registered_test is not None
+        assert registered_test.name == "my_test"
+
+    def test_create_test_whitespace_only_sql_raises_error(self):
+        """Test that create_test() raises error for whitespace-only SQL."""
+        with pytest.raises(TestDecoratorError, match="sql parameter is required"):
+            create_test(name="my_test", sql="   ")
+
+    def test_create_test_none_name_raises_error(self):
+        """Test that create_test() raises error when name is None."""
+        with pytest.raises(TestDecoratorError, match="name parameter is required"):
+            create_test(name=None, sql="SELECT 1")  # type: ignore[arg-type]
+
+    def test_create_test_none_sql_raises_error(self):
+        """Test that create_test() raises error when sql is None."""
+        with pytest.raises(TestDecoratorError, match="sql parameter is required"):
+            create_test(name="my_test", sql=None)  # type: ignore[arg-type]
+
+    def test_create_test_with_tags_none(self):
+        """Test create_test() with tags=None."""
+        create_test(name="my_test", sql="SELECT 1", tags=None)
+
+        registered_test = TestRegistry.get("my_test")
+        assert registered_test.tags == []
+
+    def test_create_test_with_description_none(self):
+        """Test create_test() with description=None."""
+        create_test(name="my_test", sql="SELECT 1", description=None)
+
+        registered_test = TestRegistry.get("my_test")
+        assert registered_test.description is None
+
+    def test_test_decorator_error_exception(self):
+        """Test that TestDecoratorError is a proper exception."""
+        error = TestDecoratorError("test error")
+        assert isinstance(error, Exception)
+        assert str(error) == "test error"
+
+
+class TestDeriveTestName:
+    """Test cases for _derive_test_name function."""
+
+    def test_derive_test_name_with_folder_and_function(self):
+        """Test deriving test name with folder and function name."""
+        from t4t.testing.test_decorator import _derive_test_name
+
+        result = _derive_test_name(
+            "/project/tests/my_schema/check_minimum_rows.py", "my_function"
+        )
+        assert result == "my_schema__check_minimum_rows__my_function"
+
+    def test_derive_test_name_with_folder_no_function(self):
+        """Test deriving test name with folder but no function name."""
+        from t4t.testing.test_decorator import _derive_test_name
+
+        result = _derive_test_name(
+            "/project/tests/my_schema/check_minimum_rows.py", None
+        )
+        assert result == "my_schema__check_minimum_rows"
+
+    def test_derive_test_name_root_folder_with_function(self):
+        """Test deriving test name from root tests/ folder with function."""
+        from t4t.testing.test_decorator import _derive_test_name
+
+        result = _derive_test_name(
+            "/project/tests/check_minimum_rows.py", "my_function"
+        )
+        assert result == "check_minimum_rows__my_function"
+
+    def test_derive_test_name_root_folder_no_function(self):
+        """Test deriving test name from root tests/ folder without function."""
+        from t4t.testing.test_decorator import _derive_test_name
+
+        result = _derive_test_name("/project/tests/check_minimum_rows.py", None)
+        assert result == "check_minimum_rows"
+
+    def test_derive_test_name_no_file_path_with_function(self):
+        """Test deriving test name with no file path but with function name."""
+        from t4t.testing.test_decorator import _derive_test_name
+
+        result = _derive_test_name(None, "my_function")
+        assert result == "my_function"
+
+    def test_derive_test_name_no_file_path_no_function_raises_error(self):
+        """Test that _derive_test_name raises error with no file path and no function."""
+        from t4t.testing.test_decorator import _derive_test_name
+
+        with pytest.raises(TestDecoratorError, match="Cannot derive test name"):
+            _derive_test_name(None, None)
+
+    def test_derive_test_name_deeply_nested_folder(self):
+        """Test deriving test name from deeply nested folder."""
+        from t4t.testing.test_decorator import _derive_test_name
+
+        result = _derive_test_name(
+            "/project/tests/schema/subfolder/check_test.py", "my_func"
+        )
+        assert result == "subfolder__check_test__my_func"
+
+    def test_derive_test_name_tests_folder_name_edge(self):
+        """Test deriving test name when parent folder is 'tests'."""
+        from t4t.testing.test_decorator import _derive_test_name
+
+        result = _derive_test_name("/project/tests/check_test.py", "my_func")
+        assert result == "check_test__my_func"
