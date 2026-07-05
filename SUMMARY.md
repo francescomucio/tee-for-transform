@@ -14,8 +14,8 @@
 
 ### 🌐 Environment Variables
 - **Prefix rename**: `TEE_DB_*` → `T4T_DB_*` 
-- **Backward compatibility**: Both prefixes supported (T4T_ takes priority)
-- **Config sections**: `[tool.tee.*]` → `[tool.t4t.*]` with legacy fallback
+- **Backward compatibility**: **REMOVED** — only `T4T_DB_*` is supported (pre-release cleanup)
+- **Config sections**: `[tool.tee.*]` → `[tool.t4t.*]` — no fallback, only `[tool.t4t.*]`
 
 ### 📚 Documentation
 - Updated README.md and all documentation files

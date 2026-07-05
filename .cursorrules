@@ -14,13 +14,13 @@ This is a Python 3.14 project for managing SQL data transformations, managed wit
 
 ## File Structure
 - `pyproject.toml` - Project configuration and dependencies (requires Python >=3.14)
-- `tee/` - Main package containing all modules
-  - `tee/cli/` - CLI command implementations (`tcli` commands)
-  - `tee/parser/` - SQL parsing, dependency analysis, and graph building
-  - `tee/engine/` - Execution engine for running SQL models
-  - `tee/testing/` - Data quality testing framework
-  - `tee/adapters/` - Database adapter implementations
-  - `tee/executor.py` - High-level execution functions
+- `t4t/` - Main package containing all modules
+  - `t4t/cli/` - CLI command implementations (`tcli` commands)
+  - `t4t/parser/` - SQL parsing, dependency analysis, and graph building
+  - `t4t/engine/` - Execution engine for running SQL models
+  - `t4t/testing/` - Data quality testing framework
+  - `t4t/adapters/` - Database adapter implementations
+  - `t4t/executor.py` - High-level execution functions
 - `tests/` - Test files (use `uv run pytest`)
 - `examples/` - Example projects
 - `docs/` - Documentation (MkDocs)
@@ -68,7 +68,7 @@ This is a Python 3.14 project for managing SQL data transformations, managed wit
 - Keep main logic in `main.py` or appropriate modules
 - Create separate modules for different functionality
 - Use `__init__.py` files for package structure
-- Follow the tee module structure: `tee/parser/` and `tee/engine/`
+- Follow the t4t module structure: `t4t/parser/` and `t4t/engine/`
 
 ## Common Commands
 ```bash
@@ -127,15 +127,15 @@ uv pip list
 - The project uses "t4t" as the shorthand name (not "TEE" or "Tee")
 
 ## Module Structure
-- `tee/` - Main package
-  - `tee/cli/` - CLI commands (`run`, `build`, `test`, `compile`, `debug`)
-  - `tee/parser/` - SQL parsing, dependency graph, and analysis
-  - `tee/engine/` - Execution engine for running SQL models
-  - `tee/testing/` - Data quality testing framework (standard tests, SQL tests)
-  - `tee/adapters/` - Database adapters (DuckDB, Snowflake, PostgreSQL, BigQuery)
-  - `tee/executor.py` - High-level execution functions (`execute_models`, `build_models`)
-  - `tee/executor_helpers/` - Helper functions for build command
-- `tests/` - All test files (mirror the `tee/` structure)
+- `t4t/` - Main package
+  - `t4t/cli/` - CLI commands (`run`, `build`, `test`, `compile`, `debug`)
+  - `t4t/parser/` - SQL parsing, dependency graph, and analysis
+  - `t4t/engine/` - Execution engine for running SQL models
+  - `t4t/testing/` - Data quality testing framework (standard tests, SQL tests)
+  - `t4t/adapters/` - Database adapters (DuckDB, Snowflake, PostgreSQL, BigQuery)
+  - `t4t/executor.py` - High-level execution functions (`execute_models`, `build_models`)
+  - `t4t/executor_helpers/` - Helper functions for build command
+- `tests/` - All test files (mirror the `t4t/` structure)
 - `examples/` - Example projects (e.g., `t_project/`)
 
 ## Error Handling
@@ -145,7 +145,7 @@ uv pip list
 - Test error conditions
 
 ## Code Style
-- Use absolute imports: `from tee.module import function` (not `from ..module`)
+- Use absolute imports: `from t4t.module import function` (not `from ..module`)
 - No `from __future__ import annotations` needed (Python 3.14 default)
 - Use `print()` for user-facing CLI output
 - Use `logging` for internal/debug messages

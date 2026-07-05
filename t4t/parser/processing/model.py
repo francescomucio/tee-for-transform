@@ -126,27 +126,27 @@ def model(
                 raise ModelDecoratorError(f"Invalid table name: {final_table_name}")
 
             # Get caller file path for registration
-            # First try to get from __tee_file_path__ (injected by parser for executed modules)
+            # First try to get from __t4t_file_path__ (injected by parser for executed modules)
             # Otherwise fall back to frame inspection
             import os
 
             frame = inspect.currentframe()
             caller_file = None
 
-            # Walk up the frame stack to find the module's __tee_file_path__ or __file__
+            # Walk up the frame stack to find the module's __t4t_file_path__ or __file__
             current_frame = frame
             for _ in range(5):  # Go up to 5 frames to find the module
                 if current_frame and current_frame.f_back:
                     current_frame = current_frame.f_back
                     frame_globals = current_frame.f_globals
-                    # Check for __tee_file_path__ first (most reliable)
-                    if "__tee_file_path__" in frame_globals:
-                        caller_file = frame_globals["__tee_file_path__"]
+                    # Check for __t4t_file_path__ first (most reliable)
+                    if "__t4t_file_path__" in frame_globals:
+                        caller_file = frame_globals["__t4t_file_path__"]
                         break
                     # Fall back to __file__
                     if "__file__" in frame_globals:
                         caller_file = frame_globals["__file__"]
-                        # Don't break here - keep looking for __tee_file_path__ in higher frames
+                        # Don't break here - keep looking for __t4t_file_path__ in higher frames
                 else:
                     break
 
@@ -278,25 +278,25 @@ def create_model(
         return
 
     # Get caller file path
-    # First try to get from __tee_file_path__ (injected by parser for executed modules)
+    # First try to get from __t4t_file_path__ (injected by parser for executed modules)
     # Otherwise fall back to frame inspection
     frame = inspect.currentframe()
     caller_file = None
 
-    # Walk up the frame stack to find the module's __tee_file_path__ or __file__
+    # Walk up the frame stack to find the module's __t4t_file_path__ or __file__
     current_frame = frame
     for _ in range(4):  # Go up to 4 frames to find the module
         if current_frame and current_frame.f_back:
             current_frame = current_frame.f_back
             frame_globals = current_frame.f_globals
-            # Check for __tee_file_path__ first (most reliable)
-            if "__tee_file_path__" in frame_globals:
-                caller_file = frame_globals["__tee_file_path__"]
+            # Check for __t4t_file_path__ first (most reliable)
+            if "__t4t_file_path__" in frame_globals:
+                caller_file = frame_globals["__t4t_file_path__"]
                 break
             # Fall back to __file__
             if "__file__" in frame_globals:
                 caller_file = frame_globals["__file__"]
-                # Don't break here - keep looking for __tee_file_path__ in higher frames
+                # Don't break here - keep looking for __t4t_file_path__ in higher frames
         else:
             break
 

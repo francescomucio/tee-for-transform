@@ -116,7 +116,7 @@ source_dialect = "postgresql"
 ### Environment Variables
 
 ```bash
-export TEE_DB_SOURCE_DIALECT=postgresql
+export T4T_DB_SOURCE_DIALECT=postgresql
 ```
 
 ### Programmatic Configuration

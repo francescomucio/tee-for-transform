@@ -1,7 +1,7 @@
 """
 OTS Transformer - Transforms parsed models to OTS Module format.
 
-This module implements the transformation from tee's internal parsed model format
+This module implements the transformation from t4t's internal parsed model format
 to the Open Transformation Specification (OTS) Module format.
 """
 

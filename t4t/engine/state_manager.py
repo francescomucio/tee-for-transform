@@ -1,5 +1,5 @@
 """
-Centralized state management for TEE models.
+Centralized state management for t4t models.
 
 This module provides a unified interface for managing model state across
 both parsing and execution phases, ensuring consistent hash computation
@@ -36,7 +36,7 @@ class ModelState:
 
 class StateManager:
     """
-    Centralized state management for TEE models.
+    Centralized state management for t4t models.
 
     This class provides a unified interface for managing model state across
     both parsing and execution phases, ensuring consistent hash computation

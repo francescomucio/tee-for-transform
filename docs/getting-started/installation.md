@@ -1,6 +1,6 @@
 # Installation
 
-The **supported way to use t4t today** is to install from a clone of the GitHub repository (there is no published PyPI release aligned with these docs yet). The Python package name in the repo is `tee`; the CLI entry point is `t4t`.
+The **supported way to use t4t today** is to install from a clone of the GitHub repository (there is no published PyPI release aligned with these docs yet). The CLI entry point is `t4t`.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ uv run t4t --help
 
 ## PyPI / `pip install` (not available yet)
 
-When a release is published to PyPI, installation may look like `pip install tee` or `uv add tee`. Until then, use the clone workflow above.
+When a release is published to PyPI, installation may look like `pip install t4t` or `uv add t4t`. Until then, use the clone workflow above.
 
 ## Database drivers
 
@@ -40,7 +40,6 @@ Core dependencies (including DuckDB and the Snowflake connector) are already lis
 ## Verify installation
 
 ```python
-import tee
 from t4t.adapters import list_available_adapters
 
 print("t4t import OK")
