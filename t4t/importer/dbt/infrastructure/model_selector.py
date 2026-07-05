@@ -179,7 +179,7 @@ class DbtModelSelector:
         # Excluded when matching a name pattern or a tag pattern
         if self.exclude_names and self._matches_name(model_name, self.exclude_names):
             return True
-        if self.exclude_tags and self._matches_tags(tags, self.exclude_tags):
+        if self.exclude_tags and self._matches_tags(tags, self.exclude_tags):  # noqa: SIM103
             return True
         return False
 
