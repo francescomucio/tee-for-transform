@@ -61,14 +61,9 @@ Pushing a tag `v*.*.*` triggers the [release workflow](../.github/workflows/rele
 
 ## Required Secrets
 
-The release workflow requires the following GitHub secrets to be configured in the repository:
+The release workflow uses **trusted publishing (OIDC)** via `pypa/gh-action-pypi-publish` with `attestations: false`. No PyPI token is needed — the workflow authenticates directly through GitHub OIDC.
 
-- **`PYPI_TOKEN`**: A PyPI API token with upload permissions for the `t4t` project.
-  - Generate at: https://pypi.org/manage/account/token/
-  - Add to repository: Settings → Secrets and variables → Actions → New repository secret
-  - The token is used by the `pypa/gh-action-pypi-publish` action.
-
-> **Note**: The workflow uses trusted publishing (OIDC) by default, which does not require a token. If you prefer token-based publishing, set `attestations: true` and ensure `PYPI_TOKEN` is configured.
+No repository secrets are required for publishing. If you need to configure trusted publishing for a new PyPI project, follow the [PyPI trusted publishing guide](https://docs.pypi.org/trusted-publishers/).
 
 ## Hotfix Releases
 
