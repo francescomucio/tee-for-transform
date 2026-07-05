@@ -10,6 +10,8 @@ A Python framework for SQL data transformations with **DuckDB** (including **Mot
 
 ## 🚀 Quick Start
 
+> **New here?** Start with the [5-Minute Quickstart](docs/getting-started/quickstart.md) — it takes under 5 minutes and uses DuckDB (no external database needed).
+
 ```bash
 # Install t4t (DuckDB included — no extra drivers needed)
 pip install t4t
