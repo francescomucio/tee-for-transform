@@ -62,4 +62,6 @@ OUTPUT_FILES = {
     "dimensional_graph": "dimensional_graph.json",
     "dimension_registry": "dimension_registry.json",
     "markdown_report": "dependency_report.md",
+    "last_run": "last_run.json",
+    "runs_db": "runs.sqlite",
 }

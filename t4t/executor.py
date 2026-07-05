@@ -12,12 +12,47 @@ from t4t.engine import ModelExecutor
 from t4t.executor_helpers import build_helpers, shared_helpers
 from t4t.parser import ProjectParser
 from t4t.parser.shared.exceptions import ParserError
+from t4t.state import LocalStateBackend, results_to_manifest, utc_now_iso
 
 if TYPE_CHECKING:
     from t4t.adapters import AdapterConfig
 
 # Constants for output formatting
 SECTION_SEPARATOR = "=" * 50
+
+
+def _try_persist_run_manifest(
+    project_folder: str,
+    results: dict[str, Any],
+    command: str,
+    started_at: str,
+    *,
+    project_config: dict[str, Any] | None = None,
+    variables: dict[str, Any] | None = None,
+    function_names: set[str] | None = None,
+    cli_args: dict[str, Any] | None = None,
+) -> None:
+    """Write last_run.json and append to runs.sqlite; failures are logged only."""
+    logger = logging.getLogger(__name__)
+    try:
+        from pathlib import Path
+
+        finished_at = utc_now_iso()
+        manifest = results_to_manifest(
+            results,
+            command,  # type: ignore[arg-type]
+            str(Path(project_folder).resolve()),
+            started_at,
+            finished_at,
+            project_config=project_config,
+            variables=variables,
+            cli_args=cli_args,
+            function_names=function_names,
+        )
+        backend = LocalStateBackend(Path(project_folder) / "output")
+        backend.append_run(manifest)
+    except Exception as e:
+        logger.warning("Could not persist run manifest: %s", e)
 
 
 def execute_models(
@@ -72,6 +107,8 @@ def execute_models(
         graph, execution_order, parsed_models = shared_helpers.validate_compile_results(
             compile_results
         )
+        run_started_at = utc_now_iso()
+        fnames = set((compile_results.get("parsed_functions") or {}).keys())
 
     except (CompilationError, ParserError) as e:
         logger.error(f"Compilation failed: {e}")
@@ -87,7 +124,17 @@ def execute_models(
         print(SECTION_SEPARATOR)
         print("\n✅ No models to execute")
         print("   Project compiled successfully with 0 models")
-        return shared_helpers.create_empty_execution_results(graph)
+        empty = shared_helpers.create_empty_execution_results(graph)
+        _try_persist_run_manifest(
+            project_folder,
+            empty,
+            "run",
+            run_started_at,
+            project_config=project_config,
+            variables=variables,
+            function_names=fnames or None,
+        )
+        return empty
 
     # Create parser instance for model execution (needed by ModelExecutor)
     parser = ProjectParser(project_folder, connection_config, variables, project_config)
@@ -113,9 +160,19 @@ def execute_models(
             print(f"Filtered execution order: {' -> '.join(filtered_execution_order)}")
         else:
             print("⚠️  No models matched the selection criteria!")
-            return shared_helpers.create_empty_execution_results(
+            empty = shared_helpers.create_empty_execution_results(
                 graph, warnings=["No models matched the selection criteria"]
             )
+            _try_persist_run_manifest(
+                project_folder,
+                empty,
+                "run",
+                run_started_at,
+                project_config=project_config,
+                variables=variables,
+                function_names=fnames or None,
+            )
+            return empty
 
     # Step 3: Execute models
     print(f"\n{SECTION_SEPARATOR}")
@@ -186,6 +243,15 @@ def execute_models(
             "dependency_graph": graph,
         }
 
+        _try_persist_run_manifest(
+            project_folder,
+            results,
+            "run",
+            run_started_at,
+            project_config=project_config,
+            variables=variables,
+            function_names=fnames or None,
+        )
         return results
 
     except Exception as e:
@@ -251,6 +317,7 @@ def build_models(
         graph, execution_order, parsed_models = shared_helpers.validate_compile_results(
             compile_results
         )
+        build_started_at = utc_now_iso()
 
     except (CompilationError, ParserError) as e:
         logger.error(f"Compilation failed: {e}")
@@ -301,6 +368,15 @@ def build_models(
                 print(f"  Seeds failed: {len(seed_results['failed_tables'])}")
         empty_results = shared_helpers.create_empty_build_results(graph)
         empty_results["seed_results"] = seed_results
+        _try_persist_run_manifest(
+            project_folder,
+            empty_results,
+            "build",
+            build_started_at,
+            project_config=project_config,
+            variables=variables,
+            function_names=None,
+        )
         return empty_results
 
     # Step 2: Initialize executors
@@ -310,7 +386,7 @@ def build_models(
 
     model_executor = None
     failed_models = set()
-    skipped_models = set()
+    skipped_models: dict[str, str] = {}
     all_test_results = []
 
     try:
@@ -368,6 +444,16 @@ def build_models(
         )
         build_helpers.print_build_summary(results, failed_models, skipped_models)
 
+        fn_build = set((parsed_functions or {}).keys()) if parsed_functions else set()
+        _try_persist_run_manifest(
+            project_folder,
+            results,
+            "build",
+            build_started_at,
+            project_config=project_config,
+            variables=variables,
+            function_names=fn_build or None,
+        )
         return results
 
     except SystemExit:

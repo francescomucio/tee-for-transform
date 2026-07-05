@@ -113,6 +113,7 @@ def compile_project(
             "dependency_graph": graph,
             "execution_order": execution_order,
             "parsed_models": all_models,
+            "parsed_functions": parsed_functions,
         }
 
     except (CompilationError, ParserError):

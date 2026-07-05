@@ -5,9 +5,11 @@ Run command implementation.
 import typer
 
 from t4t.cli.context import CommandContext
+from t4t.compiler import CompilationError
 from t4t.engine.connection_manager import ConnectionManager
 from t4t.executor import execute_models
 from t4t.parser.output.lookup_generator import generate_lookups
+from t4t.state import prepare_retry_select_patterns
 
 
 def _pluralize(count: int, singular: str, plural: str | None = None) -> str:
@@ -33,6 +35,7 @@ def cmd_run(
     verbose: bool = False,
     select: list[str] | None = None,
     exclude: list[str] | None = None,
+    retry: bool = False,
     auto_resolve_level_conflicts: bool = True,
 ) -> None:
     """Execute the run command."""
@@ -64,13 +67,39 @@ def cmd_run(
             variables=ctx.vars,
         )
 
+        if retry and ctx.select_patterns:
+            typer.echo(
+                typer.style("Error: ", fg=typer.colors.RED, bold=True)
+                + "Cannot use --retry together with --select.",
+                err=True,
+            )
+            raise typer.Exit(1)
+
+        select_patterns = ctx.select_patterns
+        if retry:
+            try:
+                select_patterns = prepare_retry_select_patterns(
+                    str(ctx.project_path),
+                    ctx.config["connection"],
+                    ctx.vars,
+                    ctx.config,
+                )
+            except ValueError as e:
+                typer.echo(
+                    typer.style("Error: ", fg=typer.colors.RED, bold=True) + str(e),
+                    err=True,
+                )
+                raise typer.Exit(1) from None
+            except CompilationError as e:
+                ctx.handle_error(e)
+
         # Execute models using the unified connection manager
         results = execute_models(
             project_folder=str(ctx.project_path),
             connection_config=ctx.config["connection"],
             save_analysis=True,
             variables=ctx.vars,
-            select_patterns=ctx.select_patterns,
+            select_patterns=select_patterns,
             exclude_patterns=ctx.exclude_patterns,
             project_config=ctx.config,
         )

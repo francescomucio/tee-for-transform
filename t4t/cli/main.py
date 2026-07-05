@@ -91,6 +91,11 @@ SELECT_OPTION = typer.Option(
 EXCLUDE_OPTION = typer.Option(
     None, "-e", "--exclude", help="Exclude models. Can be used multiple times."
 )
+RETRY_OPTION = typer.Option(
+    False,
+    "--retry",
+    help="Re-run models that failed or were skipped downstream in the last run (same as run:failed+).",
+)
 
 
 def _check_required_argument(ctx: typer.Context, _arg_name: str, arg_value: Any) -> None:
@@ -108,6 +113,7 @@ def run(
     vars: str | None = VARS_OPTION,
     select: list[str] | None = SELECT_OPTION,
     exclude: list[str] | None = EXCLUDE_OPTION,
+    retry: bool = RETRY_OPTION,
     auto_resolve_level_conflicts: bool = typer.Option(
         True,
         "--auto-resolve-level-conflicts",
@@ -122,6 +128,7 @@ def run(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
     )
 
@@ -170,6 +177,7 @@ def build(
     vars: str | None = VARS_OPTION,
     select: list[str] | None = SELECT_OPTION,
     exclude: list[str] | None = EXCLUDE_OPTION,
+    retry: bool = RETRY_OPTION,
     auto_resolve_level_conflicts: bool = typer.Option(
         True,
         "--auto-resolve-level-conflicts",
@@ -184,6 +192,7 @@ def build(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
     )
 
