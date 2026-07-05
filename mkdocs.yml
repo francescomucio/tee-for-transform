@@ -74,6 +74,7 @@ nav:
     - getting-started/installation.md
     - getting-started/quick-start.md
     - getting-started/configuration.md
+    - getting-started/dbt-users-guide.md
   - User Guide:
     - user-guide/overview.md
     - user-guide/cli-reference.md
