@@ -179,12 +179,11 @@ class ModelSelector:
             True if model should be excluded
         """
         # Excluded when matching a name exclusion or a tag exclusion
-        return bool(
-            self.exclude_names
-            and self._matches_name(model_name, self.exclude_names)
-            or self.exclude_tags
-            and self._matches_tags(model_data, self.exclude_tags)
-        )
+        if self.exclude_names and self._matches_name(model_name, self.exclude_names):
+            return True
+        if self.exclude_tags and self._matches_tags(model_data, self.exclude_tags):
+            return True
+        return False
 
     def filter_models(
         self, parsed_models: dict[str, Any], execution_order: list[str] | None = None

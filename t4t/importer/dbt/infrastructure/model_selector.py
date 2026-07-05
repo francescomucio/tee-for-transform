@@ -177,12 +177,11 @@ class DbtModelSelector:
             True if model is excluded
         """
         # Excluded when matching a name pattern or a tag pattern
-        return bool(
-            self.exclude_names
-            and self._matches_name(model_name, self.exclude_names)
-            or self.exclude_tags
-            and self._matches_tags(tags, self.exclude_tags)
-        )
+        if self.exclude_names and self._matches_name(model_name, self.exclude_names):
+            return True
+        if self.exclude_tags and self._matches_tags(tags, self.exclude_tags):
+            return True
+        return False
 
     def filter_models(
         self,
