@@ -139,7 +139,7 @@ def _load_seeds_for_build(model_executor: ModelExecutor, project_folder: str) ->
 
 def should_skip_model(
     node_name: str,
-    skipped_models: set[str],
+    skipped_models: dict[str, str],
     failed_models: set[str],
     graph: dict[str, Any],
 ) -> bool:
@@ -163,13 +163,13 @@ def should_skip_model(
 def mark_dependents_as_skipped(
     node_name: str,
     parser: ProjectParser,
-    skipped_models: set[str],
+    skipped_models: dict[str, str],
 ) -> None:
     """Mark all dependents of a node as skipped."""
     dependents = parser.get_table_dependents(node_name)
     for dependent in dependents:
         if not dependent.startswith(TEST_NODE_PREFIX):
-            skipped_models.add(dependent)
+            skipped_models[dependent] = f"upstream_failed:{node_name}"
 
 
 def execute_single_model(
@@ -192,7 +192,7 @@ def handle_model_execution_result(
     model_results: dict[str, Any],
     failed_models: set[str],
     parser: ProjectParser,
-    skipped_models: set[str],
+    skipped_models: dict[str, str],
 ) -> bool:
     """
     Handle model execution result. Returns True if model succeeded, False if failed.
@@ -271,7 +271,7 @@ def handle_test_results(
     test_results: list[Any],
     failed_models: set[str],
     parser: ProjectParser,
-    skipped_models: set[str],
+    skipped_models: dict[str, str],
 ) -> bool:
     """
     Handle test results. Returns True if tests passed (or only warnings), False if ERROR failures.
@@ -306,7 +306,7 @@ def handle_test_results(
 def compile_build_results(
     execution_order: list[str],
     failed_models: set[str],
-    skipped_models: set[str],
+    skipped_models: dict[str, str],
     all_test_results: list[Any],
     parsed_models: dict[str, Any],
     graph: dict[str, Any],
@@ -353,7 +353,9 @@ def compile_build_results(
     return {
         "executed_tables": executed_tables,
         "failed_tables": failed_tables,
-        "skipped_tables": list(skipped_models),
+        "skipped_tables": [
+            {"table": name, "reason": reason} for name, reason in skipped_models.items()
+        ],
         "executed_functions": function_results.get("executed_functions", []),
         "failed_functions": function_results.get("failed_functions", []),
         "test_results": test_results_summary,
@@ -373,7 +375,7 @@ def execute_functions_in_build(
     test_executor: TestExecutor,
     execution_order: list[str],
     failed_models: set[str],
-    skipped_models: set[str],
+    skipped_models: dict[str, str],
     all_test_results: list[Any],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """
@@ -442,7 +444,7 @@ def execute_models_with_tests(
     test_executor: TestExecutor,
     parser: ProjectParser,
     failed_models: set[str],
-    skipped_models: set[str],
+    skipped_models: dict[str, str],
     all_test_results: list[Any],
 ) -> None:
     """
@@ -463,7 +465,7 @@ def execute_models_with_tests(
                     for dep in node_deps
                     if not dep.startswith(TEST_NODE_PREFIX)
                 ):
-                    skipped_models.add(node_name)
+                    skipped_models[node_name] = "depends_on_failed"
             continue
 
         try:
@@ -498,7 +500,7 @@ def execute_models_with_tests(
 
 
 def print_build_summary(
-    results: dict[str, Any], failed_models: set[str], skipped_models: set[str]
+    results: dict[str, Any], failed_models: set[str], skipped_models: dict[str, str]
 ) -> None:
     """Print build summary."""
     executed_tables = results["executed_tables"]
