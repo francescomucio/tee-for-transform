@@ -1,5 +1,7 @@
 """Tag management for Snowflake database objects."""
 
+from __future__ import annotations
+
 import logging
 import re
 from typing import TYPE_CHECKING, Any

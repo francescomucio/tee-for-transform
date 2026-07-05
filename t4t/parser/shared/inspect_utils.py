@@ -4,6 +4,7 @@ Utility functions for frame inspection and caller information extraction.
 
 import inspect
 import os
+import types
 from collections.abc import Iterator
 
 
@@ -65,8 +66,8 @@ MAX_FRAME_WALK_DEPTH = 5
 
 
 def _iter_frames(
-    start_frame: inspect.FrameType | None, max_frames: int
-) -> Iterator[inspect.FrameType]:
+    start_frame: types.FrameType | None, max_frames: int
+) -> Iterator[types.FrameType]:
     """
     Generator that yields frames walking up the call stack.
 

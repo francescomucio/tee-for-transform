@@ -48,20 +48,39 @@ You'll see output like:
 
 Your model is now a table in DuckDB. You can query it with any DuckDB-compatible tool.
 
-## 5. Add a Test
+## 5. Add Tests
 
-Create a test to verify your data:
+Tests are declared in model metadata: create a companion `.py` file next to
+`hello.sql` (same name, `.py` extension) that describes the model's schema and
+which tests to run:
 
 ```bash
-mkdir -p demo_project/tests
-echo "SELECT * FROM hello WHERE id IS NULL" > demo_project/tests/check_not_null.sql
+cat > demo_project/models/hello.py << 'EOF'
+from t4t.parser.processing.model_builder import SqlModelMetadata
+from t4t.typing.metadata import ModelMetadata
+
+metadata: ModelMetadata = {
+    "schema": [
+        {"name": "id", "datatype": "number", "tests": ["not_null", "unique"]},
+        {"name": "message", "datatype": "string", "tests": ["not_null"]},
+    ],
+    "tests": ["row_count_gt_0"],
+}
+
+model = SqlModelMetadata(metadata)
+EOF
 ```
 
-Run tests:
+Run the tests:
 
 ```bash
 t4t test demo_project
 ```
+
+You'll see 4 tests pass: `not_null` and `unique` on `id`, `not_null` on
+`message`, and a table-level row-count check. Beyond these standard tests you
+can write reusable SQL tests with parameters — see
+[Data Quality Tests](../user-guide/data-quality-tests.md).
 
 ## 6. Generate Documentation
 
@@ -77,7 +96,7 @@ This generates a static documentation site with your model's dependency graph an
 |---|---|
 | `t4t init` | Created project structure with DuckDB config |
 | `t4t run` | Parsed your SQL, detected dependencies, executed against DuckDB, materialized as a table |
-| `t4t test` | Ran your test SQL against the database |
+| `t4t test` | Ran the tests declared in your model metadata against the database |
 | `t4t docs` | Generated interactive documentation with dependency graph |
 
 ## Next Steps
