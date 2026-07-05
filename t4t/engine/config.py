@@ -49,6 +49,53 @@ class DatabaseConfigManager:
         # Validate and create AdapterConfig
         return self._create_adapter_config(merged_config)
 
+    @staticmethod
+    def _resolve_environment(
+        data: dict[str, Any], env_name: str
+    ) -> tuple[dict[str, Any], dict[str, Any], bool]:
+        """Resolve an environment section from TOML data.
+
+        Shared helper used by both DatabaseConfigManager and load_project_config.
+
+        Args:
+            data: The parsed TOML data dict
+            env_name: The environment name to resolve
+
+        Returns:
+            Tuple of (connection_dict, variables_dict, protected_flag)
+
+        Raises:
+            ValueError: If the environment name is unknown or not a table
+        """
+        environments = data.get("environments", {})
+        if not isinstance(environments, dict) or env_name not in environments:
+            available = (
+                ", ".join(sorted(environments.keys())) if isinstance(environments, dict) else ""
+            )
+            msg = f"Unknown environment '{env_name}'"
+            if available:
+                msg += f". Available environments: {available}"
+            raise ValueError(msg)
+
+        env_section = environments[env_name]
+        if not isinstance(env_section, dict):
+            raise ValueError(f"Environment '{env_name}' must be a table section")
+
+        # Load connection from [environments.<name>].connection
+        env_connection = env_section.get("connection", {})
+        if not isinstance(env_connection, dict):
+            env_connection = {}
+
+        # Load variables from [environments.<name>].variables
+        env_variables = env_section.get("variables", {})
+        if not isinstance(env_variables, dict):
+            env_variables = {}
+
+        # Load protected flag
+        protected = bool(env_section.get("protected", False))
+
+        return env_connection, env_variables, protected
+
     def _load_toml_config(self, config_name: str, env_name: str | None = None) -> dict[str, Any]:
         """Load configuration from pyproject.toml or project.toml.
 
@@ -82,35 +129,23 @@ class DatabaseConfigManager:
 
             # If an env_name is specified, look in [environments.<env_name>]
             if env_name is not None:
-                environments = data.get("environments", {})
-                if not isinstance(environments, dict) or env_name not in environments:
-                    available = (
-                        ", ".join(sorted(environments.keys()))
-                        if isinstance(environments, dict)
-                        else ""
-                    )
-                    msg = f"Unknown environment '{env_name}'"
-                    if available:
-                        msg += f". Available environments: {available}"
-                    raise ValueError(msg)
-
-                env_section = environments[env_name]
-                if not isinstance(env_section, dict):
-                    raise ValueError(f"Environment '{env_name}' must be a table section")
-
-                # Load connection from [environments.<name>].connection
-                env_connection = env_section.get("connection", {})
-                if isinstance(env_connection, dict):
-                    config.update(env_connection)
-
-                # Load variables from [environments.<name>].variables
-                env_variables = env_section.get("variables", {})
-                if isinstance(env_variables, dict):
+                env_connection, env_variables, protected = self._resolve_environment(data, env_name)
+                config.update(env_connection)
+                if env_variables:
                     config["_env_variables"] = env_variables
+                config["_protected"] = protected
+                return config
 
-                # Load protected flag
-                config["_protected"] = env_section.get("protected", False)
-
+            # If no env_name, check for default_environment
+            if "default_environment" in data:
+                default_env = data["default_environment"]
+                env_connection, env_variables, protected = self._resolve_environment(
+                    data, default_env
+                )
+                config.update(env_connection)
+                if env_variables:
+                    config["_env_variables"] = env_variables
+                config["_protected"] = protected
                 return config
 
             # Check for single database config in tool.t4t.database
@@ -193,6 +228,15 @@ class DatabaseConfigManager:
         # Map source_sql_dialect to source_dialect (source_sql_dialect is the preferred name in project.toml)
         source_dialect = config_dict.get("source_dialect") or config_dict.get("source_sql_dialect")
 
+        # Build extra dict, consuming _env_variables and _protected
+        extra: dict[str, Any] = {}
+        if config_dict.get("extra"):
+            extra.update(config_dict["extra"])
+        if config_dict.get("_env_variables"):
+            extra["env_variables"] = config_dict["_env_variables"]
+        if config_dict.get("_protected"):
+            extra["protected"] = config_dict["_protected"]
+
         # Create AdapterConfig
         return AdapterConfig(
             type=db_type,
@@ -210,7 +254,7 @@ class DatabaseConfigManager:
             warehouse=config_dict.get("warehouse"),
             role=config_dict.get("role"),
             project=config_dict.get("project"),
-            extra=config_dict.get("extra"),
+            extra=extra or None,
         )
 
 

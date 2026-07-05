@@ -66,36 +66,24 @@ def load_project_config(
     if "project_folder" not in config:
         raise ValueError("project.toml must contain 'project_folder' setting")
 
-    # If env_name is specified, load connection from [environments.<env_name>]
+    # If no env_name specified, check for default_environment
+    if env_name is None and "default_environment" in config:
+        env_name = config["default_environment"]
+
+    # If env_name is specified, delegate to DatabaseConfigManager._resolve_environment
     if env_name is not None:
-        environments = config.get("environments", {})
-        if not isinstance(environments, dict) or env_name not in environments:
-            available = (
-                ", ".join(sorted(environments.keys())) if isinstance(environments, dict) else ""
-            )
-            msg = f"Unknown environment '{env_name}'"
-            if available:
-                msg += f". Available environments: {available}"
-            raise ValueError(msg)
+        from t4t.engine.config import DatabaseConfigManager
 
-        env_section = environments[env_name]
-        if not isinstance(env_section, dict):
-            raise ValueError(f"Environment '{env_name}' must be a table section")
-
-        # Load connection from [environments.<name>].connection
-        env_connection = env_section.get("connection", {})
-        if isinstance(env_connection, dict):
-            config["connection"] = env_connection
+        env_connection, env_variables, _protected = DatabaseConfigManager._resolve_environment(
+            config, env_name
+        )
+        config["connection"] = env_connection
 
         # Merge env-level variables with CLI vars (CLI wins)
-        env_variables = env_section.get("variables", {})
-        if isinstance(env_variables, dict):
-            merged_vars = dict(env_variables)
-            if vars_dict:
-                merged_vars.update(vars_dict)
-            config["vars"] = merged_vars
-        elif vars_dict:
-            config["vars"] = vars_dict
+        merged_vars = dict(env_variables)
+        if vars_dict:
+            merged_vars.update(vars_dict)
+        config["vars"] = merged_vars
     else:
         # Legacy mode: require [connection]
         if "connection" not in config:

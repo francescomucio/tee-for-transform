@@ -138,6 +138,20 @@ class TestLoadProjectConfigEnvironments:
         with pytest.raises(ValueError, match="project.toml must contain 'connection'"):
             load_project_config(project_toml_no_environments)
 
+    def test_default_environment_used_when_no_env_specified(self, project_toml_with_environments):
+        """default_environment is used when no env is specified."""
+        config = load_project_config(project_toml_with_environments)
+        assert config["connection"]["type"] == "duckdb"
+        assert config["connection"]["path"] == "data/dev.duckdb"
+        assert config["vars"]["row_limit"] == 1000
+
+    def test_default_environment_overridden_by_explicit_env(self, project_toml_with_environments):
+        """Explicit env_name overrides default_environment."""
+        config = load_project_config(project_toml_with_environments, env_name="prod")
+        assert config["connection"]["type"] == "snowflake"
+        assert config["connection"]["database"] == "ANALYTICS"
+        assert config["vars"]["row_limit"] == 0
+
 
 # ---------------------------------------------------------------------------
 # Tests: DatabaseConfigManager
@@ -186,3 +200,23 @@ class TestDatabaseConfigManagerEnvironments:
             manager = DatabaseConfigManager(project_root=tmpdir)
             with pytest.raises(ValueError, match="No database configuration found"):
                 manager.load_config(env_name="dev")
+
+    def test_default_environment_via_manager(self, project_toml_with_environments):
+        """DatabaseConfigManager uses default_environment when no env_name given."""
+        manager = DatabaseConfigManager(project_root=project_toml_with_environments)
+        config = manager.load_config()
+        assert config.type == "duckdb"
+        assert config.path == "data/dev.duckdb"
+        # _env_variables and _protected should be in extra
+        assert config.extra is not None
+        assert config.extra.get("env_variables", {}).get("row_limit") == 1000
+
+    def test_default_environment_overridden_via_manager(self, project_toml_with_environments):
+        """Explicit env_name overrides default_environment in DatabaseConfigManager."""
+        manager = DatabaseConfigManager(project_root=project_toml_with_environments)
+        config = manager.load_config(env_name="prod")
+        assert config.type == "snowflake"
+        assert config.database == "ANALYTICS"
+        # protected flag should be in extra
+        assert config.extra is not None
+        assert config.extra.get("protected") is True

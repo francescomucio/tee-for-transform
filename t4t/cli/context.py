@@ -46,6 +46,12 @@ class CommandContext:
         # Load project configuration
         self.config = load_project_config(project_folder, self.vars, self.env)
 
+        # If no env was explicitly provided, check for default_environment in config
+        if self.env is None and "default_environment" in self.config:
+            self.env = self.config["default_environment"]
+            # Reload config with the default environment
+            self.config = load_project_config(project_folder, self.vars, self.env)
+
         # Set up logging
         self.verbose = verbose
         setup_logging(self.verbose)
