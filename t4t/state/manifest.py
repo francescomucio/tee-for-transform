@@ -20,7 +20,7 @@ FuncStatus = Literal["success", "failed"]
 
 def _t4t_version() -> str:
     try:
-        return version("tee")
+        return version("t4t")
     except PackageNotFoundError:
         return "0.0.0"
 

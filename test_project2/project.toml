@@ -1,8 +1,0 @@
-project_folder = "test_project2"
-
-[connection]
-type = "duckdb"
-path = "data/test_project2.duckdb"
-
-[flags]
-materialization_change_behavior = "warn"  # Options: "warn", "error", "ignore"

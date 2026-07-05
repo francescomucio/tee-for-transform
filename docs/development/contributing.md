@@ -67,7 +67,7 @@ uv run pytest tests/
 uv run pytest tests/ -m snowflake_e2e
 
 # Run with coverage
-uv run pytest --cov=tee --cov-report=html
+uv run pytest --cov=t4t --cov-report=html
 
 # Run specific test file
 uv run pytest tests/cli/commands/test_run.py
@@ -86,7 +86,7 @@ uv run ruff check .
 uv run ruff format .
 
 # Check for dead code
-uv run vulture tee/
+uv run vulture t4t/
 ```
 
 ### 5. Commit Changes
@@ -197,7 +197,7 @@ def test_cmd_run_success():
 
 ### Test Organization
 
-- Mirror source structure: `tests/tee/cli/commands/test_run.py`
+- Mirror source structure: `tests/cli/commands/test_run.py`
 - One test file per module
 - Use descriptive test names
 - Group related tests in classes
@@ -264,14 +264,14 @@ def test_cmd_run_success():
 
 ### New CLI Commands
 
-1. Create command function in `tee/cli/commands/`
-2. Register in `tee/cli/main.py`
+1. Create command function in `t4t/cli/commands/`
+2. Register in `t4t/cli/main.py`
 3. Add tests in `tests/cli/commands/`
 4. Update CLI reference documentation
 
 ### New Database Adapters
 
-1. Create adapter class in `tee/adapters/`
+1. Create adapter class in `t4t/adapters/`
 2. Inherit from `BaseAdapter`
 3. Implement required methods
 4. Add tests
@@ -279,7 +279,7 @@ def test_cmd_run_success():
 
 ### New Test Types
 
-1. Create test class in `tee/testing/`
+1. Create test class in `t4t/testing/`
 2. Inherit from `TestType`
 3. Implement test logic
 4. Register in test executor
@@ -341,7 +341,7 @@ Contributors will be:
 uv run pytest-watch
 
 # Check type hints
-uv run mypy tee/
+uv run mypy t4t/
 
 # Generate documentation
 uv run mkdocs serve
@@ -354,7 +354,7 @@ uv run pytest tests/cli/commands/test_run.py::test_cmd_run_success
 
 ```
 tee-for-transform/
-├── tee/                 # Main package
+├── t4t/                 # Main package
 │   ├── cli/            # CLI commands
 │   ├── parser/         # SQL parsing
 │   ├── engine/         # Execution engine

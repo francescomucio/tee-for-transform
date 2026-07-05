@@ -1,5 +1,5 @@
 """
-Tee Module
+t4t (Tee for Transform)
 
 A SQL model execution framework with parsing and execution capabilities.
 """
