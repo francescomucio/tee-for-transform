@@ -34,10 +34,7 @@ def has_complex_jinja(content: str) -> bool:
     elif_count = len(re.findall(elif_pattern, content, re.IGNORECASE))
 
     # If there are multiple branches, it's complex
-    if else_count > 0 or elif_count > 0 or if_count > 1:
-        return True
-
-    return False
+    return bool(else_count > 0 or elif_count > 0 or if_count > 1)
 
 
 def has_dbt_specific_functions(content: str) -> bool:

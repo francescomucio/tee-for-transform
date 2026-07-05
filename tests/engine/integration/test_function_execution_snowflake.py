@@ -33,7 +33,7 @@ class TestFunctionExecutionSnowflake:
 
         if config_file.exists():
             try:
-                with open(config_file, "r") as f:
+                with open(config_file) as f:
                     file_config = json.load(f)
                     config = {
                         "type": "snowflake",

@@ -37,14 +37,15 @@ class TestBuildModels:
         # Set parsed_functions as a dict (not Mock) to support len() calls
         mock_parser.parsed_functions = {}
         # Make sure parsed_functions can be checked with isinstance
-        if hasattr(mock_parser, "parsed_functions"):
-            # Ensure it's a real dict, not a Mock
-            if not isinstance(mock_parser.parsed_functions, dict):
-                mock_parser.parsed_functions = {}
+        # Ensure it's a real dict, not a Mock
+        if hasattr(mock_parser, "parsed_functions") and not isinstance(
+            mock_parser.parsed_functions, dict
+        ):
+            mock_parser.parsed_functions = {}
         if graph is None:
             graph = {
                 "nodes": list(parsed_models.keys()),
-                "dependencies": {k: [] for k in parsed_models.keys()},
+                "dependencies": {k: [] for k in parsed_models},
             }
         mock_parser.build_dependency_graph.return_value = graph
         mock_parser.get_execution_order.return_value = execution_order

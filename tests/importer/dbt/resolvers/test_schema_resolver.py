@@ -4,7 +4,6 @@ Tests for schema resolver.
 
 from pathlib import Path
 
-
 from t4t.importer.dbt.resolvers import SchemaResolver
 
 

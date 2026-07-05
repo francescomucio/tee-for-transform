@@ -154,10 +154,7 @@ def should_skip_model(
     depends_on_failed = any(
         dep in failed_models for dep in node_deps if not dep.startswith(TEST_NODE_PREFIX)
     )
-    if depends_on_failed:
-        return True
-
-    return False
+    return bool(depends_on_failed)
 
 
 def mark_dependents_as_skipped(

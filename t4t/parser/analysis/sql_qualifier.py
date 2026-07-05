@@ -23,10 +23,7 @@ def generate_resolved_sql(sql_str: str, tables: list[str], table_name: str) -> s
     """
     try:
         # Get the schema from the table name if it exists
-        if "." in table_name:
-            schema_name = table_name.split(".")[0]
-        else:
-            schema_name = None
+        schema_name = table_name.split(".")[0] if "." in table_name else None
 
         if not schema_name:
             return sql_str

@@ -252,10 +252,7 @@ class IncrementalStateManager:
             return False
 
         # If no last processed value, run as full load
-        if not state.last_processed_value:
-            return False
-
-        return True
+        return bool(state.last_processed_value)
 
     def compute_sql_hash(self, sql_query: str) -> str:
         """

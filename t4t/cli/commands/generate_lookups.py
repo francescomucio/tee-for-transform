@@ -2,7 +2,6 @@
 CLI command: generate lookup tables.
 """
 
-
 import typer
 
 from t4t.cli.context import CommandContext

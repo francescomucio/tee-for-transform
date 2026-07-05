@@ -232,11 +232,9 @@ class OTSConverter:
             elif materialization_data.get("type") == "scd2":
                 nested_metadata["scd2_details"] = materialization_data.get("scd2_details", {})
 
-        if tests_data:
-            # Add table tests
-            if "table" in tests_data:
-                nested_metadata["tests"] = tests_data["table"]
-            # Column tests are already in schema_data
+        # Add table tests (column tests are already in schema_data)
+        if tests_data and "table" in tests_data:
+            nested_metadata["tests"] = tests_data["table"]
 
         if all_tags:
             nested_metadata["tags"] = all_tags

@@ -84,10 +84,7 @@ class TestFileDiscovery:
             ]
 
             # Only flag if filename explicitly indicates freshness test
-            if any(pattern in filename_lower for pattern in freshness_filename_patterns):
-                return True
-
-            return False
+            return bool(any(pattern in filename_lower for pattern in freshness_filename_patterns))
         except Exception as e:
             logger.warning(f"Error checking if {test_file} is a freshness test: {e}")
             return False

@@ -7,7 +7,8 @@ or a model short name starting with ``dim_``. Keys are lowercased logical names
 level name.
 """
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def _model_metadata_dict(model: Any) -> dict[str, Any]:

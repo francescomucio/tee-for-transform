@@ -181,12 +181,9 @@ class MacroConverter:
         if has_adapter_specific_features(body):
             return False
 
-        # Check for dbt-specific functions that can't be converted
-        if has_dbt_specific_functions(body):
-            return False
-
-        # If it's mostly SQL with simple variable substitution, it's convertible
-        return True
+        # Convertible if there are no dbt-specific functions and it's mostly
+        # SQL with simple variable substitution
+        return not has_dbt_specific_functions(body)
 
     def _get_unconvertible_reason(self, macro_def: dict[str, Any]) -> str:
         """

@@ -90,7 +90,7 @@ class ProfilesParser:
                 content = yaml.safe_load(f)
 
             if not isinstance(content, dict):
-                raise DbtImporterError(f"profiles.yml is not a valid YAML dictionary")
+                raise DbtImporterError("profiles.yml is not a valid YAML dictionary")
 
             if self.verbose:
                 logger.info(f"Parsed {len(content)} profile(s) from {profiles_path}")
@@ -210,11 +210,8 @@ class ProfilesParser:
             connection_config["project"] = dbt_profile_config.get("project", "")
             connection_config["database"] = dbt_profile_config.get("dataset", "")
             # BigQuery may have method, keyfile, etc. - log if present
-            if "method" in dbt_profile_config:
-                if self.verbose:
-                    logger.info(
-                        "BigQuery authentication method will need to be configured manually"
-                    )
+            if "method" in dbt_profile_config and self.verbose:
+                logger.info("BigQuery authentication method will need to be configured manually")
 
         elif connection_type == "duckdb":
             # DuckDB connection

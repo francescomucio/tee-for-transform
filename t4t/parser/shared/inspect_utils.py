@@ -65,9 +65,7 @@ def get_caller_file_path(frames_up: int = 2) -> str | None:
 MAX_FRAME_WALK_DEPTH = 5
 
 
-def _iter_frames(
-    start_frame: types.FrameType | None, max_frames: int
-) -> Iterator[types.FrameType]:
+def _iter_frames(start_frame: types.FrameType | None, max_frames: int) -> Iterator[types.FrameType]:
     """
     Generator that yields frames walking up the call stack.
 

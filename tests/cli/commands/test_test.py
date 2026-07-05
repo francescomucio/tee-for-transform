@@ -2,6 +2,7 @@
 Tests for the test CLI command.
 """
 
+import contextlib
 import tempfile
 from io import StringIO
 from pathlib import Path
@@ -143,11 +144,11 @@ class TestTestCommand:
         mock_executor_class.return_value = mock_executor
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()) as fake_out:
-            try:
-                cmd_test(mock_args)
-            except SystemExit:
-                pass  # May exit with 0
+        with (
+            patch("sys.stdout", new=StringIO()) as fake_out,
+            contextlib.suppress(SystemExit),  # may exit with 0
+        ):
+            cmd_test(mock_args)
 
         output = fake_out.getvalue()
         assert "Running tests for project:" in output
@@ -292,11 +293,11 @@ class TestTestCommand:
         mock_executor_class.return_value = mock_executor
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()) as fake_out:
-            try:
-                cmd_test(mock_args)
-            except SystemExit:
-                pass  # Should not exit on warnings
+        with (
+            patch("sys.stdout", new=StringIO()) as fake_out,
+            contextlib.suppress(SystemExit),  # should not exit on warnings
+        ):
+            cmd_test(mock_args)
 
         output = fake_out.getvalue()
         assert "Warnings (1):" in output
@@ -373,11 +374,11 @@ class TestTestCommand:
         mock_executor_class.return_value = mock_executor
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()) as fake_out:
-            try:
-                cmd_test(mock_args)
-            except SystemExit:
-                pass
+        with (
+            patch("sys.stdout", new=StringIO()) as fake_out,
+            contextlib.suppress(SystemExit),
+        ):
+            cmd_test(mock_args)
 
         output = fake_out.getvalue()
         assert "Filtered to 1 models" in output
@@ -442,11 +443,11 @@ class TestTestCommand:
         mock_executor_class.return_value = mock_executor
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()) as fake_out:
-            try:
-                cmd_test(mock_args)
-            except SystemExit:
-                pass
+        with (
+            patch("sys.stdout", new=StringIO()) as fake_out,
+            contextlib.suppress(SystemExit),
+        ):
+            cmd_test(mock_args)
 
         output = fake_out.getvalue()
         assert "Detailed Results:" in output
@@ -554,11 +555,8 @@ class TestTestCommand:
         mock_executor_class.return_value = mock_executor
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()):
-            try:
-                cmd_test(mock_args)
-            except SystemExit:
-                pass
+        with patch("sys.stdout", new=StringIO()), contextlib.suppress(SystemExit):
+            cmd_test(mock_args)
 
         # Verify disconnect was called
         mock_engine.disconnect.assert_called_once()
@@ -622,11 +620,8 @@ class TestTestCommand:
         mock_executor_class.return_value = mock_executor
 
         # Capture stdout
-        with patch("sys.stdout", new=StringIO()):
-            try:
-                cmd_test(mock_args)
-            except SystemExit:
-                pass
+        with patch("sys.stdout", new=StringIO()), contextlib.suppress(SystemExit):
+            cmd_test(mock_args)
 
         # Verify ExecutionEngine was called with resolved path
         call_args = mock_engine_class.call_args

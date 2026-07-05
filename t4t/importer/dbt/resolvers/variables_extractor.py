@@ -151,8 +151,7 @@ class VariablesExtractor:
 
             # Check if this variable was mentioned in warnings
             for warning in warnings:
-                if variable_name in warning:
-                    if model_name not in conversion_info["models"]:
-                        conversion_info["models"].append(model_name)
+                if variable_name in warning and model_name not in conversion_info["models"]:
+                    conversion_info["models"].append(model_name)
 
         return conversion_info

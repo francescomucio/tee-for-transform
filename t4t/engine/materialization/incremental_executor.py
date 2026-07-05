@@ -42,7 +42,7 @@ class IncrementalExecutor:
         self.state_manager = state_manager
         self._auto_incremental_wrapper: AutoIncrementalWrapper | None = None
 
-    def _get_auto_incremental_wrapper(self, adapter: "DatabaseAdapter") -> AutoIncrementalWrapper:
+    def _get_auto_incremental_wrapper(self, adapter: DatabaseAdapter) -> AutoIncrementalWrapper:
         """Get or create auto_incremental wrapper for the adapter."""
         if self._auto_incremental_wrapper is None:
             self._auto_incremental_wrapper = AutoIncrementalWrapper(adapter)
@@ -110,7 +110,7 @@ class IncrementalExecutor:
         variables: dict[str, Any] | None = None,
         table_name: str | None = None,
         table_exists: bool = True,
-        adapter: "DatabaseAdapter" | None = None,
+        adapter: DatabaseAdapter | None = None,
     ) -> str | None:
         """Generate time-based filter condition for incremental loading."""
         filter_column = config["filter_column"]
@@ -567,10 +567,7 @@ class IncrementalExecutor:
             )
 
         # Apply time filter if not already wrapped
-        if time_filter:
-            filtered_sql = self._add_where_clause(sql_query, time_filter)
-        else:
-            filtered_sql = sql_query
+        filtered_sql = self._add_where_clause(sql_query, time_filter) if time_filter else sql_query
 
         # Delegate to adapter for database-specific merge logic
         if hasattr(adapter, "execute_incremental_merge") and callable(
@@ -644,10 +641,7 @@ class IncrementalExecutor:
             time_filter = None
 
         # Apply time filter if not already wrapped
-        if time_filter:
-            filtered_sql = self._add_where_clause(sql_query, time_filter)
-        else:
-            filtered_sql = sql_query
+        filtered_sql = self._add_where_clause(sql_query, time_filter) if time_filter else sql_query
 
         # Handle schema changes if table exists (OTS 0.2.1)
         # This runs AFTER wrapping so it can see the auto_incremental column

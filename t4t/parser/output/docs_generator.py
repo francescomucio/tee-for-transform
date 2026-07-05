@@ -297,7 +297,7 @@ class DocsGenerator:
         existing_pairs = {
             tuple(e) if isinstance(e, (list, tuple)) else (e.get("source"), e.get("target"))
             for e in graph_edges
-            if isinstance(e, (list, tuple)) or isinstance(e, dict)
+            if isinstance(e, (list, tuple, dict))
         }
         for rel in relationships:
             if not isinstance(rel, dict):

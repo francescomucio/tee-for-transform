@@ -42,7 +42,7 @@ def extract_model_tags(
     model_tags: dict[str, list[str]] = {}
     config_extractor = ConfigExtractor(verbose=verbose)
 
-    for rel_path, sql_file in model_files.items():
+    for _rel_path, sql_file in model_files.items():
         # Extract model name from file path (file name without extension)
         model_name = sql_file.stem
 

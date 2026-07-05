@@ -216,7 +216,7 @@ def validate_sql_variables(sql_content: str, variables: Variables) -> dict[str, 
 
         # Find unused variables
         referenced_vars_set = set(referenced_vars)
-        unused_vars = [var for var in variables.keys() if var not in referenced_vars_set]
+        unused_vars = [var for var in variables if var not in referenced_vars_set]
 
         if missing_vars:
             raise VariableSubstitutionError(

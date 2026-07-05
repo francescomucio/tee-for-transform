@@ -130,7 +130,7 @@ select = [
 ignore = [
     "E501",  # line too long (handled by formatter)
     "B008",  # do not perform function calls in argument defaults
-    "C901",  # too complex
+    "C901",  # too complex — 80+ standing violations; complexity policy tracked in issue #62
 ]
 
 # Exclude common directories
@@ -161,5 +161,9 @@ exclude = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# Tests: unused params are often pytest fixtures (injected by name) or mock protocol stubs.
-"tests/**" = ["ARG001", "ARG002"]
+# Tests: unused params are often pytest fixtures (injected by name), mock
+# protocol stubs, or mock lambdas; B017 (assert blind Exception) and E402
+# (late imports after sys.path setup) are accepted test patterns.
+"tests/**" = ["ARG", "B017", "E402"]
+# Deliberate re-export hub: star imports + __all__ curation.
+"t4t/parser/shared/__init__.py" = ["F403", "F405"]

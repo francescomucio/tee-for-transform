@@ -1,0 +1,20 @@
+# Mechanical checks run before every commit; CI runs the same checks on push.
+# Setup: uv tool install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Keep in sync with the ruff version in pyproject.toml [dependency-groups] dev
+    rev: v0.14.3
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+        args: [--unsafe]  # mkdocs.yml uses custom tags
+      - id: check-toml
+      - id: check-added-large-files

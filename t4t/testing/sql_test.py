@@ -224,10 +224,7 @@ class SqlTest(StandardTest):
                         )
             else:
                 # Model test: dbt pattern (0 rows = pass)
-                if isinstance(results, list):
-                    row_count = len(results)
-                else:
-                    row_count = 0
+                row_count = len(results) if isinstance(results, list) else 0
 
                 passed = row_count == 0
                 message = (

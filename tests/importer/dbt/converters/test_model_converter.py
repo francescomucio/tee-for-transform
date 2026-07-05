@@ -5,7 +5,6 @@ Tests for the model converter.
 import tempfile
 from pathlib import Path
 
-
 from t4t.importer.dbt.converters import ModelConverter
 
 

@@ -126,8 +126,8 @@ class ProjectConfigGenerator:
         if not profiles_path:
             if self.verbose:
                 logger.warning(
-                    f"profiles.yml not found. Cannot extract connection configuration. "
-                    f"Please configure connection manually in project.toml"
+                    "profiles.yml not found. Cannot extract connection configuration. "
+                    "Please configure connection manually in project.toml"
                 )
             return None
 

@@ -21,7 +21,7 @@ class FunctionNameExtractor:
         """
         function_name_full = ""
         if hasattr(udf, "this") and udf.this:
-            if isinstance(udf.this, exp.Table) or isinstance(udf.this, exp.Identifier):
+            if isinstance(udf.this, (exp.Table, exp.Identifier)):
                 function_name_full = udf.this.name if hasattr(udf.this, "name") else str(udf.this)
             else:
                 function_name_full = str(udf.this)

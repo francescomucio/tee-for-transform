@@ -86,9 +86,8 @@ class TagManager:
         # Validate that all values are strings (or convert them)
         validated_tags = {}
         for key, value in object_tags.items():
-            if key and isinstance(key, str):
-                # Convert value to string if it's not already
-                if value is not None:
-                    validated_tags[key] = str(value)
+            # Convert value to string if it's not already
+            if key and isinstance(key, str) and value is not None:
+                validated_tags[key] = str(value)
 
         return validated_tags

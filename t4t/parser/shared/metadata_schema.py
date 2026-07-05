@@ -73,9 +73,10 @@ class ValidatedModelMetadata:
         if self.partitions is None:
             self.partitions = []
 
-        if self.disable_default_tests is not None:
-            if not isinstance(self.disable_default_tests, (bool, list)):
-                raise ValueError("disable_default_tests must be a bool or list[str]")
+        if self.disable_default_tests is not None and not isinstance(
+            self.disable_default_tests, (bool, list)
+        ):
+            raise ValueError("disable_default_tests must be a bool or list[str]")
 
         # Validate incremental configuration if present
         if self.incremental:
@@ -178,9 +179,8 @@ def validate_metadata_dict(metadata_dict: ModelMetadata) -> ValidatedModelMetada
             raise ValueError("Materialization must be a string")
 
         table_type = metadata_dict.get("table_type")
-        if table_type is not None:
-            if table_type not in ["fact", "dim", "lookup", "dimension"]:
-                raise ValueError("Invalid table_type; must be one of: fact, dim, lookup, dimension")
+        if table_type is not None and table_type not in ["fact", "dim", "lookup", "dimension"]:
+            raise ValueError("Invalid table_type; must be one of: fact, dim, lookup, dimension")
 
         data_model = metadata_dict.get("data_model")
         if data_model is not None and not isinstance(data_model, bool):

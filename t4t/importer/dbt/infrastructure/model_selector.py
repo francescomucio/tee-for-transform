@@ -114,11 +114,7 @@ class DbtModelSelector:
         if not tag_patterns:
             return False
 
-        for tag_pattern in tag_patterns:
-            if self._has_tag(tags, tag_pattern):
-                return True
-
-        return False
+        return any(self._has_tag(tags, tag_pattern) for tag_pattern in tag_patterns)
 
     def is_selected(
         self,
@@ -180,17 +176,13 @@ class DbtModelSelector:
         Returns:
             True if model is excluded
         """
-        # Check name patterns
-        if self.exclude_names:
-            if self._matches_name(model_name, self.exclude_names):
-                return True
-
-        # Check tag patterns
-        if self.exclude_tags:
-            if self._matches_tags(tags, self.exclude_tags):
-                return True
-
-        return False
+        # Excluded when matching a name pattern or a tag pattern
+        return bool(
+            self.exclude_names
+            and self._matches_name(model_name, self.exclude_names)
+            or self.exclude_tags
+            and self._matches_tags(tags, self.exclude_tags)
+        )
 
     def filter_models(
         self,

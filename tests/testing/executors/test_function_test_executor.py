@@ -167,13 +167,15 @@ class TestFunctionTestExecutor:
 
         # Mock inspect.signature to return a signature without function_name
         sig = inspect.Signature(parameters=[])
-        with patch("inspect.signature", return_value=sig):
-            with patch.object(TestRegistry, "get", return_value=mock_test):
-                metadata = {"tests": ["not_null"]}
+        with (
+            patch("inspect.signature", return_value=sig),
+            patch.object(TestRegistry, "get", return_value=mock_test),
+        ):
+            metadata = {"tests": ["not_null"]}
 
-                results = executor.execute_tests_for_function("my_function", metadata=metadata)
+            results = executor.execute_tests_for_function("my_function", metadata=metadata)
 
-                assert len(results) == 0  # Should return None and not add to results
+            assert len(results) == 0  # Should return None and not add to results
 
     def test_execute_tests_for_function_test_execution_error(
         self, executor, mock_adapter, tmp_path

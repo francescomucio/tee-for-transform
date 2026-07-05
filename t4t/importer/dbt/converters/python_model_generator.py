@@ -71,7 +71,7 @@ class PythonModelGenerator:
             var_name = match.group(1)
             variables.add(var_name)
 
-        return sorted(list(variables))
+        return sorted(variables)
 
     def _generate_python_code(
         self,
@@ -241,7 +241,7 @@ class PythonModelGenerator:
         # Split SQL by if statements and convert
         last_end = 0
 
-        for i, match in enumerate(matches):
+        for _i, match in enumerate(matches):
             # Add SQL before this if statement
             before_sql = sql_content[last_end : match.start()].strip()
             if before_sql:

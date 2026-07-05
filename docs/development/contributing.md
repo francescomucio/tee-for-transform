@@ -28,6 +28,13 @@ Thank you for your interest in contributing to t4t! This guide will help you get
    uv run t4t --help
    ```
 
+4. **Install the pre-commit hooks** (mechanical checks run on every commit;
+   CI runs the same checks, so this saves round-trips):
+   ```bash
+   uv tool install pre-commit
+   pre-commit install
+   ```
+
 ## Development Workflow
 
 ### 1. Create a Branch
@@ -79,11 +86,9 @@ uv run pytest -v
 ### 4. Check Code Quality
 
 ```bash
-# Lint with ruff
-uv run ruff check .
-
-# Format code
-uv run ruff format .
+# Lint and format (also run automatically by pre-commit and enforced in CI)
+uv run ruff check t4t tests
+uv run ruff format t4t tests
 
 # Check for dead code
 uv run vulture t4t/
@@ -339,9 +344,6 @@ Contributors will be:
 ```bash
 # Run tests in watch mode (if available)
 uv run pytest-watch
-
-# Check type hints
-uv run mypy t4t/
 
 # Generate documentation
 uv run mkdocs serve

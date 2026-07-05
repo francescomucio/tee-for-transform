@@ -2,6 +2,7 @@
 Unit tests for SQL function parser.
 """
 
+import contextlib
 from pathlib import Path
 
 import pytest
@@ -259,14 +260,11 @@ metadata: FunctionMetadata = {
 
         sql_content = "CREATE FUNCTION invalid syntax here"
 
-        # Should fall back to regex parsing or raise error
-        # Behavior depends on implementation
-        try:
+        # Should fall back to regex parsing, or raise FunctionSQLParsingError
+        # for invalid syntax; not raising is also acceptable (graceful
+        # degradation) - behavior depends on implementation
+        with contextlib.suppress(FunctionSQLParsingError):
             parser.parse(sql_content, "test.sql")
-            # If it doesn't raise, that's also acceptable (graceful degradation)
-        except FunctionSQLParsingError:
-            # Expected for invalid syntax
-            pass
 
     def test_parse_caching(self):
         """Test that parsing results are cached."""
