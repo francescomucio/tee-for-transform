@@ -3,7 +3,37 @@ Unit tests for TestDefinitionParser.
 """
 
 from t4t.testing.base import TestSeverity
-from t4t.testing.parsers.test_definition_parser import TestDefinitionParser
+from t4t.testing.parsers.test_definition_parser import (
+    ParsedTestDefinition,
+    TestDefinitionParser,
+)
+
+
+class TestParsedTestDefinition:
+    """Test cases for ParsedTestDefinition dataclass."""
+
+    def test_parsed_test_definition_defaults(self):
+        """Test ParsedTestDefinition with default values."""
+        result = ParsedTestDefinition(test_name="my_test")
+
+        assert result.test_name == "my_test"
+        assert result.params is None
+        assert result.expected is None
+        assert result.severity_override is None
+
+    def test_parsed_test_definition_all_fields(self):
+        """Test ParsedTestDefinition with all fields."""
+        result = ParsedTestDefinition(
+            test_name="my_test",
+            params={"param1": 10},
+            expected=42,
+            severity_override=TestSeverity.WARNING,
+        )
+
+        assert result.test_name == "my_test"
+        assert result.params == {"param1": 10}
+        assert result.expected == 42
+        assert result.severity_override == TestSeverity.WARNING
 
 
 class TestTestDefinitionParser:
@@ -171,3 +201,85 @@ class TestTestDefinitionParser:
 
         assert result is not None
         assert result.severity_override == TestSeverity.WARNING
+
+    def test_parse_empty_string(self):
+        """Test parsing an empty string test definition."""
+        severity_overrides = {}
+
+        result = TestDefinitionParser.parse("", severity_overrides, "context")
+
+        assert result is not None
+        assert result.test_name == ""
+
+    def test_parse_none_test_def(self):
+        """Test parsing None as test definition."""
+        severity_overrides = {}
+
+        result = TestDefinitionParser.parse(None, severity_overrides, "context")  # type: ignore[arg-type]
+
+        assert result is None
+
+    def test_parse_dict_with_both_name_and_test_keys(self):
+        """Test parsing a dict with both 'name' and 'test' keys (name takes precedence)."""
+        severity_overrides = {}
+        test_def = {"name": "primary_name", "test": "secondary_name", "param1": 10}
+
+        result = TestDefinitionParser.parse(test_def, severity_overrides, "context")
+
+        assert result is not None
+        assert result.test_name == "primary_name"
+        assert result.params == {"param1": 10}
+
+    def test_parse_dict_with_only_test_key(self):
+        """Test parsing a dict with only 'test' key (no 'name')."""
+        severity_overrides = {}
+        test_def = {"test": "my_test", "param1": 10}
+
+        result = TestDefinitionParser.parse(test_def, severity_overrides, "context")
+
+        assert result is not None
+        assert result.test_name == "my_test"
+        assert result.params == {"param1": 10}
+
+    def test_parse_dict_with_severity_override_context_precedence(self):
+        """Test that context-specific override takes precedence over test name override."""
+        severity_overrides = {
+            "context.my_test": TestSeverity.ERROR,
+            "my_test": TestSeverity.WARNING,
+        }
+        test_def = {"name": "my_test"}
+
+        result = TestDefinitionParser.parse(test_def, severity_overrides, "context")
+
+        assert result is not None
+        assert result.severity_override == TestSeverity.ERROR
+
+    def test_parse_dict_with_severity_inline_overrides_dict(self):
+        """Test that inline severity takes precedence over overrides dict."""
+        severity_overrides = {"context.my_test": TestSeverity.WARNING}
+        test_def = {"name": "my_test", "severity": "error"}
+
+        result = TestDefinitionParser.parse(test_def, severity_overrides, "context")
+
+        assert result is not None
+        assert result.severity_override == TestSeverity.ERROR
+
+    def test_parse_dict_with_expected_none(self):
+        """Test parsing a dict with expected=None."""
+        severity_overrides = {}
+        test_def = {"name": "my_test", "expected": None}
+
+        result = TestDefinitionParser.parse(test_def, severity_overrides, "context")
+
+        assert result is not None
+        assert result.expected is None
+
+    def test_parse_dict_with_params_as_empty_dict(self):
+        """Test parsing a dict where params dict is empty."""
+        severity_overrides = {}
+        test_def = {"name": "my_test", "extra": {}}
+
+        result = TestDefinitionParser.parse(test_def, severity_overrides, "context")
+
+        assert result is not None
+        assert result.params == {"extra": {}}

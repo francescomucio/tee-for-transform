@@ -204,6 +204,284 @@ test = SqlTestMetadata(name="test", severity="error")
         if module_name in sys.modules:
             del sys.modules[module_name]
 
+    def test_sql_test_metadata_invalid_name_raises_error(self, temp_dir):
+        """Test that SqlTestMetadata raises error for invalid test name."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        sql_file = tests_folder / "test.sql"
+
+        py_file.write_text(
+            """
+from t4t.testing import SqlTestMetadata
+
+test = SqlTestMetadata(name="invalid-name!", severity="error")
+"""
+        )
+
+        sql_file.write_text("SELECT 1")
+
+        import importlib.util
+        import sys
+
+        module_name = f"temp_module_{hash(py_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+        module.SqlTestMetadata = SqlTestMetadata
+        module.__file__ = str(py_file.absolute())
+
+        with open(py_file) as f:
+            content = f.read()
+
+        with pytest.raises(TestBuilderError, match="Invalid test name"):
+            exec(content, module.__dict__)
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    def test_sql_test_metadata_name_with_spaces_raises_error(self, temp_dir):
+        """Test that SqlTestMetadata raises error for name with spaces."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        sql_file = tests_folder / "test.sql"
+
+        py_file.write_text(
+            """
+from t4t.testing import SqlTestMetadata
+
+test = SqlTestMetadata(name="my test name", severity="error")
+"""
+        )
+
+        sql_file.write_text("SELECT 1")
+
+        import importlib.util
+        import sys
+
+        module_name = f"temp_module_{hash(py_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+        module.SqlTestMetadata = SqlTestMetadata
+        module.__file__ = str(py_file.absolute())
+
+        with open(py_file) as f:
+            content = f.read()
+
+        with pytest.raises(TestBuilderError, match="Invalid test name"):
+            exec(content, module.__dict__)
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    def test_sql_test_metadata_name_dots_only_raises_error(self, temp_dir):
+        """Test that SqlTestMetadata raises error for name with only dots."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        sql_file = tests_folder / "test.sql"
+
+        py_file.write_text(
+            """
+from t4t.testing import SqlTestMetadata
+
+test = SqlTestMetadata(name="...", severity="error")
+"""
+        )
+
+        sql_file.write_text("SELECT 1")
+
+        import importlib.util
+        import sys
+
+        module_name = f"temp_module_{hash(py_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+        module.SqlTestMetadata = SqlTestMetadata
+        module.__file__ = str(py_file.absolute())
+
+        with open(py_file) as f:
+            content = f.read()
+
+        with pytest.raises(TestBuilderError, match="Invalid test name"):
+            exec(content, module.__dict__)
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    def test_sql_test_metadata_name_underscores_only_raises_error(self, temp_dir):
+        """Test that SqlTestMetadata raises error for name with only underscores."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        sql_file = tests_folder / "test.sql"
+
+        py_file.write_text(
+            """
+from t4t.testing import SqlTestMetadata
+
+test = SqlTestMetadata(name="___", severity="error")
+"""
+        )
+
+        sql_file.write_text("SELECT 1")
+
+        import importlib.util
+        import sys
+
+        module_name = f"temp_module_{hash(py_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+        module.SqlTestMetadata = SqlTestMetadata
+        module.__file__ = str(py_file.absolute())
+
+        with open(py_file) as f:
+            content = f.read()
+
+        with pytest.raises(TestBuilderError, match="Invalid test name"):
+            exec(content, module.__dict__)
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    def test_sql_test_metadata_none_description_and_tags(self, temp_dir):
+        """Test SqlTestMetadata with None description and tags."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        sql_file = tests_folder / "test.sql"
+
+        py_file.write_text(
+            """
+from t4t.testing import SqlTestMetadata
+
+test = SqlTestMetadata(name="test", severity="error", description=None, tags=None)
+"""
+        )
+
+        sql_file.write_text("SELECT 1")
+
+        import importlib.util
+        import sys
+
+        module_name = f"temp_module_{hash(py_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+        module.SqlTestMetadata = SqlTestMetadata
+        module.__file__ = str(py_file.absolute())
+
+        with open(py_file) as f:
+            content = f.read()
+        exec(content, module.__dict__)
+
+        registered_test = TestRegistry.get("test")
+        assert registered_test is not None
+        assert registered_test.description is None
+        assert registered_test.tags == []
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    def test_sql_test_metadata_with_severity_enum(self, temp_dir):
+        """Test SqlTestMetadata with TestSeverity enum directly."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        sql_file = tests_folder / "test.sql"
+
+        py_file.write_text(
+            """
+from t4t.testing import SqlTestMetadata, TestSeverity
+
+test = SqlTestMetadata(name="test", severity=TestSeverity.WARNING)
+"""
+        )
+
+        sql_file.write_text("SELECT 1")
+
+        import importlib.util
+        import sys
+
+        module_name = f"temp_module_{hash(py_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+        module.SqlTestMetadata = SqlTestMetadata
+        module.TestSeverity = TestSeverity
+        module.__file__ = str(py_file.absolute())
+
+        with open(py_file) as f:
+            content = f.read()
+        exec(content, module.__dict__)
+
+        registered_test = TestRegistry.get("test")
+        assert registered_test.severity == TestSeverity.WARNING
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    def test_sql_test_metadata_empty_tags(self, temp_dir):
+        """Test SqlTestMetadata with empty tags list."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        sql_file = tests_folder / "test.sql"
+
+        py_file.write_text(
+            """
+from t4t.testing import SqlTestMetadata
+
+test = SqlTestMetadata(name="test", severity="error", tags=[])
+"""
+        )
+
+        sql_file.write_text("SELECT 1")
+
+        import importlib.util
+        import sys
+
+        module_name = f"temp_module_{hash(py_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+        module.SqlTestMetadata = SqlTestMetadata
+        module.__file__ = str(py_file.absolute())
+
+        with open(py_file) as f:
+            content = f.read()
+        exec(content, module.__dict__)
+
+        registered_test = TestRegistry.get("test")
+        assert registered_test.tags == []
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    def test_sql_test_metadata_test_builder_error_exception(self):
+        """Test that TestBuilderError is a proper exception."""
+        error = TestBuilderError("test error")
+        assert isinstance(error, Exception)
+        assert str(error) == "test error"
+
     def test_sql_test_metadata_severity_warning(self, temp_dir):
         """Test SqlTestMetadata with warning severity."""
         tests_folder = temp_dir / "tests"
@@ -243,3 +521,57 @@ test = SqlTestMetadata(name="test", severity="warning")
         # Cleanup
         if module_name in sys.modules:
             del sys.modules[module_name]
+
+    def test_sql_test_metadata_print_test(self, temp_dir, capsys):
+        """Test that _print_test() outputs formatted test information."""
+        tests_folder = temp_dir / "tests"
+        tests_folder.mkdir()
+
+        py_file = tests_folder / "test.py"
+        sql_file = tests_folder / "test.sql"
+
+        py_file.write_text(
+            """
+from t4t.testing import SqlTestMetadata
+
+test = SqlTestMetadata(name="print_test", severity="error", description="A test to print", tags=["demo"])
+"""
+        )
+
+        sql_file.write_text("SELECT 1 FROM @table_name")
+
+        import importlib.util
+        import sys
+
+        module_name = f"temp_module_{hash(py_file)}"
+        spec = importlib.util.spec_from_loader(module_name, loader=None)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+
+        module.SqlTestMetadata = SqlTestMetadata
+        module.__file__ = str(py_file.absolute())
+
+        with open(py_file) as f:
+            content = f.read()
+        exec(content, module.__dict__)
+
+        # Manually call _print_test to verify output
+        test_instance = module.test
+        test_instance._print_test()
+
+        captured = capsys.readouterr()
+        assert "TEST: print_test" in captured.out
+        assert "SELECT 1 FROM @table_name" in captured.out
+        assert "Severity: error" in captured.out
+        assert "Tags: demo" in captured.out
+        assert "Description: A test to print" in captured.out
+
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+
+    def test_sql_test_metadata_print_test_no_test(self):
+        """Test that _print_test() handles None test gracefully."""
+        metadata = SqlTestMetadata.__new__(SqlTestMetadata)
+        metadata.test = None
+        # Should not raise any error
+        metadata._print_test()
