@@ -1,6 +1,8 @@
 # Tee for Transform
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/f/f7/Rpb_clothing_icon.svg" alt="Tee Logo" width="80" height="80" align="left" style="margin-right: 15px; margin-bottom: 10px;">
+<p align="center">
+  <img src="https://raw.githubusercontent.com/francescomucio/tee-for-transform/main/docs/logo.svg" alt="t4t logo" width="100">
+</p>
 
 **This is a "what if" project**: What if a transformation tool supported functions? What if it allowed for richer metadata? What if data modeling was a priority? After a chat with a friend, I decided to see how far I could go...
 
@@ -8,33 +10,27 @@ A Python framework for SQL data transformations with **DuckDB** (including **Mot
 
 ## 🚀 Quick Start
 
-Since this is an initial release, there's no pip package available yet. Clone this repository, install with [uv](https://github.com/astral-sh/uv), then scaffold a project with the CLI:
-
 ```bash
-# Clone the repository
-git clone https://github.com/francescomucio/tee-for-transform
-cd tee-for-transform
-
-# Install the package and dependencies (makes `t4t` available via `uv run`)
-uv sync
+# Install t4t (DuckDB included — no extra drivers needed)
+pip install t4t
 
 # Create a new project (DuckDB by default: data/<name>.duckdb, models/, seeds/, tests/)
-uv run t4t init my_project
+t4t init my_project
 
-# Optional: pick another backend (Snowflake / MotherDuck match current adapter maturity; others scaffold config while adapters land)
-# uv run t4t init my_project -d snowflake
-# uv run t4t init my_project -d motherduck
-# uv run t4t init my_project -d postgresql   # in progress
-# uv run t4t init my_project -d bigquery     # in progress
+# Optional: pick another backend
+# pip install t4t[snowflake]   # Snowflake
+# pip install t4t[postgres]    # PostgreSQL (adapter in progress)
+# pip install t4t[bigquery]    # BigQuery (adapter in progress)
+# t4t init my_project -d snowflake
 
 # Add a model (SQL file)
 echo "SELECT 1 AS id, 'hello' AS message" > my_project/models/my_first_model.sql
 
 # Confirm config and connectivity (edit my_project/project.toml first if not using defaults)
-uv run t4t debug my_project
+t4t debug my_project
 
 # Run models
-uv run t4t run my_project
+t4t run my_project
 ```
 
 Python models live under `models/` too. With the **`@model`** decorator (`my_project/models/hello_py.py`):
@@ -108,23 +104,19 @@ The parser reads these definitions from source. Details: [Model API](docs/api-re
 
 ## 📦 Installation
 
-**Note**: This is an initial release with no pip package available. You must clone this repository to use t4t.
-
 ```bash
-# Clone the repository
-git clone https://github.com/francescomucio/tee-for-transform
-cd tee-for-transform
+# Install t4t (DuckDB included — no extra drivers needed)
+pip install t4t
 
-# Install dependencies using uv
-uv sync
+# With optional database drivers
+pip install t4t[snowflake]   # Snowflake
+pip install t4t[postgres]    # PostgreSQL (adapter in progress)
+pip install t4t[bigquery]    # BigQuery (adapter in progress)
+pip install t4t[all]         # All drivers
 
-# Install the package in development mode to make t4t available
-uv pip install -e .
-
-# Or install specific dependencies
-uv add duckdb  # DuckDB / MotherDuck
-uv add snowflake-connector-python  # Snowflake
-# uv add psycopg2-binary  # PostgreSQL (adapter in progress)
+# Or with uv
+uv add t4t
+uvx t4t init my_project
 ```
 
 ## 🛠️ CLI Commands
