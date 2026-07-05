@@ -2,8 +2,6 @@
 Compute which models to re-run from a stored manifest (failed + downstream + upstream-skipped).
 """
 
-from __future__ import annotations
-
 import logging
 from pathlib import Path
 from typing import Any

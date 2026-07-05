@@ -4,8 +4,6 @@ Lookup table generator.
 Creates `lkp_<level>.sql` + `lkp_<level>.py` for each level of a hierarchical dimension.
 """
 
-from __future__ import annotations
-
 import pprint
 import re
 import shutil

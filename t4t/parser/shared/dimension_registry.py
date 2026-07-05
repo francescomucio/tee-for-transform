@@ -7,8 +7,6 @@ or a model short name starting with ``dim_``. Keys are lowercased logical names
 level name.
 """
 
-from __future__ import annotations
-
 from typing import Any, Mapping
 
 

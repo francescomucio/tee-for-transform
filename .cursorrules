@@ -1,19 +1,18 @@
 # Cursor Rules for t4t (Tee for Transform) Project
 
 ## Project Overview
-This is a Python 3.14 project for managing SQL data transformations, managed with uv (a fast Python package installer and resolver). The project is named "Tee for Transform" (abbreviated as **t4t**).
+This is a Python 3.11+ project for managing SQL data transformations, managed with uv (a fast Python package installer and resolver). The project is named "Tee for Transform" (abbreviated as **t4t**).
 
 ## Python Version
-- **Python 3.14 is REQUIRED** - This project targets Python 3.14 specifically
-- Python 3.14 features are used (e.g., deferred annotation evaluation is default, no need for `from __future__ import annotations`)
-- The `.python-version` file specifies `3.14`
-- `pyproject.toml` requires `>=3.14`
+- **Python 3.11+ is required** - This project targets Python 3.11 and above
+- The `.python-version` file specifies `3.11`
+- `pyproject.toml` requires `>=3.11`
 - **ALWAYS use `uv run` for executing Python scripts** - never use `python` directly
 - Use `uv add` for adding dependencies
 - Use `uv sync` for installing dependencies
 
 ## File Structure
-- `pyproject.toml` - Project configuration and dependencies (requires Python >=3.14)
+- `pyproject.toml` - Project configuration and dependencies (requires Python >=3.11)
 - `t4t/` - Main package containing all modules
   - `t4t/cli/` - CLI command implementations (`tcli` commands)
   - `t4t/parser/` - SQL parsing, dependency analysis, and graph building
@@ -146,7 +145,7 @@ uv pip list
 
 ## Code Style
 - Use absolute imports: `from t4t.module import function` (not `from ..module`)
-- No `from __future__ import annotations` needed (Python 3.14 default)
+- `from __future__ import annotations` is not required (Python 3.11+ has deferred evaluation via `annotations` future import, but it's optional)
 - Use `print()` for user-facing CLI output
 - Use `logging` for internal/debug messages
 - Project name shorthand is "t4t" (not "TEE" or "Tee")
