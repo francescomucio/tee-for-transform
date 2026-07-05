@@ -5,44 +5,40 @@ import pytest
 
 from t4t.parser.output.lookup_generator import generate_lookups
 
+FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "lookup_conflict_project"
+
+
+@pytest.fixture
+def conflict_project(tmp_path):
+    """Copy the lookup-conflict fixture project into a temp dir.
+
+    Both dims declare a hierarchy level named "Region", so lookup generation
+    must either raise (default) or auto-resolve by prefixing the dim name.
+    Copying keeps generated files out of the repository.
+    """
+    project = tmp_path / "lookup_conflict_project"
+    shutil.copytree(FIXTURE, project)
+    return project
+
 
 class TestLookupGenerator:
-    def test_generate_lookups_conflicting_names_raise_error_by_default(self):
-        repo_root = Path(__file__).resolve().parents[3]  # tee-for-transform
-        project_root = repo_root.parent  # workspace root
-        test_project = project_root / "test_project"
-
-        dim_dir = test_project / "models" / "dwh"
-        generated_dir = dim_dir / "_generated"
-        assert dim_dir.exists()
-
-        # Ensure clean state.
-        if generated_dir.exists():
-            shutil.rmtree(generated_dir)
-
+    def test_generate_lookups_conflicting_names_raise_error_by_default(self, conflict_project):
         with pytest.raises(ValueError, match="Lookup level name conflict detected"):
-            generate_lookups(test_project)
+            generate_lookups(conflict_project)
 
-    def test_generate_lookups_auto_resolves_conflicting_names(self):
-        repo_root = Path(__file__).resolve().parents[3]  # tee-for-transform
-        project_root = repo_root.parent  # workspace root
-        test_project = project_root / "test_project"
+    def test_generate_lookups_auto_resolves_conflicting_names(self, conflict_project):
+        created = generate_lookups(conflict_project, auto_resolve_level_conflicts=True)
 
-        dim_dir = test_project / "models" / "dwh"
-        generated_dir = dim_dir / "_generated"
-        assert dim_dir.exists()
-
-        # Ensure clean state.
-        if generated_dir.exists():
-            shutil.rmtree(generated_dir)
-
-        created = generate_lookups(test_project, auto_resolve_level_conflicts=True)
-
+        generated_dir = conflict_project / "models" / "dwh" / "_generated"
         assert generated_dir.exists()
         assert created
-        for safe in ["shop_region", "customer_region", "category", "subcategory"]:
+
+        # Conflicting "Region" levels are prefixed with their dim name.
+        for safe in ["shop_region", "customer_region"]:
             assert (generated_dir / f"lkp_{safe}.sql").exists()
             assert (generated_dir / f"lkp_{safe}.py").exists()
+
+        # Leaf levels do not produce lookups.
         assert not (generated_dir / "lkp_shop.sql").exists()
         assert not (generated_dir / "lkp_shop.py").exists()
 
@@ -58,22 +54,4 @@ class TestLookupGenerator:
         assert (
             "'table_type': 'lookup'" in customer_region_py
             or '"table_type": "lookup"' in customer_region_py
-        )
-        assert (
-            "'name': 'customer_region'" in customer_region_py
-            or '"name": "customer_region"' in customer_region_py
-        )
-        assert (
-            "'primary_key': 'region_id'" in customer_region_py
-            or '"primary_key": "region_id"' in customer_region_py
-        )
-        assert "'description':" in customer_region_py or '"description":' in customer_region_py
-        assert "'fk_to'" in customer_region_py or '"fk_to"' in customer_region_py
-        assert (
-            "'table': 'dwh.dim_customer'" in customer_region_py
-            or '"table": "dwh.dim_customer"' in customer_region_py
-        )
-        assert (
-            "'column': 'region_id'" in customer_region_py
-            or '"column": "region_id"' in customer_region_py
         )

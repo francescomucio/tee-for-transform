@@ -26,7 +26,7 @@ This guide helps dbt users understand t4t by mapping familiar dbt concepts to th
 | **Tests (singular/generic)** | **`@test` decorator / SQL tests** | Python `@test` functions or SQL files in `tests/` |
 | **Tags** | **Tags** | Similar tag-based model selection |
 | **Hooks** | **N/A (yet)** | Not currently supported |
-| **Snapshots** | **N/A (yet)** | Not currently supported |
+| **Snapshots** | **SCD2 materialization** | Set `"materialization": "scd2"` in model metadata — no separate artifact type or command needed |
 | **Exposures** | **N/A (yet)** | Not currently supported |
 | **Analysis** | **N/A (yet)** | Not currently supported |
 
@@ -128,7 +128,7 @@ t4t supports multiple backends with automatic SQL dialect conversion:
 pip install t4t
 ```
 
-> **Note**: t4t requires **Python 3.11+**. Make sure your environment meets this requirement.
+> **Note**: t4t requires **Python 3.12+**. Make sure your environment meets this requirement.
 
 ### Step 2: Import Your dbt Project
 
@@ -278,11 +278,11 @@ SELECT * FROM orders WHERE total < 0
 - **SQL dialect conversion**: Write once, run on any supported database
 - **OTS support**: Export/import Open Transformation Specification modules
 - **No separate test framework**: Tests are part of the model definition
+- **SCD2 as a materialization**: History tracking is a per-model config, not a separate snapshot artifact with its own command
 
 ## What dbt Does Better (for now)
 
 - **Ecosystem**: Larger community, more packages, more adapters
-- **Snapshots**: Point-in-time snapshot support
 - **Hooks**: Pre/post hook support
 - **Exposures**: Downstream consumer documentation
 - **Analysis**: Ad-hoc analysis queries
