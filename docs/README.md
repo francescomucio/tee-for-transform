@@ -55,7 +55,7 @@ Welcome to the Tee for Transform (t4t) documentation. t4t is a powerful Python f
 - **Incremental Materialization**: Efficient data processing with append, merge, and delete+insert strategies
 - **Comprehensive Tagging**: dbt-style tags and database object tags for tables, views, schemas, and functions
 - **Pluggable Architecture**: Easy to add new database adapters
-- **Configuration Management**: `project.toml` (from `t4t init`) or `pyproject.toml` with `[tool.tee]`, plus environment overrides
+- **Configuration Management**: `project.toml` (from `t4t init`) or `pyproject.toml` with `[tool.t4t]`, plus environment overrides
 
 ## Quick Example
 

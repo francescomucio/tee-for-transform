@@ -1,6 +1,6 @@
 # Configuration
 
-t4t loads database and project settings from TOML files in your **project directory** (the folder you pass to `t4t run`, `t4t debug`, etc.) and from **environment variables**. The loader is `DatabaseConfigManager` in `tee/engine/config.py`.
+t4t loads database and project settings from TOML files in your **project directory** (the folder you pass to `t4t run`, `t4t debug`, etc.) and from **environment variables**. The loader is `DatabaseConfigManager` in `t4t/engine/config.py`.
 
 ## Which file is read?
 
@@ -55,7 +55,7 @@ Either is mapped to the adapter’s source dialect for SQL conversion. See [SQL 
 
 Top-level `[flags]` in `project.toml` / `pyproject.toml` is passed through (e.g. `materialization_change_behavior`). Other flags may be documented in the user guide as they are added.
 
-## `pyproject.toml` alternative (`[tool.tee]`)
+## `pyproject.toml` alternative (`[tool.t4t]`)
 
 If you use **`pyproject.toml`** as the single config file, you can put the database section under **`[tool.t4t.database]`**, or define multiple named configs under **`[tool.t4t.databases.<name>]`** and load by name in code (`load_database_config("dev")`).
 
@@ -76,19 +76,19 @@ These override values loaded from TOML (last-write wins in the merged dict):
 
 | Variable | Maps to |
 |----------|---------|
-| `TEE_DB_TYPE` | `type` |
-| `TEE_DB_HOST` | `host` |
-| `TEE_DB_PORT` | `port` |
-| `TEE_DB_DATABASE` | `database` |
-| `TEE_DB_USER` | `user` |
-| `TEE_DB_PASSWORD` | `password` |
-| `TEE_DB_PATH` | `path` |
-| `TEE_DB_SCHEMA` | `schema` |
-| `TEE_DB_WAREHOUSE` | `warehouse` |
-| `TEE_DB_ROLE` | `role` |
-| `TEE_DB_PROJECT` | `project` |
-| `TEE_DB_SOURCE_DIALECT` | `source_dialect` |
-| `TEE_DB_TARGET_DIALECT` | `target_dialect` |
+| `T4T_DB_TYPE` | `type` |
+| `T4T_DB_HOST` | `host` |
+| `T4T_DB_PORT` | `port` |
+| `T4T_DB_DATABASE` | `database` |
+| `T4T_DB_USER` | `user` |
+| `T4T_DB_PASSWORD` | `password` |
+| `T4T_DB_PATH` | `path` |
+| `T4T_DB_SCHEMA` | `schema` |
+| `T4T_DB_WAREHOUSE` | `warehouse` |
+| `T4T_DB_ROLE` | `role` |
+| `T4T_DB_PROJECT` | `project` |
+| `T4T_DB_SOURCE_DIALECT` | `source_dialect` |
+| `T4T_DB_TARGET_DIALECT` | `target_dialect` |
 
 Use env vars for secrets and environment-specific overrides.
 

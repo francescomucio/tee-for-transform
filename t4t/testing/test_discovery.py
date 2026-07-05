@@ -5,7 +5,6 @@ Test discovery for finding SQL and Python test files in project's tests/ folder.
 import importlib.util
 import logging
 import sys
-import types
 from pathlib import Path
 
 from .base import StandardTest, TestRegistry, TestSeverity
@@ -203,20 +202,6 @@ class TestDiscovery:
             module.test = test_func
             module.create_test = create_test
             module.SqlTestMetadata = SqlTestMetadata
-
-            # Also inject into tee.testing structure for imports
-            if "tee" not in sys.modules:
-                tee_module = types.ModuleType("tee")
-                sys.modules["tee"] = tee_module
-            if "tee.testing" not in sys.modules:
-                testing_module = types.ModuleType("testing")
-                sys.modules["tee.testing"] = testing_module
-            # Mark test as not a pytest test function (it's a decorator)
-            test_func = test
-            test_func.__test__ = False
-            sys.modules["tee.testing"].test = test_func
-            sys.modules["tee.testing"].create_test = create_test
-            sys.modules["tee.testing"].SqlTestMetadata = SqlTestMetadata
 
             # Set __file__ so SqlTestMetadata can find the companion SQL file
             module.__file__ = str(py_file.absolute())

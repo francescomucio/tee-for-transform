@@ -30,7 +30,7 @@ from t4t.adapters.duckdb.adapter import DuckDBAdapter
 def _get_config_file_path() -> Path:
     """Get the path to the MotherDuck config file."""
     test_file_dir = Path(__file__).parent  # tests/adapters/duckdb/
-    project_root = test_file_dir.parent.parent.parent  # tee-for-transform/
+    project_root = test_file_dir.parent.parent.parent  # t4t-for-transform/
     return project_root / "tests" / ".motherduck_config.json"
 
 

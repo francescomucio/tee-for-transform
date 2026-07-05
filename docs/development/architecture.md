@@ -39,7 +39,7 @@ t4t is built with a modular, pluggable architecture that separates concerns into
 
 ## Core Components
 
-### 1. CLI Layer (`tee/cli/`)
+### 1. CLI Layer (`t4t/cli/`)
 
 The command-line interface built with Typer:
 
@@ -60,7 +60,7 @@ The command-line interface built with Typer:
 - Commands are thin wrappers around core functionality
 - Shared context handles common setup (config loading, logging)
 
-### 2. Execution Layer (`tee/executor.py`, `tee/executor_helpers/`)
+### 2. Execution Layer (`t4t/executor.py`, `t4t/executor_helpers/`)
 
 High-level orchestration of the complete workflow:
 
@@ -85,7 +85,7 @@ High-level orchestration of the complete workflow:
 - Specific error handling for `CompilationError` and `ParserError`
 - Graceful handling of empty projects (no models)
 
-### 3. Parser Layer (`tee/parser/`)
+### 3. Parser Layer (`t4t/parser/`)
 
 SQL parsing, dependency analysis, and graph building:
 
@@ -111,7 +111,7 @@ SQL parsing, dependency analysis, and graph building:
 - Supports both SQL and Python metadata files
 - Uses SQLglot for SQL parsing and dialect conversion
 
-### 4. Engine Layer (`tee/engine/`)
+### 4. Engine Layer (`t4t/engine/`)
 
 Database-agnostic execution engine:
 
@@ -133,7 +133,7 @@ Database-agnostic execution engine:
 - State management for incremental models
 - Automatic schema creation and management
 
-### 5. Adapter Layer (`tee/adapters/`)
+### 5. Adapter Layer (`t4t/adapters/`)
 
 Database-specific implementations:
 
@@ -149,7 +149,7 @@ Database-specific implementations:
 - Database-specific optimizations
 - SQL dialect conversion via SQLglot
 
-### 6. Testing Layer (`tee/testing/`)
+### 6. Testing Layer (`t4t/testing/`)
 
 Data quality testing framework:
 

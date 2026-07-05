@@ -9,7 +9,7 @@ from t4t.parser.output.lookup_generator import generate_lookups
 class TestLookupGenerator:
     def test_generate_lookups_conflicting_names_raise_error_by_default(self):
         repo_root = Path(__file__).resolve().parents[3]  # tee-for-transform
-        project_root = repo_root.parent  # /home/mucio/tee
+        project_root = repo_root.parent  # workspace root
         test_project = project_root / "test_project"
 
         dim_dir = test_project / "models" / "dwh"
@@ -25,7 +25,7 @@ class TestLookupGenerator:
 
     def test_generate_lookups_auto_resolves_conflicting_names(self):
         repo_root = Path(__file__).resolve().parents[3]  # tee-for-transform
-        project_root = repo_root.parent  # /home/mucio/tee
+        project_root = repo_root.parent  # workspace root
         test_project = project_root / "test_project"
 
         dim_dir = test_project / "models" / "dwh"

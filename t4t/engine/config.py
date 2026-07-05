@@ -62,7 +62,7 @@ class DatabaseConfigManager:
                 data = tomllib.load(f)
 
             # Look for [tool.t4t.database], [tool.t4t.databases], or [connection]
-            tee_config = data.get("tool", {}).get("tee", {})
+            t4t_config = data.get("tool", {}).get("t4t", {})
 
             # Start with flags if they exist
             config = {}
@@ -70,12 +70,12 @@ class DatabaseConfigManager:
                 config["extra"] = {"flags": data["flags"]}
 
             # Check for single database config in tool.t4t.database
-            if "database" in tee_config:
-                config.update(tee_config["database"])
+            if "database" in t4t_config:
+                config.update(t4t_config["database"])
                 return config
 
             # Check for multiple database configs in tool.t4t.databases
-            databases = tee_config.get("databases", {})
+            databases = t4t_config.get("databases", {})
             if isinstance(databases, dict) and config_name in databases:
                 config.update(databases[config_name])
                 return config
@@ -114,24 +114,7 @@ class DatabaseConfigManager:
             "T4T_DB_TARGET_DIALECT": "target_dialect",
         }
 
-        # Legacy TEE_ prefix support for backward compatibility
-        legacy_mappings = {
-            "TEE_DB_TYPE": "type",
-            "TEE_DB_HOST": "host",
-            "TEE_DB_PORT": "port",
-            "TEE_DB_DATABASE": "database",
-            "TEE_DB_USER": "user",
-            "TEE_DB_PASSWORD": "password",
-            "TEE_DB_PATH": "path",
-            "TEE_DB_SCHEMA": "schema",
-            "TEE_DB_WAREHOUSE": "warehouse",
-            "TEE_DB_ROLE": "role",
-            "TEE_DB_PROJECT": "project",
-            "TEE_DB_SOURCE_DIALECT": "source_dialect",
-            "TEE_DB_TARGET_DIALECT": "target_dialect",
-        }
-
-        # Load T4T_ prefixed variables first (higher priority)
+        # Load T4T_ prefixed variables
         for env_var, config_key in env_mappings.items():
             value = os.getenv(env_var)
             if value is not None:
@@ -140,17 +123,6 @@ class DatabaseConfigManager:
                     env_config[config_key] = int(value)
                 else:
                     env_config[config_key] = value
-
-        # Load legacy TEE_ prefixed variables (lower priority - only if not already set)
-        for env_var, config_key in legacy_mappings.items():
-            if config_key not in env_config:  # Only set if not already defined by T4T_
-                value = os.getenv(env_var)
-                if value is not None:
-                    # Convert port to int if it's a number
-                    if config_key == "port" and value.isdigit():
-                        env_config[config_key] = int(value)
-                    else:
-                        env_config[config_key] = value
 
         return env_config
 

@@ -27,7 +27,7 @@ class TestFunctionExecutionSnowflake:
         # Path from test file: tests/engine/integration/test_function_execution_snowflake.py
         # Config file: tests/.snowflake_config.json
         test_file_dir = Path(__file__).parent  # tests/engine/integration/
-        project_root = test_file_dir.parent.parent.parent  # tee-for-transform/
+        project_root = test_file_dir.parent.parent.parent  # t4t-for-transform/
         config_file = project_root / "tests" / ".snowflake_config.json"
         config = {}
 

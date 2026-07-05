@@ -137,11 +137,11 @@ t4t follows a modular, pluggable architecture:
 
 ### Key Components
 
-1. **CLI** (`tee/cli/`) - Command-line interface for all operations
-2. **Parser** (`tee/parser/`) - SQL parsing, dependency analysis, and graph building
-3. **Engine** (`tee/engine/`) - Model execution and state management
-4. **Adapters** (`tee/adapters/`) - Database-specific implementations
-5. **Testing** (`tee/testing/`) - Data quality testing framework
+1. **CLI** (`t4t/cli/`) - Command-line interface for all operations
+2. **Parser** (`t4t/parser/`) - SQL parsing, dependency analysis, and graph building
+3. **Engine** (`t4t/engine/`) - Model execution and state management
+4. **Adapters** (`t4t/adapters/`) - Database-specific implementations
+5. **Testing** (`t4t/testing/`) - Data quality testing framework
 
 ## Workflow
 

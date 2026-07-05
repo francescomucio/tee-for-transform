@@ -543,7 +543,7 @@ t4t automatically tracks the state of incremental models:
 - **Config hashes**: Detects changes in model configuration
 - **Last processed values**: For tracking incremental progress
 
-State is stored in `examples/t_project/data/tee_state.db` by default.
+State is stored in `examples/t_project/data/t4t_state.db` by default.
 
 ## Database Support
 

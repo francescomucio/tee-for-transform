@@ -108,7 +108,7 @@ t_project/
 │       └── test_calculate_percentage_zero.sql
 ├── data/
 │   ├── t_project.duckdb
-│   └── tee_state.db
+│   └── t4t_state.db
 └── project.toml
 ```
 

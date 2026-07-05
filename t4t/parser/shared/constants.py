@@ -16,8 +16,8 @@ SUPPORTED_FUNCTION_OVERRIDE_EXTENSIONS = [
 ]  # .sql for SQL, .js for JavaScript (Snowflake)
 
 # Known database adapter names (lowercase) for override detection
-# These should match the adapters available in tee.adapters
-# See tee.adapters.__init__ for the list of registered adapters
+# These should match the adapters available in t4t.adapters
+# See t4t.adapters.__init__ for the list of registered adapters
 KNOWN_DATABASE_NAMES = {"duckdb", "snowflake", "postgresql", "bigquery"}
 
 # Common SQL built-in functions that should be filtered out when extracting user-defined functions
@@ -62,4 +62,6 @@ OUTPUT_FILES = {
     "dimensional_graph": "dimensional_graph.json",
     "dimension_registry": "dimension_registry.json",
     "markdown_report": "dependency_report.md",
+    "last_run": "last_run.json",
+    "runs_db": "runs.sqlite",
 }

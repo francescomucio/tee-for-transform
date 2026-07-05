@@ -41,9 +41,9 @@ source_dialect = "postgresql"  # Write models in PostgreSQL, convert to DuckDB
 Or use environment variables:
 
 ```bash
-export TEE_DB_TYPE=duckdb
-export TEE_DB_PATH=data/my_project.db
-export TEE_DB_SOURCE_DIALECT=postgresql
+export T4T_DB_TYPE=duckdb
+export T4T_DB_PATH=data/my_project.db
+export T4T_DB_SOURCE_DIALECT=postgresql
 ```
 
 ## Supported Databases

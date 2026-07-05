@@ -314,30 +314,11 @@ class PythonParser(BaseParser):
             module.model = model
             module.create_model = create_model
 
-            # Also inject it into the tee.parser module structure
-            if "tee" not in sys.modules:
-                import types
-
-                tee_module = types.ModuleType("tee")
-                sys.modules["tee"] = tee_module
-            if "tee.parser" not in sys.modules:
-                import types
-
-                parser_module = types.ModuleType("parser")
-                sys.modules["tee.parser"] = parser_module
-            if "tee.parser.model" not in sys.modules:
-                import types
-
-                model_module = types.ModuleType("model")
-                model_module.model = model
-                model_module.create_model = create_model
-                sys.modules["tee.parser.model"] = model_module
-
-            # Set __file__ and __tee_file_path__ before executing module
+            # Set __file__ and __t4t_file_path__ before executing module
             # This ensures decorators can find the correct file path
             file_path_abs = str(file_path.absolute())
             module.__file__ = file_path_abs
-            module.__tee_file_path__ = file_path_abs
+            module.__t4t_file_path__ = file_path_abs
 
             spec.loader.exec_module(module)
 
@@ -426,46 +407,13 @@ class PythonParser(BaseParser):
             module.SqlModelMetadata = SqlModelMetadata
             module.ModelMetadata = ModelMetadata
 
-            # Also inject into tee.parser structure for imports
-            if "tee" not in sys.modules:
-                import types
-
-                tee_module = types.ModuleType("tee")
-                sys.modules["tee"] = tee_module
-            if "tee.parser" not in sys.modules:
-                import types
-
-                parser_module = types.ModuleType("parser")
-                sys.modules["tee.parser"] = parser_module
-            # Inject tee.parser.model for backward compatibility
-            if "tee.parser.model" not in sys.modules:
-                import types
-
-                model_module = types.ModuleType("model")
-                model_module.model = model
-                model_module.create_model = create_model
-                sys.modules["tee.parser.model"] = model_module
-            if "tee.parser.processing" not in sys.modules:
-                import types
-
-                processing_module = types.ModuleType("processing")
-                sys.modules["tee.parser.processing"] = processing_module
-            # Ensure model_builder module exists and has SqlModelMetadata
-            if not hasattr(sys.modules["tee.parser.processing"], "model_builder"):
-                import types
-
-                processing_module = sys.modules["tee.parser.processing"]
-                processing_module.model_builder = types.ModuleType("model_builder")
-                sys.modules["tee.parser.processing.model_builder"] = processing_module.model_builder
-            sys.modules["tee.parser.processing.model_builder"].SqlModelMetadata = SqlModelMetadata
-
             # Set __file__ to absolute path so models can find companion files and match file_path
             file_path_abs = str(file_path.absolute())
             module.__file__ = file_path_abs
 
             # Inject a special variable that decorators can use to get the file path
             # This is more reliable than frame inspection in executed modules
-            module.__tee_file_path__ = file_path_abs
+            module.__t4t_file_path__ = file_path_abs
 
             # Execute the file content
             # This will trigger auto-registration of models via decorators/factory functions

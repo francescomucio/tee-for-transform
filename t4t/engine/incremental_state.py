@@ -45,8 +45,8 @@ class IncrementalStateManager:
             state_database_path: Path to the state database. If None, uses default location.
         """
         if state_database_path is None:
-            # Default to tee_state.db in the current directory
-            state_database_path = "tee_state.db"
+            # Default to t4t_state.db in the current directory
+            state_database_path = "t4t_state.db"
 
         self.state_database_path = Path(state_database_path)
         self.connection = None

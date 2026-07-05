@@ -143,42 +143,13 @@ class FunctionPythonParser(BaseParser):
             module.SQLFunctionMetadata = SQLFunctionMetadata
             module.FunctionMetadata = FunctionMetadata
 
-            # Also inject into tee.parser structure for imports
-            if "tee" not in sys.modules:
-                import types
-
-                tee_module = types.ModuleType("tee")
-                sys.modules["tee"] = tee_module
-            if "tee.parser" not in sys.modules:
-                import types
-
-                parser_module = types.ModuleType("parser")
-                sys.modules["tee.parser"] = parser_module
-            if "tee.parser.processing" not in sys.modules:
-                import types
-
-                processing_module = types.ModuleType("processing")
-                sys.modules["tee.parser.processing"] = processing_module
-            # Ensure function_builder module exists and has SQLFunctionMetadata
-            if not hasattr(sys.modules["tee.parser.processing"], "function_builder"):
-                import types
-
-                processing_module = sys.modules["tee.parser.processing"]
-                processing_module.function_builder = types.ModuleType("function_builder")
-                sys.modules["tee.parser.processing.function_builder"] = (
-                    processing_module.function_builder
-                )
-            sys.modules[
-                "tee.parser.processing.function_builder"
-            ].SQLFunctionMetadata = SQLFunctionMetadata
-
             # Set __file__ to absolute path so functions can find companion files and match file_path
             file_path_abs = str(file_path.absolute())
             module.__file__ = file_path_abs
 
             # Inject a special variable that decorators can use to get the file path
             # This is more reliable than frame inspection in executed modules
-            module.__tee_file_path__ = file_path_abs
+            module.__t4t_file_path__ = file_path_abs
 
             # Execute the file content
             # This will trigger auto-registration of functions via decorators or SQLFunctionMetadata

@@ -19,7 +19,7 @@ The implementation should follow this flow:
 
 ### Step 1: Update Type Definitions
 
-**File:** `tee-for-transform/tee/typing/metadata.py`
+**File:** `tee-for-transform/t4t/typing/metadata.py`
 
 Add `on_schema_change` to the incremental config types:
 
@@ -49,7 +49,7 @@ class IncrementalConfig(TypedDict):
 
 ### Step 2: Create Schema Comparison Module
 
-**New File:** `tee-for-transform/tee/engine/materialization/schema_comparator.py`
+**New File:** `tee-for-transform/t4t/engine/materialization/schema_comparator.py`
 
 This module will:
 - Infer schema from SQL query output
@@ -120,7 +120,7 @@ class SchemaComparator:
 
 ### Step 3: Create Schema Change Handler
 
-**New File:** `tee-for-transform/tee/engine/materialization/schema_change_handler.py`
+**New File:** `tee-for-transform/t4t/engine/materialization/schema_change_handler.py`
 
 This module will:
 - Handle the four `on_schema_change` behaviors
@@ -264,7 +264,7 @@ class SchemaChangeHandler:
 
 ### Step 4: Integrate into Incremental Executor
 
-**File:** `tee-for-transform/tee/engine/materialization/incremental_executor.py`
+**File:** `tee-for-transform/t4t/engine/materialization/incremental_executor.py`
 
 Add schema change handling before executing strategies:
 
@@ -311,7 +311,7 @@ Apply the same pattern to `execute_merge_strategy` and `execute_delete_insert_st
 
 ### Step 5: Update Materialization Handler
 
-**File:** `tee-for-transform/tee/engine/materialization/materialization_handler.py`
+**File:** `tee-for-transform/t4t/engine/materialization/materialization_handler.py`
 
 Pass `on_schema_change` to executor methods:
 
@@ -343,7 +343,7 @@ def _execute_incremental_materialization(
 
 ### Step 6: Update dbt Importer
 
-**File:** `tee-for-transform/tee/importer/dbt/converters/metadata_converter.py`
+**File:** `tee-for-transform/t4t/importer/dbt/converters/metadata_converter.py`
 
 Update `_convert_incremental_config` to convert `on_schema_change` instead of warning:
 
@@ -370,7 +370,7 @@ def _convert_incremental_config(
 
 ### Step 7: Add Database Adapter Methods (Optional but Recommended)
 
-**File:** `tee-for-transform/tee/adapters/base/core.py`
+**File:** `tee-for-transform/t4t/adapters/base/core.py`
 
 Add optional methods to the base adapter interface:
 

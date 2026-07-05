@@ -10,12 +10,12 @@ Narrative API reference pages are not written yet. Adapters implement a common i
 
 | Area | Python package / module |
 |------|-------------------------|
-| Registry & public helpers | `tee/adapters/__init__.py`, `tee/adapters/registry.py` |
-| Shared types & config | `tee/adapters/base/core.py` (`AdapterConfig`, adapter base), `tee/adapters/base/config.py` |
-| DuckDB | `tee/adapters/duckdb/` |
-| Snowflake | `tee/adapters/snowflake/` |
-| PostgreSQL | `tee/adapters/postgresql/` |
-| BigQuery | `tee/adapters/bigquery/` |
+| Registry & public helpers | `t4t/adapters/__init__.py`, `t4t/adapters/registry.py` |
+| Shared types & config | `t4t/adapters/base/core.py` (`AdapterConfig`, adapter base), `t4t/adapters/base/config.py` |
+| DuckDB | `t4t/adapters/duckdb/` |
+| Snowflake | `t4t/adapters/snowflake/` |
+| PostgreSQL | `t4t/adapters/postgresql/` |
+| BigQuery | `t4t/adapters/bigquery/` |
 
 ## User-facing docs
 
