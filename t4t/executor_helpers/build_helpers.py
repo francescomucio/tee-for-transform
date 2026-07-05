@@ -5,8 +5,6 @@ This module contains helper functions used by the build_models function
 to keep the main executor.py focused on the public API.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 

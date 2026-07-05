@@ -9,8 +9,6 @@ This module handles the execution of incremental materializations including:
 - State management integration
 """
 
-from __future__ import annotations
-
 import logging
 import re
 from datetime import UTC, datetime, timedelta
