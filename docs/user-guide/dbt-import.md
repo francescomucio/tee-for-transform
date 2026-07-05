@@ -496,7 +496,7 @@ After importing:
 
 - [CLI Reference](cli-reference.md) - Complete command reference
 - [dbt Import Limitations](dbt-import-limitations.md) - Unsupported features
-- [Getting Started](../getting-started/quick-start.md) - t4t basics
+- [Getting Started](../getting-started/quickstart.md) - t4t basics
 - [Execution Engine](execution-engine.md) - Running models
 - [Data Quality Tests](data-quality-tests.md) - Testing in t4t
 

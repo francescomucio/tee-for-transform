@@ -761,6 +761,6 @@ For more information:
 
 - Run `t4t --help` for general help
 - Run `t4t <command> --help` for command-specific help
-- See [Quick Start Guide](../getting-started/quick-start.md) for examples
+- See [Quick Start Guide](../getting-started/quickstart.md) for examples
 - See [Examples](examples/README.md) for practical usage patterns
 

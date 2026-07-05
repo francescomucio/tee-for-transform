@@ -48,5 +48,5 @@ print("Adapters:", ", ".join(sorted(list_available_adapters())))
 
 ## Next steps
 
-- [Quick Start](quick-start.md) — create a project with `t4t init`
+- [Quick Start](quickstart.md) — create a project with `t4t init`
 - [Configuration](configuration.md) — `project.toml` and connection settings

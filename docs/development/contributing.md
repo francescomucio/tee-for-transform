@@ -54,7 +54,7 @@ Branch naming conventions:
 
 Most day-to-day work should use the **fast suite**, which **excludes live Snowflake E2E** tests. Those tests connect to a real Snowflake warehouse, need credentials, and take **much longer** than everything else combined. Use the **full suite** (including Snowflake E2E) before merging or when you change Snowflake-specific code and need warehouse-level validation.
 
-See **[tests/README.md](../../tests/README.md)** for the full rationale, credential setup, and CI notes.
+See **[tests/README.md](https://github.com/francescomucio/tee-for-transform/blob/main/tests/README.md)** for the full rationale, credential setup, and CI notes.
 
 ```bash
 # Default for local development (no Snowflake credentials required)

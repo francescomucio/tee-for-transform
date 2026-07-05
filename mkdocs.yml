@@ -107,6 +107,13 @@ nav:
     - parser-model-flow.md
     - development/contributing.md
     - development/migration-guides/index.md
+    - Implementation Guides:
+      - development/implementation-guides/on_schema_change_implementation.md
+      - development/implementation-guides/on_schema_change_actions.md
+      - development/implementation-guides/on_schema_change_execution_flow.md
+      - development/implementation-guides/on_schema_change_ots_alignment.md
+      - development/implementation-guides/on_schema_change_questions.md
+      - development/implementation-guides/e2e_tests_explained.md
 
 extra:
   social:

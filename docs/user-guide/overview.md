@@ -218,7 +218,7 @@ Flexible configuration via `project.toml`.
 
 Ready to get started? Check out:
 
-1. [Quick Start Guide](../getting-started/quick-start.md) - Get up and running in minutes
+1. [Quick Start Guide](../getting-started/quickstart.md) - Get up and running in minutes
 2. [CLI Reference](cli-reference.md) - Complete command reference
 3. [Examples](examples/README.md) - Practical usage examples
 

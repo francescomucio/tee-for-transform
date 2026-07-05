@@ -259,7 +259,7 @@ uv run t4t --help
 
 ### Quick Links
 - [Installation](docs/getting-started/installation.md)
-- [Quick Start Guide](docs/getting-started/quick-start.md)
+- [Quick Start Guide](docs/getting-started/quickstart.md)
 - [Configuration](docs/getting-started/configuration.md)
 - [Incremental Materialization](docs/user-guide/incremental-materialization.md)
 - [Database Adapters](docs/user-guide/database-adapters.md)
