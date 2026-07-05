@@ -4,16 +4,41 @@ version = "0.1.0"
 description = "t4t - Transform, Extract, Execute (and t-shirts!)"
 readme = "README.md"
 requires-python = ">=3.14"
+license = "MIT"
+authors = [
+    {name = "Francesco Mucio", email = "francescomucio@gmail.com"},
+]
+keywords = ["sql", "data-transformation", "etl", "dbt-alternative", "data-pipeline"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Database",
+    "Topic :: Software Development :: Build Tools",
+]
 dependencies = [
     "duckdb>=1.4.2",
     "jinja2>=3.1.0",
     "pydantic>=2.12.2",
     "pyyaml>=6.0.3",
-    "snowflake-connector-python>=4.1.1",
     "sqlglot[rs]>=28.1.0",
     "toml>=0.10.2",
     "typer>=0.20.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/francescomucio/tee-for-transform"
+Documentation = "https://francescomucio.github.io/tee-for-transform/"
+Repository = "https://github.com/francescomucio/tee-for-transform"
+"Bug Tracker" = "https://github.com/francescomucio/tee-for-transform/issues"
+
+[project.optional-dependencies]
+snowflake = ["snowflake-connector-python>=4.1.1"]
+postgres = ["psycopg2-binary>=2.9.0"]
+bigquery = ["google-cloud-bigquery>=3.0.0"]
+all = ["t4t[snowflake,postgres,bigquery]"]
 
 [project.scripts]
 t4t = "t4t.cli.main:main"
