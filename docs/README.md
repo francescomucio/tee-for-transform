@@ -8,6 +8,7 @@ Welcome to the Tee for Transform (t4t) documentation. t4t is a powerful Python f
 - [Installation](getting-started/installation.md) - Install t4t and its dependencies
 - [Quick Start](getting-started/quick-start.md) - Get up and running in minutes
 - [Configuration](getting-started/configuration.md) - Configure databases and settings
+- [t4t for dbt Users](getting-started/dbt-users-guide.md) - Migration guide for dbt users
 
 ### 📖 User Guide
 - [Overview](user-guide/overview.md) - Core concepts and architecture

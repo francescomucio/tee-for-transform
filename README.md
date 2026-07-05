@@ -57,7 +57,7 @@ create_model(
 
 The parser reads these definitions from source. Details: [Model API](docs/api-reference/models.md).
 
-**Coming from dbt?** You can generate a t4t layout from an existing project with `uv run t4t import <path-to-dbt-project> <path-to-new-t4t-project>` (see `t4t import --help`).
+**Coming from dbt?** Check out the [t4t for dbt Users](docs/getting-started/dbt-users-guide.md) migration guide, or use the automated importer: `uv run t4t import <path-to-dbt-project> <path-to-new-t4t-project>` (see `t4t import --help`).
 
 **Prefer a hand-written `project.toml`?** Create a folder, add `project.toml`, `models/`, and the rest yourself. The layout matches what `t4t init` produces.
 
