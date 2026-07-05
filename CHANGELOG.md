@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-07-05
+
 ### Added
 - CI workflow with Python version matrix (3.12, 3.13, 3.14)
 - Release automation via GitHub Actions, gated on the test matrix and a
