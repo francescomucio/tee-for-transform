@@ -72,7 +72,7 @@ nav:
   - Home: README.md
   - Getting Started:
     - getting-started/installation.md
-    - getting-started/quick-start.md
+    - getting-started/quickstart.md
     - getting-started/configuration.md
     - getting-started/dbt-users-guide.md
   - User Guide:
