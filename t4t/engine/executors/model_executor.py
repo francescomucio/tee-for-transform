@@ -116,6 +116,17 @@ class ModelExecutor:
                     )
                     continue
 
+                # Remap dependency references in SQL when naming is active
+                if (
+                    self.config
+                    and hasattr(self.config, "naming")
+                    and self.config.naming
+                    and self.config.naming.schema_prefix
+                ):
+                    sql_query = self._remap_sql_references(
+                        sql_query, table_name, execution_order
+                    )
+
                 # Log dialect conversion if applicable
                 if (
                     self.adapter.config.source_dialect
@@ -258,6 +269,36 @@ class ModelExecutor:
         if "." in table_name:
             return table_name.split(".", 1)[0]
         return None
+
+    def _remap_sql_references(
+        self, sql_query: str, current_table: str, execution_order: list[str]
+    ) -> str:
+        """Remap upstream model references in SQL to their mapped names.
+
+        When a ``schema_prefix`` is active, models are materialised under
+        the prefixed schema (e.g. ``dev_my_schema.my_table``).  This method
+        rewrites references to upstream models in *sql_query* so they point
+        to the correct prefixed location.
+
+        Uses longest-first string replacement on fully-qualified names.
+        """
+        dep_mapping: dict[str, str] = {}
+        for dep_name in execution_order:
+            if dep_name == current_table:
+                break
+            if dep_name.startswith("test:"):
+                continue
+            dep_mapped = self.adapter.apply_naming(dep_name)
+            if dep_mapped != dep_name:
+                dep_mapping[dep_name] = dep_mapped
+
+        if not dep_mapping:
+            return sql_query
+
+        # Sort by length (longest first) to avoid partial replacements
+        for logical_name in sorted(dep_mapping, key=len, reverse=True):
+            sql_query = sql_query.replace(logical_name, dep_mapping[logical_name])
+        return sql_query
 
     def _attach_schema_tags_if_needed(self, schema_name: str) -> None:
         """

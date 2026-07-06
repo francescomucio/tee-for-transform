@@ -126,6 +126,7 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
             warehouse=config_dict.get("warehouse"),
             role=config_dict.get("role"),
             project=config_dict.get("project"),
+            naming=config_dict.get("_naming_config"),
             extra=config_dict.get("extra"),
         )
 
@@ -404,6 +405,9 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
         method prepends the prefix to the schema portion of a qualified name
         (e.g. ``my_schema.my_table`` → ``dev_my_schema.my_table``).
 
+        For three-part names (``db.schema.table``), the schema (second-to-last
+        part) is prefixed, not the database (first part).
+
         For unqualified names, the adapter's default schema is used as the
         schema portion before applying the prefix.
 
@@ -418,10 +422,25 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
         if naming is None or naming.schema_prefix is None:
             return name
 
-        if "." in name:
-            schema, obj = name.split(".", 1)
-            return f"{naming.schema_prefix}{schema}.{obj}"
+        parts = name.split(".")
+        if len(parts) >= 3:
+            # Three-or-more-part name: prefix the second-to-last part (schema)
+            # e.g. my_db.my_schema.my_table -> my_db.dev_my_schema.my_table
+            parts[-2] = f"{naming.schema_prefix}{parts[-2]}"
+            return ".".join(parts)
+        elif len(parts) == 2:
+            # Two-part name: prefix the first part (schema)
+            # e.g. my_schema.my_table -> dev_my_schema.my_table
+            return f"{naming.schema_prefix}{parts[0]}.{parts[1]}"
+        else:
+            # Unqualified name — use the adapter's default schema
+            schema = self.config.schema or self._get_default_schema()
+            return f"{naming.schema_prefix}{schema}.{name}"
 
-        # Unqualified name — use the adapter's default schema
-        schema = self.config.schema or "public"
-        return f"{naming.schema_prefix}{schema}.{name}"
+    def _get_default_schema(self) -> str:
+        """Return the default schema name for this database type.
+
+        Override in subclasses to provide the correct default for each
+        database (e.g. DuckDB → ``main``, Snowflake → ``PUBLIC``).
+        """
+        return "public"

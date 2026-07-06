@@ -47,6 +47,10 @@ class DuckDBAdapter(DatabaseAdapter):
         """Get the default SQL dialect for DuckDB."""
         return "duckdb"
 
+    def _get_default_schema(self) -> str:
+        """DuckDB's default schema is ``main``, not ``public``."""
+        return "main"
+
     def get_supported_materializations(self) -> list[MaterializationType]:
         """Get list of supported materialization types for DuckDB."""
         return [
