@@ -219,24 +219,6 @@ path = "data/dev.duckdb"
         assert config.path == "data/dev.duckdb"  # overridden
         assert config.warehouse == "COMPUTE_WH"  # inherited from default
 
-    def test_default_naming_inherited(self, tmp_path) -> None:
-        """Naming config from default is inherited."""
-        toml = tmp_path / "pyproject.toml"
-        toml.write_text("""
-[environments.default.connection]
-type = "duckdb"
-path = ":memory:"
-
-[environments.default.naming]
-schema_prefix = "dev_"
-
-[environments.staging.naming]
-schema_prefix = "stg_"
-""")
-        manager = DatabaseConfigManager(str(tmp_path))
-        config = manager.load_config("staging")
-        assert config.naming is not None
-        assert config.naming.schema_prefix == "stg_"
 
     def test_no_environments_raises_error(self, tmp_path) -> None:
         """No [environments.*] sections → empty config → ValueError."""
@@ -481,69 +463,6 @@ path = ":memory:"
         manager = DatabaseConfigManager(str(tmp_path))
         config = manager.load_config("dev")
         assert config.type == "duckdb"  # environments wins, not connection
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# Naming config with new environments structure
-# ══════════════════════════════════════════════════════════════════════════
-
-
-class TestNamingWithNewConfig:
-    """Tests that naming config works with the new environments structure."""
-
-    def test_naming_in_environment(self, tmp_path) -> None:
-        """Naming config in [environments.dev.naming] is parsed."""
-        toml = tmp_path / "pyproject.toml"
-        toml.write_text("""
-[environments.dev.connection]
-type = "duckdb"
-path = ":memory:"
-
-[environments.dev.naming]
-schema_prefix = "dev_"
-""")
-        manager = DatabaseConfigManager(str(tmp_path))
-        config = manager.load_config("dev")
-        assert config.naming is not None
-        assert config.naming.schema_prefix == "dev_"
-
-    def test_naming_in_default(self, tmp_path) -> None:
-        """Naming config in [environments.default.naming] is inherited."""
-        toml = tmp_path / "pyproject.toml"
-        toml.write_text("""
-[environments.default.connection]
-type = "duckdb"
-path = ":memory:"
-
-[environments.default.naming]
-schema_prefix = "shared_"
-
-[environments.dev.connection]
-database = "dev_db"
-""")
-        manager = DatabaseConfigManager(str(tmp_path))
-        config = manager.load_config("dev")
-        assert config.naming is not None
-        assert config.naming.schema_prefix == "shared_"
-
-    def test_naming_overridden_in_specific(self, tmp_path) -> None:
-        """Specific env naming overrides default naming."""
-        toml = tmp_path / "pyproject.toml"
-        toml.write_text("""
-[environments.default.connection]
-type = "duckdb"
-path = ":memory:"
-
-[environments.default.naming]
-schema_prefix = "shared_"
-
-[environments.dev.naming]
-schema_prefix = "dev_"
-""")
-        manager = DatabaseConfigManager(str(tmp_path))
-        config = manager.load_config("dev")
-        assert config.naming is not None
-        assert config.naming.schema_prefix == "dev_"
 
 
 # ══════════════════════════════════════════════════════════════════════════

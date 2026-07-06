@@ -18,29 +18,6 @@ class MaterializationType(Enum):
     INCREMENTAL = "incremental"
 
 
-@dataclass
-class NamingConfig:
-    """Naming strategy configuration for environment-aware object naming.
-
-    Controls how database objects (tables, views, functions) are named
-    per environment. The v1 strategy uses ``schema_prefix`` to prefix
-    the schema portion of qualified names (e.g. ``dev_my_schema.my_table``).
-    """
-
-    schema_prefix: str | None = None
-    """Prefix prepended to the schema name (v1 strategy).
-
-    Example: ``"dev_"`` turns ``my_schema.my_table`` into
-    ``dev_my_schema.my_table``.
-    """
-
-    schema_suffix: str | None = None
-    """Suffix appended to the schema name (reserved for future use)."""
-
-    database: str | None = None
-    """Override database name (reserved for future use)."""
-
-
 # ── Secret Provider Protocol ──────────────────────────────────────────────
 
 
@@ -201,9 +178,6 @@ class AdapterConfig:
     warehouse: str | None = None  # For Snowflake
     role: str | None = None  # For Snowflake
     project: str | None = None  # For BigQuery
-
-    # Naming strategy (env-aware)
-    naming: NamingConfig | None = None
 
     # Multi-engine: additional named connections
     connections: dict[str, AdapterConfig] | None = None

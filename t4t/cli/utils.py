@@ -112,23 +112,6 @@ def load_project_config(
                 if resolved != original:
                     merged_conn[key] = resolved
 
-        # Extract naming config from environment sections
-        naming_raw = None
-        if isinstance(default_env, dict):
-            default_naming = default_env.get("naming", {})
-            if isinstance(default_naming, dict):
-                naming_raw = default_naming
-        if isinstance(specific_env, dict):
-            specific_naming = specific_env.get("naming", {})
-            if isinstance(specific_naming, dict):
-                naming_raw = specific_naming  # specific overrides default
-        if naming_raw:
-            config["_naming_config"] = {
-                "schema_prefix": naming_raw.get("schema_prefix"),
-                "schema_suffix": naming_raw.get("schema_suffix"),
-                "database": naming_raw.get("database"),
-            }
-
         # Store as "connection" for backward compat
         config["connection"] = merged_conn
 
