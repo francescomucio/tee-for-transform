@@ -423,6 +423,7 @@ def test_schema_prefix_end_to_end(tmp_path) -> None:
     ``dev_<schema>`` tables in DuckDB."""
     import duckdb
     from typer.testing import CliRunner
+
     from t4t.cli.main import app
 
     proj = tmp_path / "demo"
@@ -430,10 +431,10 @@ def test_schema_prefix_end_to_end(tmp_path) -> None:
     (proj / "data").mkdir()
     (proj / "project.toml").write_text(
         'project_folder = "demo"\n'
-        '[environments.dev.connection]\n'
+        "[environments.dev.connection]\n"
         'type = "duckdb"\n'
         'path = "data/demo.duckdb"\n'
-        '[environments.dev.naming]\n'
+        "[environments.dev.naming]\n"
         'schema_prefix = "dev_"\n'
     )
     (proj / "models" / "core" / "base_table.sql").write_text("SELECT 1 AS id, 'a' AS name")
@@ -453,12 +454,10 @@ def test_schema_prefix_end_to_end(tmp_path) -> None:
         ).fetchall()
         schemas = {row[0] for row in tables}
         assert "dev_core" in schemas, (
-            f"Expected tables in dev_core schema, got schemas: {schemas}\n"
-            f"All tables: {tables}"
+            f"Expected tables in dev_core schema, got schemas: {schemas}\nAll tables: {tables}"
         )
         assert "core" not in schemas, (
-            f"Tables should NOT land in unprefixed core schema\n"
-            f"All tables: {tables}"
+            f"Tables should NOT land in unprefixed core schema\nAll tables: {tables}"
         )
     finally:
         con.close()

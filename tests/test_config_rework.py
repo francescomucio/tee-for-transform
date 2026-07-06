@@ -534,8 +534,6 @@ class TestAdapterConfigFieldSurvival:
 
         from t4t.adapters.base import AdapterConfig
 
-        field_names = {f.name for f in fields(AdapterConfig)}
-
         # Build a TOML that sets every simple field
         toml_lines = [
             "[environments.dev.connection]",
@@ -606,8 +604,8 @@ path = ":memory:"
 [environments.dev.naming]
 schema_prefix = "dev_"
 """)
-        from t4t.engine.config import DatabaseConfigManager
         from t4t.adapters import get_adapter
+        from t4t.engine.config import DatabaseConfigManager
 
         config = DatabaseConfigManager(str(tmp_path)).load_config("dev")
         assert config.naming is not None
