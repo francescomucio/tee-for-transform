@@ -219,7 +219,6 @@ path = "data/dev.duckdb"
         assert config.path == "data/dev.duckdb"  # overridden
         assert config.warehouse == "COMPUTE_WH"  # inherited from default
 
-
     def test_no_environments_raises_error(self, tmp_path) -> None:
         """No [environments.*] sections → empty config → ValueError."""
         toml = tmp_path / "pyproject.toml"
