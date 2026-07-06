@@ -110,10 +110,19 @@ def cmd_run(
             except CompilationError as e:
                 ctx.handle_error(e)
 
+        # Inject _naming_config into connection_config so it reaches the executor
+        connection_config = ctx.config["connection"]
+        naming_config = ctx.config.get("_naming_config")
+        if naming_config:
+            if isinstance(connection_config, dict):
+                connection_config = {**connection_config, "_naming_config": naming_config}
+            elif hasattr(connection_config, "naming") and connection_config.naming is None:
+                connection_config.naming = naming_config
+
         # Execute models using the unified connection manager
         results = execute_models(
             project_folder=str(ctx.project_path),
-            connection_config=ctx.config["connection"],
+            connection_config=connection_config,
             save_analysis=True,
             variables=ctx.vars,
             select_patterns=select_patterns,

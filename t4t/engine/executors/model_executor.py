@@ -271,15 +271,20 @@ class ModelExecutor:
     def _remap_sql_references(
         self, sql_query: str, current_table: str, execution_order: list[str]
     ) -> str:
-        """Remap upstream model references in SQL to their mapped names.
+        """Remap upstream model references in SQL using sqlglot AST rewriting.
 
         When a ``schema_prefix`` is active, models are materialised under
         the prefixed schema (e.g. ``dev_my_schema.my_table``).  This method
         rewrites references to upstream models in *sql_query* so they point
         to the correct prefixed location.
 
-        Uses longest-first string replacement on fully-qualified names.
+        Uses sqlglot AST rewriting to avoid substring collisions, quoted
+        identifiers, and string literals that plague string-based replacement.
+        Falls back to longest-first string replacement if sqlglot parsing fails.
         """
+        import sqlglot
+
+        # Build mapping of logical -> mapped names for upstream models
         dep_mapping: dict[str, str] = {}
         for dep_name in execution_order:
             if dep_name == current_table:
@@ -293,10 +298,40 @@ class ModelExecutor:
         if not dep_mapping:
             return sql_query
 
-        # Sort by length (longest first) to avoid partial replacements
-        for logical_name in sorted(dep_mapping, key=len, reverse=True):
-            sql_query = sql_query.replace(logical_name, dep_mapping[logical_name])
-        return sql_query
+        # Parse SQL and rewrite table references using sqlglot AST
+        dialect = self.adapter.get_default_dialect()
+
+        def _rewrite_table(node):
+            if isinstance(node, sqlglot.exp.Table):
+                full_name = ".".join(
+                    p.name for p in node.args.values()
+                    if isinstance(p, sqlglot.exp.Identifier)
+                )
+                if full_name in dep_mapping:
+                    # Replace with the mapped name
+                    mapped_parts = dep_mapping[full_name].split(".")
+                    if len(mapped_parts) == 2:
+                        return sqlglot.exp.Table(
+                            this=sqlglot.exp.Identifier(this=mapped_parts[1]),
+                            db=sqlglot.exp.Identifier(this=mapped_parts[0]),
+                        )
+                    elif len(mapped_parts) == 3:
+                        return sqlglot.exp.Table(
+                            this=sqlglot.exp.Identifier(this=mapped_parts[2]),
+                            db=sqlglot.exp.Identifier(this=mapped_parts[1]),
+                            catalog=sqlglot.exp.Identifier(this=mapped_parts[0]),
+                        )
+            return node
+
+        try:
+            tree = sqlglot.parse_one(sql_query, dialect=dialect)
+            tree = tree.transform(_rewrite_table)
+            return tree.sql(dialect=dialect)
+        except Exception:
+            # Fall back to string replacement if sqlglot parsing fails
+            for logical_name in sorted(dep_mapping, key=len, reverse=True):
+                sql_query = sql_query.replace(logical_name, dep_mapping[logical_name])
+            return sql_query
 
     def _attach_schema_tags_if_needed(self, schema_name: str) -> None:
         """
