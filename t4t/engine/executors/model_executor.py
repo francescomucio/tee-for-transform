@@ -304,8 +304,7 @@ class ModelExecutor:
         def _rewrite_table(node):
             if isinstance(node, sqlglot.exp.Table):
                 full_name = ".".join(
-                    p.name for p in node.args.values()
-                    if isinstance(p, sqlglot.exp.Identifier)
+                    p.name for p in node.args.values() if isinstance(p, sqlglot.exp.Identifier)
                 )
                 if full_name in dep_mapping:
                     # Replace with the mapped name
