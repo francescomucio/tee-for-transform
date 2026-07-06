@@ -3,9 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
-import typer
-
 from t4t.state.backend import LocalStateBackend
 from t4t.state.manifest import (
     SCHEMA_VERSION,
