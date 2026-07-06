@@ -122,11 +122,6 @@ def run(
     env: str | None = typer.Option(
         None, "--env", help="Environment name (e.g. dev, prod). Defaults to 'dev'."
     ),
-    allow_destructive: bool = typer.Option(
-        False,
-        "--allow-destructive",
-        help="Allow destructive operations on protected environments.",
-    ),
 ) -> None:
     """Parse and execute SQL models."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -139,7 +134,6 @@ def run(
         retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
         env=env,
-        allow_destructive=allow_destructive,
     )
 
 
@@ -196,11 +190,6 @@ def build(
     env: str | None = typer.Option(
         None, "--env", help="Environment name (e.g. dev, prod). Defaults to 'dev'."
     ),
-    allow_destructive: bool = typer.Option(
-        False,
-        "--allow-destructive",
-        help="Allow destructive operations on protected environments.",
-    ),
 ) -> None:
     """Build models with tests (stops on test failure)."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -213,7 +202,6 @@ def build(
         retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
         env=env,
-        allow_destructive=allow_destructive,
     )
 
 

@@ -25,7 +25,6 @@ class CommandContext:
         select: list[str] | None = None,
         exclude: list[str] | None = None,
         env: str | None = None,
-        allow_destructive: bool = False,
     ) -> None:
         """
         Initialize command context from parameters.
@@ -39,7 +38,6 @@ class CommandContext:
             env: Environment name (e.g. "dev", "prod") — if provided, the
                  connection config for that environment is loaded into
                  ``config["connection"]``. Defaults to "dev" if not specified.
-            allow_destructive: Allow destructive operations on protected environments
         """
         # Parse variables if provided
         self.vars = parse_vars(vars)
@@ -76,9 +74,6 @@ class CommandContext:
         self.select_patterns = select
         self.exclude_patterns = exclude
 
-        # Destructive operations flag
-        self.allow_destructive = allow_destructive
-
     def _check_protected_env(
         self, project_folder: str, resolved_env: str, explicit_env: str | None
     ) -> None:
@@ -104,19 +99,6 @@ class CommandContext:
         from t4t.engine.config import is_env_protected
 
         return is_env_protected(str(self.project_path), self.env_name)
-
-    def check_destructive_operation(self) -> None:
-        """Check if a destructive operation is allowed on a protected environment."""
-        if self.is_protected_env() and not self.allow_destructive:
-            import typer
-
-            typer.echo(
-                typer.style("Error: ", fg=typer.colors.RED, bold=True)
-                + f"Environment '{self.env_name}' is protected. "
-                "Use --allow-destructive to perform destructive operations.",
-                err=True,
-            )
-            raise typer.Exit(1)
 
     def handle_error(self, error: Exception, show_traceback: bool = None) -> None:
         """

@@ -40,7 +40,6 @@ def cmd_build(
     retry: bool = False,
     auto_resolve_level_conflicts: bool = True,
     env: str | None = None,
-    allow_destructive: bool = False,
 ) -> None:
     """Execute the build command."""
     try:
@@ -51,7 +50,6 @@ def cmd_build(
             select=select,
             exclude=exclude,
             env=env,
-            allow_destructive=allow_destructive,
         )
     except ValueError as e:
         typer.echo(
