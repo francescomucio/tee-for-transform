@@ -382,7 +382,7 @@
       "function_type": "scalar",
       "language": "sql",
       "code": {
-        "generic_sql": "-- Simple UDF function to calculate percentage\n-- Usage: SELECT calculate_percentage(25, 100) -- returns 25.0\n\nCREATE OR REPLACE FUNCTION calculate_percentage(\n    numerator DOUBLE,\n    denominator DOUBLE\n) RETURNS DOUBLE AS $$\n      \n        CASE \n            WHEN denominator = 0 OR denominator IS NULL THEN NULL\n            ELSE (numerator / denominator) * 100.0\n        END\n$$;",
+        "generic_sql": "-- Simple UDF function to calculate percentage\n-- Usage: SELECT calculate_percentage(25, 100) -- returns 25.0\n\nCREATE OR REPLACE FUNCTION calculate_percentage(\n    numerator DOUBLE,\n    denominator DOUBLE\n) RETURNS DOUBLE AS $$\n\n        CASE\n            WHEN denominator = 0 OR denominator IS NULL THEN NULL\n            ELSE (numerator / denominator) * 100.0\n        END\n$$;",
         "database_specific": {}
       },
       "metadata": {

@@ -459,5 +459,13 @@ def test_schema_prefix_end_to_end(tmp_path) -> None:
         assert "core" not in schemas, (
             f"Tables should NOT land in unprefixed core schema\nAll tables: {tables}"
         )
+        # Per-table assertions: every model must be in the prefixed schema
+        table_set = {(row[0], row[1]) for row in tables}
+        assert ("dev_core", "base_table") in table_set, (
+            f"base_table missing from dev_core\nAll tables: {tables}"
+        )
+        assert ("dev_core", "derived_table") in table_set, (
+            f"derived_table missing from dev_core — SQL remap likely failed\nAll tables: {tables}"
+        )
     finally:
         con.close()
