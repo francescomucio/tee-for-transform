@@ -362,6 +362,7 @@ class TestSeedLoader:
         mock_adapter = Mock()
         mock_adapter.config.type = "postgresql"
         mock_adapter.execute_query = Mock()
+        mock_adapter.apply_naming = lambda name: name  # passthrough for naming
 
         seeds_folder = temp_project_dir / "seeds"
         seeds_folder.mkdir()

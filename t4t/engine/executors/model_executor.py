@@ -105,6 +105,9 @@ class ModelExecutor:
 
                 model_data = parsed_models[table_name]
 
+                # Apply naming strategy to the table name (env-aware schema prefix)
+                mapped_name = self.adapter.apply_naming(table_name)
+
                 # Get SQL query (prefer resolved_sql, fallback to original_sql)
                 sql_query = self._extract_sql_query(model_data, table_name)
                 if not sql_query:
@@ -137,21 +140,21 @@ class ModelExecutor:
 
                 # Check for materialization changes and database existence
                 self.state_checker.check_model_state(
-                    table_name, materialization, metadata, self.adapter
+                    mapped_name, materialization, metadata, self.adapter
                 )
 
-                # Execute the model
+                # Execute the model using the mapped name
                 self.materialization_handler.materialize(
-                    table_name, sql_query, materialization, metadata, self.config
+                    mapped_name, sql_query, materialization, metadata, self.config
                 )
 
                 # Save model state after successful execution
                 self.state_checker.save_model_state(
-                    table_name, materialization, sql_query, metadata
+                    mapped_name, materialization, sql_query, metadata
                 )
 
                 # Get table information
-                table_info = self.adapter.get_table_info(table_name)
+                table_info = self.adapter.get_table_info(mapped_name)
 
                 results["executed_tables"].append(table_name)
                 results["table_info"][table_name] = table_info
@@ -165,7 +168,7 @@ class ModelExecutor:
                 )
 
                 logger.debug(
-                    f"Successfully executed {table_name} with {table_info['row_count']} rows"
+                    f"Successfully executed {table_name} (mapped to {mapped_name}) with {table_info['row_count']} rows"
                 )
 
             except Exception as e:
