@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from t4t.compiler import CompilationError, compile_project
 from t4t.engine import ModelExecutor
+from t4t.engine.config import is_env_protected
 from t4t.executor_helpers import build_helpers, shared_helpers
 from t4t.parser import ProjectParser
 from t4t.parser.shared.exceptions import ParserError
@@ -31,6 +32,8 @@ def _try_persist_run_manifest(
     variables: dict[str, Any] | None = None,
     function_names: set[str] | None = None,
     cli_args: dict[str, Any] | None = None,
+    environment: str | None = None,
+    protected: bool = False,
 ) -> None:
     """Write last_run.json and append to runs.sqlite; failures are logged only."""
     logger = logging.getLogger(__name__)
@@ -48,8 +51,10 @@ def _try_persist_run_manifest(
             variables=variables,
             cli_args=cli_args,
             function_names=function_names,
+            environment=environment,
+            protected=protected,
         )
-        backend = LocalStateBackend(Path(project_folder) / "output")
+        backend = LocalStateBackend(Path(project_folder) / "output", env_name=environment)
         backend.append_run(manifest)
     except Exception as e:
         logger.warning("Could not persist run manifest: %s", e)
@@ -63,6 +68,7 @@ def execute_models(
     select_patterns: list[str] | None = None,
     exclude_patterns: list[str] | None = None,
     project_config: dict[str, Any] | None = None,
+    env_name: str | None = None,
 ) -> dict[str, Any]:
     """
     Execute SQL models by compiling to OTS modules and running them in dependency order.
@@ -133,6 +139,8 @@ def execute_models(
             project_config=project_config,
             variables=variables,
             function_names=fnames or None,
+            environment=env_name,
+            protected=is_env_protected(project_folder, env_name),
         )
         return empty
 
@@ -171,6 +179,8 @@ def execute_models(
                 project_config=project_config,
                 variables=variables,
                 function_names=fnames or None,
+                environment=env_name,
+                protected=is_env_protected(project_folder, env_name),
             )
             return empty
 
@@ -179,7 +189,7 @@ def execute_models(
     print("EXECUTING SQL MODELS")
     print(SECTION_SEPARATOR)
 
-    model_executor = ModelExecutor(project_folder, connection_config)
+    model_executor = ModelExecutor(project_folder, connection_config, env_name=env_name)
 
     try:
         # Execute models using the executor (pass filtered models if selection was applied)
@@ -251,6 +261,8 @@ def execute_models(
             project_config=project_config,
             variables=variables,
             function_names=fnames or None,
+            environment=env_name,
+            protected=is_env_protected(project_folder, env_name),
         )
         return results
 
@@ -267,6 +279,7 @@ def build_models(
     select_patterns: list[str] | None = None,
     exclude_patterns: list[str] | None = None,
     project_config: dict[str, Any] | None = None,
+    env_name: str | None = None,
 ) -> dict[str, Any]:
     """
     Build models with interleaved test execution, stopping on test failures.
@@ -343,7 +356,7 @@ def build_models(
     from t4t.engine import ModelExecutor
     from t4t.engine.execution_engine import ExecutionEngine
 
-    temp_executor = ModelExecutor(project_folder, connection_config)
+    temp_executor = ModelExecutor(project_folder, connection_config, env_name=env_name)
     temp_executor.execution_engine = ExecutionEngine(
         temp_executor.config, project_folder=project_folder, variables=variables
     )
@@ -376,6 +389,8 @@ def build_models(
             project_config=project_config,
             variables=variables,
             function_names=None,
+            environment=env_name,
+            protected=is_env_protected(project_folder, env_name),
         )
         return empty_results
 
@@ -391,7 +406,7 @@ def build_models(
 
     try:
         model_executor, test_executor = build_helpers.initialize_build_executors(
-            project_folder, connection_config, variables, load_seeds=False
+            project_folder, connection_config, variables, load_seeds=False, env_name=env_name
         )
 
         # Evaluate Python models before execution
@@ -453,6 +468,8 @@ def build_models(
             project_config=project_config,
             variables=variables,
             function_names=fn_build or None,
+            environment=env_name,
+            protected=is_env_protected(project_folder, env_name),
         )
         return results
 

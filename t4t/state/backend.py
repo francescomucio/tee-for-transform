@@ -28,10 +28,15 @@ class StateBackend(Protocol):
 class LocalStateBackend:
     """Write last_run.json + append to runs.sqlite under output_dir."""
 
-    def __init__(self, output_dir: Path) -> None:
+    def __init__(self, output_dir: Path, env_name: str | None = None) -> None:
         self.output_dir = Path(output_dir)
-        self._json_path = self.output_dir / JSON_NAME
-        self._db_path = self.output_dir / SQLITE_NAME
+        self.env_name = env_name
+        if env_name:
+            self._scoped_dir = self.output_dir / env_name
+        else:
+            self._scoped_dir = self.output_dir
+        self._json_path = self._scoped_dir / JSON_NAME
+        self._db_path = self._scoped_dir / SQLITE_NAME
 
     def _ensure_db(self, conn: sqlite3.Connection) -> None:
         conn.execute(f"PRAGMA user_version = {SCHEMA_USER_VERSION}")
@@ -47,7 +52,7 @@ class LocalStateBackend:
         )
 
     def append_run(self, manifest: RunManifest) -> None:
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self._scoped_dir.mkdir(parents=True, exist_ok=True)
         payload = manifest_to_dict(manifest)
         text = json.dumps(payload, indent=2)
 
@@ -65,17 +70,25 @@ class LocalStateBackend:
             conn.close()
 
     def read_latest(self) -> RunManifest | None:
-        if self._json_path.is_file():
+        """Read the latest run manifest from this backend's scoped path.
+
+        The path is determined by the ``env_name`` passed at construction time:
+        ``output/<env_name>/`` if set, otherwise ``output/``.
+        """
+        json_path = self._json_path
+        db_path = self._db_path
+
+        if json_path.is_file():
             try:
-                data = json.loads(self._json_path.read_text(encoding="utf-8"))
+                data = json.loads(json_path.read_text(encoding="utf-8"))
                 return manifest_from_dict(data)
             except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
-                logger.warning("Could not read %s: %s", self._json_path, e)
+                logger.warning("Could not read %s: %s", json_path, e)
 
-        if not self._db_path.is_file():
+        if not db_path.is_file():
             return None
 
-        conn = sqlite3.connect(self._db_path)
+        conn = sqlite3.connect(db_path)
         try:
             cur = conn.execute("SELECT manifest_json FROM runs ORDER BY id DESC LIMIT 1")
             row = cur.fetchone()

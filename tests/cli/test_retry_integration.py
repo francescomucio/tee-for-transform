@@ -27,7 +27,7 @@ def _write_retry_chain_project(root: Path) -> Path:
     db_path = root / "data" / "retry_e2e.duckdb"
     (root / "project.toml").write_text(
         f'''project_folder = "retry_e2e"
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "{db_path.as_posix()}"
 ''',
@@ -61,7 +61,7 @@ class TestRetryIntegration:
         self, retry_project: Path
     ) -> None:
         runner = CliRunner()
-        last_run = retry_project / "output" / "last_run.json"
+        last_run = retry_project / "output" / "dev" / "last_run.json"
 
         r1 = runner.invoke(
             app,

@@ -1,5 +1,5 @@
 project_folder = "lookup_conflict_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "data/lookup_conflict_project.duckdb"

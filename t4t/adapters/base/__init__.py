@@ -6,7 +6,7 @@ All components are re-exported here for backward compatibility.
 """
 
 # Import core components
-from .config import AdapterConfig, MaterializationType
+from .config import AdapterConfig, MaterializationType, SecretProvider
 from .core import DatabaseAdapter
 
 # Re-export everything for backward compatibility
@@ -15,4 +15,5 @@ __all__ = [
     "DatabaseAdapter",
     "AdapterConfig",
     "MaterializationType",
+    "SecretProvider",
 ]

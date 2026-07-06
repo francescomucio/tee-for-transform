@@ -43,19 +43,32 @@ class StateManager:
     and state tracking.
     """
 
-    def __init__(self, state_database_path: str | None = None, project_folder: str = ".") -> None:
+    def __init__(
+        self,
+        state_database_path: str | None = None,
+        project_folder: str = ".",
+        environment: str | None = None,
+    ) -> None:
         """
         Initialize the state manager.
 
         Args:
             state_database_path: Path to the state database file
             project_folder: Project folder path
+            environment: Environment name for scoping state
         """
         self.project_folder = Path(project_folder)
+        self.environment = environment
         if state_database_path:
             self.state_database_path = Path(state_database_path)
         else:
-            self.state_database_path = self.project_folder / "data" / "t4t_state.db"
+            # Scope the state database path per environment
+            if environment:
+                self.state_database_path = (
+                    self.project_folder / "data" / environment / "t4t_state.db"
+                )
+            else:
+                self.state_database_path = self.project_folder / "data" / "t4t_state.db"
 
         # Ensure parent directory exists
         self.state_database_path.parent.mkdir(parents=True, exist_ok=True)
@@ -71,11 +84,59 @@ class StateManager:
         return self.conn
 
     def _initialize_database(self) -> None:
-        """Initialize the state database with required tables."""
+        """Initialize the state database with required tables.
+
+        Handles migration from old schema (no ``environment`` column,
+        single-column PK) to the new composite-PK schema.
+        """
         conn = self._get_connection()
+
+        # Check if the table already exists with the old schema
+        table_exists = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='tee_model_state'"
+        ).fetchone()
+
+        if table_exists:
+            # Check if the environment column exists (old schema detection)
+            columns = [
+                row[1] for row in conn.execute("PRAGMA table_info(tee_model_state)").fetchall()
+            ]
+            if "environment" not in columns:
+                logger.info("Detected old state schema — migrating to composite-PK schema")
+                # Step 1: Add the environment column with a default
+                conn.execute(
+                    "ALTER TABLE tee_model_state ADD COLUMN environment VARCHAR DEFAULT 'default'"
+                )
+                # Step 2: Rebuild the table with the new composite primary key
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS tee_model_state_new (
+                        model_name VARCHAR NOT NULL,
+                        materialization VARCHAR NOT NULL,
+                        last_execution_timestamp VARCHAR,
+                        sql_hash VARCHAR,
+                        config_hash VARCHAR,
+                        created_at VARCHAR,
+                        updated_at VARCHAR,
+                        last_processed_value VARCHAR,
+                        strategy VARCHAR,
+                        environment VARCHAR DEFAULT 'default',
+                        PRIMARY KEY (model_name, environment)
+                    )
+                """)
+                conn.execute("""
+                    INSERT INTO tee_model_state_new
+                    SELECT * FROM tee_model_state
+                """)
+                conn.execute("DROP TABLE tee_model_state")
+                conn.execute("ALTER TABLE tee_model_state_new RENAME TO tee_model_state")
+                logger.info("State database migrated to composite-PK schema")
+                conn.commit()
+                return
+
+        # Fresh table creation (or already migrated)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS tee_model_state (
-                model_name VARCHAR PRIMARY KEY,
+                model_name VARCHAR NOT NULL,
                 materialization VARCHAR NOT NULL,
                 last_execution_timestamp VARCHAR,
                 sql_hash VARCHAR,
@@ -83,7 +144,9 @@ class StateManager:
                 created_at VARCHAR,
                 updated_at VARCHAR,
                 last_processed_value VARCHAR,
-                strategy VARCHAR
+                strategy VARCHAR,
+                environment VARCHAR DEFAULT 'default',
+                PRIMARY KEY (model_name, environment)
             )
         """)
         conn.commit()
@@ -104,8 +167,8 @@ class StateManager:
     def get_model_state(self, model_name: str) -> ModelState | None:
         """Get the current state of a model."""
         conn = self._get_connection()
-        query = "SELECT * FROM tee_model_state WHERE model_name = ?"
-        result = conn.execute(query, [model_name]).fetchone()
+        query = "SELECT * FROM tee_model_state WHERE model_name = ? AND environment = ?"
+        result = conn.execute(query, [model_name, self.environment or "default"]).fetchone()
         if result is None:
             return None
 
@@ -133,6 +196,7 @@ class StateManager:
         """Save or update model state."""
         conn = self._get_connection()
         now = datetime.now(UTC).isoformat()
+        env = self.environment or "default"
 
         # Check if model exists
         existing_state = self.get_model_state(model_name)
@@ -143,7 +207,7 @@ class StateManager:
                 UPDATE tee_model_state
                 SET materialization = ?, last_execution_timestamp = ?, sql_hash = ?,
                     config_hash = ?, updated_at = ?, last_processed_value = ?, strategy = ?
-                WHERE model_name = ?
+                WHERE model_name = ? AND environment = ?
             """
             conn.execute(
                 update_sql,
@@ -156,6 +220,7 @@ class StateManager:
                     last_processed_value,
                     strategy,
                     model_name,
+                    env,
                 ],
             )
             logger.debug(f"Updated state for model: {model_name}")
@@ -164,8 +229,8 @@ class StateManager:
             insert_sql = """
                 INSERT INTO tee_model_state
                 (model_name, materialization, last_execution_timestamp, sql_hash, config_hash,
-                 created_at, updated_at, last_processed_value, strategy)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_at, updated_at, last_processed_value, strategy, environment)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             conn.execute(
                 insert_sql,
@@ -179,6 +244,7 @@ class StateManager:
                     now,
                     last_processed_value,
                     strategy,
+                    env,
                 ],
             )
             logger.debug(f"Created new state for model: {model_name}")
@@ -279,10 +345,10 @@ class StateManager:
                 logger.info(f"Ignoring materialization change for {model_name}")
 
     def get_all_models(self) -> list[ModelState]:
-        """Get all model states."""
+        """Get all model states for the current environment."""
         conn = self._get_connection()
-        query = "SELECT * FROM tee_model_state ORDER BY model_name"
-        results = conn.execute(query).fetchall()
+        query = "SELECT * FROM tee_model_state WHERE environment = ? ORDER BY model_name"
+        results = conn.execute(query, [self.environment or "default"]).fetchall()
 
         return [
             ModelState(

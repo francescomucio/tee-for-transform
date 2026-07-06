@@ -37,18 +37,23 @@ class IncrementalState:
 class IncrementalStateManager:
     """Manages incremental model state using DuckDB."""
 
-    def __init__(self, state_database_path: str | None = None) -> None:
+    def __init__(
+        self, state_database_path: str | None = None, environment: str | None = None
+    ) -> None:
         """
         Initialize the state manager.
 
         Args:
             state_database_path: Path to the state database. If None, uses default location.
+            environment: Environment name for scoping state
         """
         if state_database_path is None:
-            # Default to t4t_state.db in the current directory
-            state_database_path = "t4t_state.db"
+            # Default to t4t_state.db in the current directory.
+            # If environment is set, scope it under an env subdirectory.
+            state_database_path = f"t4t_state_{environment}.db" if environment else "t4t_state.db"
 
         self.state_database_path = Path(state_database_path)
+        self.environment = environment
         self.connection = None
         self._ensure_state_table()
 
@@ -64,14 +69,16 @@ class IncrementalStateManager:
 
         create_table_sql = """
         CREATE TABLE IF NOT EXISTS tee_incremental_state (
-            model_name VARCHAR PRIMARY KEY,
+            model_name VARCHAR NOT NULL,
             strategy VARCHAR NOT NULL,
             last_processed_value VARCHAR,
             last_run_timestamp VARCHAR,
             sqlglot_hash VARCHAR,
             config_hash VARCHAR,
             created_at VARCHAR,
-            updated_at VARCHAR
+            updated_at VARCHAR,
+            environment VARCHAR DEFAULT 'default',
+            PRIMARY KEY (model_name, environment)
         )
         """
 
@@ -93,10 +100,10 @@ class IncrementalStateManager:
 
         query = """
         SELECT * FROM tee_incremental_state
-        WHERE model_name = ?
+        WHERE model_name = ? AND environment = ?
         """
 
-        result = conn.execute(query, [model_name]).fetchone()
+        result = conn.execute(query, [model_name, self.environment or "default"]).fetchone()
         logger.info(f"Raw database result for {model_name}: {result}")
 
         if result is None:
@@ -121,10 +128,13 @@ class IncrementalStateManager:
             state: IncrementalState object to save
         """
         conn = self._get_connection()
+        env = self.environment or "default"
 
         # Check if model exists by querying directly
-        check_sql = "SELECT COUNT(*) FROM tee_incremental_state WHERE model_name = ?"
-        count = conn.execute(check_sql, [state.model_name]).fetchone()[0]
+        check_sql = (
+            "SELECT COUNT(*) FROM tee_incremental_state WHERE model_name = ? AND environment = ?"
+        )
+        count = conn.execute(check_sql, [state.model_name, env]).fetchone()[0]
         logger.info(f"Model {state.model_name} exists: {count > 0}")
 
         if count == 0:
@@ -133,8 +143,8 @@ class IncrementalStateManager:
             insert_sql = """
             INSERT INTO tee_incremental_state
             (model_name, strategy, last_processed_value, last_run_timestamp,
-             sqlglot_hash, config_hash, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             sqlglot_hash, config_hash, created_at, updated_at, environment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
 
             now = datetime.now(UTC).isoformat()
@@ -149,6 +159,7 @@ class IncrementalStateManager:
                     state.config_hash,
                     now,  # created_at
                     now,  # updated_at
+                    env,
                 ],
             )
         else:
@@ -157,7 +168,7 @@ class IncrementalStateManager:
             UPDATE tee_incremental_state
             SET strategy = ?, last_processed_value = ?, last_run_timestamp = ?,
                 sqlglot_hash = ?, config_hash = ?, updated_at = ?
-            WHERE model_name = ?
+            WHERE model_name = ? AND environment = ?
             """
 
             now = datetime.now(UTC).isoformat()
@@ -174,6 +185,7 @@ class IncrementalStateManager:
                     state.config_hash,
                     now,
                     state.model_name,
+                    env,
                 ],
             )
             logger.info(f"UPDATE result: {result.fetchall()}")
@@ -282,15 +294,17 @@ class IncrementalStateManager:
 
     def list_models(self) -> list[str]:
         """
-        List all models with state.
+        List all models with state for the current environment.
 
         Returns:
             List of model names
         """
         conn = self._get_connection()
 
-        query = "SELECT model_name FROM tee_incremental_state ORDER BY model_name"
-        result = conn.execute(query).fetchall()
+        query = (
+            "SELECT model_name FROM tee_incremental_state WHERE environment = ? ORDER BY model_name"
+        )
+        result = conn.execute(query, [self.environment or "default"]).fetchall()
 
         return [row[0] for row in result]
 
@@ -303,8 +317,8 @@ class IncrementalStateManager:
         """
         conn = self._get_connection()
 
-        delete_sql = "DELETE FROM tee_incremental_state WHERE model_name = ?"
-        conn.execute(delete_sql, [model_name])
+        delete_sql = "DELETE FROM tee_incremental_state WHERE model_name = ? AND environment = ?"
+        conn.execute(delete_sql, [model_name, self.environment or "default"])
 
         logger.debug(f"Deleted state for model: {model_name}")
 

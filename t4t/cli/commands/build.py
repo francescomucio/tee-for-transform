@@ -39,18 +39,32 @@ def cmd_build(
     exclude: list[str] | None = None,
     retry: bool = False,
     auto_resolve_level_conflicts: bool = True,
+    env: str | None = None,
 ) -> None:
     """Execute the build command."""
-    ctx = CommandContext(
-        project_folder=project_folder,
-        vars=vars,
-        verbose=verbose,
-        select=select,
-        exclude=exclude,
-    )
+    try:
+        ctx = CommandContext(
+            project_folder=project_folder,
+            vars=vars,
+            verbose=verbose,
+            select=select,
+            exclude=exclude,
+            env=env,
+        )
+    except ValueError as e:
+        typer.echo(
+            typer.style("Error: ", fg=typer.colors.RED, bold=True) + str(e),
+            err=True,
+        )
+        raise typer.Exit(1) from None
     connection_manager = None
 
     try:
+        if ctx.is_protected_env():
+            typer.echo(
+                typer.style("⚠️  PROTECTED ENVIRONMENT", fg=typer.colors.YELLOW, bold=True)
+                + f": {ctx.env_name}"
+            )
         typer.echo(f"Building project: {project_folder}")
         ctx.print_variables_info()
         ctx.print_selection_info()
@@ -60,6 +74,7 @@ def cmd_build(
             project_path=ctx.project_path,
             vars_dict=ctx.vars,
             auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+            env_name=ctx.env_name,
         )
 
         # Create unified connection manager
@@ -67,6 +82,7 @@ def cmd_build(
             project_folder=str(ctx.project_path),
             connection_config=ctx.config["connection"],
             variables=ctx.vars,
+            env_name=ctx.env_name,
         )
 
         if retry and ctx.select_patterns:
@@ -85,6 +101,7 @@ def cmd_build(
                     ctx.config["connection"],
                     ctx.vars,
                     ctx.config,
+                    env_name=ctx.env_name,
                 )
             except ValueError as e:
                 typer.echo(
@@ -104,6 +121,7 @@ def cmd_build(
             select_patterns=select_patterns,
             exclude_patterns=ctx.exclude_patterns,
             project_config=ctx.config,
+            env_name=ctx.env_name,
         )
 
         # Calculate statistics

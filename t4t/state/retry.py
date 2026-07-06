@@ -87,9 +87,12 @@ def prepare_retry_select_patterns(
     connection_config: dict[str, Any],
     variables: dict[str, Any] | None,
     project_config: dict[str, Any] | None,
+    env_name: str | None = None,
 ) -> list[str]:
     """
     Compile the project, load the latest manifest, return model names to pass as --select patterns.
+
+    Only considers runs from the same environment (env-scoped state).
 
     Raises:
         ValueError: with a user-facing message when retry cannot proceed
@@ -101,7 +104,7 @@ def prepare_retry_select_patterns(
         project_config=project_config,
     )
     graph, _, _ = validate_compile_results(compile_results)
-    backend = LocalStateBackend(Path(project_folder) / "output")
+    backend = LocalStateBackend(Path(project_folder) / "output", env_name=env_name)
     manifest = backend.read_latest()
     if manifest is None:
         raise ValueError(

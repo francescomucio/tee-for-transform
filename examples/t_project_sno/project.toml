@@ -1,9 +1,9 @@
 project_folder = "t_project_sno"
 
-[connection]
+[environments.dev.connection]
 type = "snowflake"
 user = "mucio"
-password = "DN_ZA@$x5Jm9#Jv"
+password = "env:SNOWFLAKE_PASSWORD"
 role = "ACCOUNTADMIN"
 warehouse = "SNOWFLAKE_LEARNING_WH"
 database = "TEST_TEE"

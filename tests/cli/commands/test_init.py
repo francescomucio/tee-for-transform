@@ -59,7 +59,7 @@ class TestInitCommand:
         """Test project.toml generation for DuckDB."""
         toml_content = _generate_project_toml("my_project", "duckdb")
         assert 'project_folder = "my_project"' in toml_content
-        assert "[connection]" in toml_content
+        assert "[environments.dev.connection]" in toml_content
         assert 'type = "duckdb"' in toml_content
         assert 'path = "data/my_project.duckdb"' in toml_content
         assert "[flags]" in toml_content
@@ -69,7 +69,7 @@ class TestInitCommand:
         """Test project.toml generation for Snowflake."""
         toml_content = _generate_project_toml("my_project", "snowflake")
         assert 'project_folder = "my_project"' in toml_content
-        assert "[connection]" in toml_content
+        assert "[environments.dev.connection]" in toml_content
         assert 'type = "snowflake"' in toml_content
         assert 'host = "YOUR_ACCOUNT.snowflakecomputing.com"' in toml_content
 
@@ -77,12 +77,12 @@ class TestInitCommand:
         """Test project.toml generation for MotherDuck."""
         toml_content = _generate_project_toml("my_project", "motherduck")
         assert 'project_folder = "my_project"' in toml_content
-        assert "[connection]" in toml_content
+        assert "[environments.dev.connection]" in toml_content
         assert 'type = "duckdb"' in toml_content
         assert 'path = "md:my_project"' in toml_content
         assert 'database = "my_project"' in toml_content
         assert 'schema = "main"' in toml_content
-        assert "[connection.extra]" in toml_content
+        assert "[environments.dev.connection.extra]" in toml_content
         assert "motherduck_token" in toml_content
 
     def test_cmd_init_creates_project_structure(self):
@@ -335,7 +335,7 @@ class TestInitCommand:
                     assert f'path = "md:{project_name}"' in toml_content
                     assert f'database = "{project_name}"' in toml_content
                     assert 'schema = "main"' in toml_content
-                    assert "[connection.extra]" in toml_content
+                    assert "[environments.dev.connection.extra]" in toml_content
                     assert "motherduck_token" in toml_content
             finally:
                 os.chdir(original_cwd)
@@ -417,13 +417,13 @@ class TestInitCommand:
 
                     # Verify all required sections exist
                     assert "project_folder =" in toml_content
-                    assert "[connection]" in toml_content
+                    assert "[environments.dev.connection]" in toml_content
                     assert "[flags]" in toml_content
                     assert "materialization_change_behavior" in toml_content
 
                     # Verify structure (project_folder before connection, connection before flags)
                     project_folder_pos = toml_content.find("project_folder")
-                    connection_pos = toml_content.find("[connection]")
+                    connection_pos = toml_content.find("[environments.dev.connection]")
                     flags_pos = toml_content.find("[flags]")
 
                     assert project_folder_pos < connection_pos

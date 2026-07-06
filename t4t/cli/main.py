@@ -119,6 +119,9 @@ def run(
         "--auto-resolve-level-conflicts",
         help="Automatically resolve duplicate hierarchy level names as <dimension>_<level> during lookup generation.",
     ),
+    env: str | None = typer.Option(
+        None, "--env", help="Environment name (e.g. dev, prod). Defaults to 'dev'."
+    ),
 ) -> None:
     """Parse and execute SQL models."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -130,6 +133,7 @@ def run(
         exclude=exclude,
         retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+        env=env,
     )
 
 
@@ -183,6 +187,9 @@ def build(
         "--auto-resolve-level-conflicts",
         help="Automatically resolve duplicate hierarchy level names as <dimension>_<level> during lookup generation.",
     ),
+    env: str | None = typer.Option(
+        None, "--env", help="Environment name (e.g. dev, prod). Defaults to 'dev'."
+    ),
 ) -> None:
     """Build models with tests (stops on test failure)."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -194,6 +201,7 @@ def build(
         exclude=exclude,
         retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+        env=env,
     )
 
 

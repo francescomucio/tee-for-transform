@@ -1,6 +1,6 @@
 project_folder = "my_test"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "data/my_test.duckdb"
 

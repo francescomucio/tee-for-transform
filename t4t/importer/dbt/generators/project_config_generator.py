@@ -46,7 +46,7 @@ class ProjectConfigGenerator:
 
         # Connection section
         if connection_config:
-            lines.append("[connection]")
+            lines.append("[environments.dev.connection]")
             for key, value in sorted(connection_config.items()):
                 if isinstance(value, str):
                     # Escape quotes in strings
@@ -67,7 +67,7 @@ class ProjectConfigGenerator:
                     "No connection configuration found. Using DuckDB default. "
                     "Please update project.toml with your database connection."
                 )
-            lines.append("[connection]")
+            lines.append("[environments.dev.connection]")
             lines.append('type = "duckdb"')
             lines.append(f'path = "data/{project_folder}.duckdb"')
             lines.append("")

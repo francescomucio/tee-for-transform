@@ -93,6 +93,7 @@ def generate_lookups(
     project_path: Path,
     vars_dict: dict[str, Any] | None = None,
     auto_resolve_level_conflicts: bool = False,
+    env_name: str | None = None,
 ) -> list[str]:
     """
     Generate lookup tables for each hierarchical dimension level.
@@ -102,7 +103,8 @@ def generate_lookups(
     """
     project_path = project_path.resolve()
     _clean_generated_dirs(project_path)
-    config = load_project_config(str(project_path), vars_dict)
+    resolved_env = env_name or "dev"
+    config = load_project_config(str(project_path), vars_dict, env_name=resolved_env)
 
     parser = ProjectParser(
         project_folder=str(project_path),

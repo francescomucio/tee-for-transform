@@ -24,6 +24,7 @@ class ModelExecutor:
         project_folder: str,
         config: AdapterConfig | dict[str, Any] | None = None,
         config_name: str = "default",
+        env_name: str | None = None,
     ) -> None:
         """
         Initialize the ModelExecutor.
@@ -32,8 +33,10 @@ class ModelExecutor:
             project_folder: Path to the project folder containing SQL models
             config: Database adapter configuration (AdapterConfig or dict, if None, loads from config files)
             config_name: Configuration name to load (if config is None)
+            env_name: Environment name for scoping state
         """
         self.project_folder = project_folder
+        self.env_name = env_name
 
         # Handle configuration
         if config is None:
@@ -98,7 +101,10 @@ class ModelExecutor:
 
         # Create execution engine
         self.execution_engine = ExecutionEngine(
-            self.config, project_folder=self.project_folder, variables=variables
+            self.config,
+            project_folder=self.project_folder,
+            variables=variables,
+            env_name=self.env_name,
         )
 
         try:

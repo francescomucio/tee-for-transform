@@ -24,6 +24,7 @@ class CommandContext:
         verbose: bool = False,
         select: list[str] | None = None,
         exclude: list[str] | None = None,
+        env: str | None = None,
     ) -> None:
         """
         Initialize command context from parameters.
@@ -34,12 +35,33 @@ class CommandContext:
             verbose: Enable verbose output
             select: Selection patterns
             exclude: Exclusion patterns
+            env: Environment name (e.g. "dev", "prod") — if provided, the
+                 connection config for that environment is loaded into
+                 ``config["connection"]``. Defaults to "dev" if not specified.
         """
         # Parse variables if provided
         self.vars = parse_vars(vars)
 
-        # Load project configuration
-        self.config = load_project_config(project_folder, self.vars)
+        # Load project configuration with environment merging
+        # Default to "dev" environment if none specified
+        resolved_env = env or "dev"
+        self.config = load_project_config(project_folder, self.vars, env_name=resolved_env)
+
+        # Validate that the resolved environment exists in project config
+        environments = self.config.get("environments", {})
+        if resolved_env not in environments:
+            available = sorted(environments.keys())
+            raise ValueError(
+                f"Environment '{resolved_env}' not found in project.toml. "
+                f"Available environments: {available}"
+            )
+
+        # Detect if env was explicitly provided by the user
+        self.env_explicit = env is not None
+        self.env_name = resolved_env
+
+        # Check if the resolved environment is protected
+        self._check_protected_env(project_folder, resolved_env, env)
 
         # Set up logging
         self.verbose = verbose
@@ -51,6 +73,32 @@ class CommandContext:
         # Extract selection criteria
         self.select_patterns = select
         self.exclude_patterns = exclude
+
+    def _check_protected_env(
+        self, project_folder: str, resolved_env: str, explicit_env: str | None
+    ) -> None:
+        """Check if the resolved environment is protected and refuse implicit selection.
+
+        Raises:
+            ValueError: If the environment is protected and was selected implicitly.
+        """
+        from t4t.engine.config import is_env_protected
+
+        if not is_env_protected(project_folder, resolved_env):
+            return
+
+        # If env was resolved implicitly (not via --env), refuse
+        if not explicit_env:
+            raise ValueError(
+                f"Environment '{resolved_env}' is protected and cannot be selected implicitly. "
+                "Use --env to explicitly select it."
+            )
+
+    def is_protected_env(self) -> bool:
+        """Check if the current environment is protected."""
+        from t4t.engine.config import is_env_protected
+
+        return is_env_protected(str(self.project_path), self.env_name)
 
     def handle_error(self, error: Exception, show_traceback: bool = None) -> None:
         """

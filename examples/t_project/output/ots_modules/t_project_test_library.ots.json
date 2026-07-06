@@ -17,18 +17,18 @@
       "sql": "SELECT id\n    FROM @table_name\n    WHERE id IS NULL",
       "parameters": []
     },
-    "example_custom_test": {
-      "type": "sql",
-      "level": "table",
-      "description": "Example custom SQL test This test checks that a table has at least 5 rows The table_name variable is automatically substituted",
-      "sql": "SELECT 1 as violation\nFROM @table_name\nGROUP BY 1\nHAVING COUNT(*) < 5",
-      "parameters": []
-    },
     "column_not_negative": {
       "type": "sql",
       "level": "column",
       "description": "Column-level SQL test example Checks that a numeric column has no negative values Can be used on any column by referencing @column_name",
       "sql": "SELECT @column_name\nFROM @table_name\nWHERE @column_name < 0",
+      "parameters": []
+    },
+    "example_custom_test": {
+      "type": "sql",
+      "level": "table",
+      "description": "Example custom SQL test This test checks that a table has at least 5 rows The table_name variable is automatically substituted",
+      "sql": "SELECT 1 as violation\nFROM @table_name\nGROUP BY 1\nHAVING COUNT(*) < 5",
       "parameters": []
     },
     "check_minimum_rows": {
