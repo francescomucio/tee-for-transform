@@ -10,7 +10,7 @@ This package provides pluggable database adapters that handle:
 Each adapter is organized in its own subpackage for better maintainability.
 """
 
-from .base import AdapterConfig, DatabaseAdapter, MaterializationType
+from .base import AdapterConfig, DatabaseAdapter, MaterializationType, NamingConfig
 from .bigquery import BigQueryAdapter
 
 # Import adapters to register them
@@ -31,6 +31,7 @@ __all__ = [
     "DatabaseAdapter",
     "AdapterConfig",
     "MaterializationType",
+    "NamingConfig",
     # Registry and factory functions
     "AdapterRegistry",
     "get_adapter",

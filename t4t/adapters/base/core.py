@@ -394,3 +394,34 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
         except Exception:
             self.logger.warning(f"Unknown dialect: {dialect_name}")
             return None
+
+    # ── Naming strategy (env-aware) ──────────────────────────────────────
+
+    def apply_naming(self, name: str) -> str:
+        """Apply the environment-aware naming strategy to a database object name.
+
+        When a ``naming.schema_prefix`` is configured on the adapter, this
+        method prepends the prefix to the schema portion of a qualified name
+        (e.g. ``my_schema.my_table`` → ``dev_my_schema.my_table``).
+
+        For unqualified names, the adapter's default schema is used as the
+        schema portion before applying the prefix.
+
+        Args:
+            name: A database object name, optionally qualified (``schema.object``).
+
+        Returns:
+            The mapped name with naming strategy applied, or the original
+            name unchanged if no naming config is set.
+        """
+        naming = self.config.naming
+        if naming is None or naming.schema_prefix is None:
+            return name
+
+        if "." in name:
+            schema, obj = name.split(".", 1)
+            return f"{naming.schema_prefix}{schema}.{obj}"
+
+        # Unqualified name — use the adapter's default schema
+        schema = self.config.schema or "public"
+        return f"{naming.schema_prefix}{schema}.{name}"

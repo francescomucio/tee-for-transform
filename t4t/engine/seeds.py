@@ -106,6 +106,9 @@ class SeedLoader:
         # Construct full table name
         full_table_name = f"{schema_name}.{table_name}" if schema_name else table_name
 
+        # Apply naming strategy (env-aware schema prefix)
+        full_table_name = self.adapter.apply_naming(full_table_name)
+
         # Determine file type and load accordingly
         file_ext = file_path.suffix.lower()
 

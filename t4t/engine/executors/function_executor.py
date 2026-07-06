@@ -100,6 +100,9 @@ class FunctionExecutor:
                 # Extract metadata
                 metadata = self.metadata_extractor.extract_function_metadata(function_data)
 
+                # Apply naming strategy to the function name (env-aware schema prefix)
+                mapped_name = self.adapter.apply_naming(function_name)
+
                 # Extract schema name and attach schema-level tags if needed
                 schema_name = self._extract_schema_name(function_name)
                 if schema_name:
@@ -108,7 +111,7 @@ class FunctionExecutor:
                 # Execute function creation (always CREATE OR REPLACE)
                 # No need to check if function exists - CREATE OR REPLACE handles replacement
                 # All supported databases (DuckDB, Snowflake, PostgreSQL, BigQuery) support CREATE OR REPLACE
-                self.adapter.create_function(function_name, function_sql, metadata)
+                self.adapter.create_function(mapped_name, function_sql, metadata)
 
                 results["executed_functions"].append(function_name)
                 results["execution_log"].append(
@@ -118,7 +121,9 @@ class FunctionExecutor:
                     }
                 )
 
-                logger.info(f"Successfully executed function: {function_name}")
+                logger.info(
+                    f"Successfully executed function: {function_name} (mapped to {mapped_name})"
+                )
 
             except Exception as e:
                 error_msg = f"Error executing function {function_name}: {str(e)}"
