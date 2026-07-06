@@ -242,7 +242,7 @@ metadata = {
                 project_toml = project_dir / "project.toml"
                 project_toml.write_text(f"""
 project_folder = "."
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "{db_path}"
 """)

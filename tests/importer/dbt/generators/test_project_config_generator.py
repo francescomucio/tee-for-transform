@@ -33,7 +33,7 @@ class TestProjectConfigGenerator:
 
             content = project_toml.read_text()
             assert 'project_folder = "target"' in content
-            assert "[connection]" in content
+            assert "[environments.dev.connection]" in content
             assert 'type = "duckdb"' in content
             assert "[flags]" in content
 

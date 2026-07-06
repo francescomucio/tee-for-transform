@@ -98,14 +98,13 @@ def _generate_project_toml(project_name: str, db_type: str) -> str:
     # Build the TOML content
     toml_content = f'''project_folder = "{project_name}"
 
-[connection]
+[environments.dev.connection]
 {connection_section}'''
 
     # Add extra section for motherduck token
     if db_type.lower() == "motherduck":
         toml_content += """
-
-[connection.extra]
+[environments.dev.connection.extra]
 # MotherDuck access token (recommended: use MOTHERDUCK_TOKEN environment variable instead)
 # motherduck_token = "your_motherduck_access_token_here"
 """

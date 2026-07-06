@@ -24,6 +24,7 @@ class CommandContext:
         verbose: bool = False,
         select: list[str] | None = None,
         exclude: list[str] | None = None,
+        env: str | None = None,
     ) -> None:
         """
         Initialize command context from parameters.
@@ -34,12 +35,17 @@ class CommandContext:
             verbose: Enable verbose output
             select: Selection patterns
             exclude: Exclusion patterns
+            env: Environment name (e.g. "dev", "prod") — if provided, the
+                 connection config for that environment is loaded into
+                 ``config["connection"]``. Defaults to "dev" if not specified.
         """
         # Parse variables if provided
         self.vars = parse_vars(vars)
 
-        # Load project configuration
-        self.config = load_project_config(project_folder, self.vars)
+        # Load project configuration with environment merging
+        # Default to "dev" environment if none specified
+        resolved_env = env or "dev"
+        self.config = load_project_config(project_folder, self.vars, env_name=resolved_env)
 
         # Set up logging
         self.verbose = verbose

@@ -16,7 +16,7 @@ class TestSchemaTagExtraction:
         project_toml.write_text("""
 project_folder = "test_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 
@@ -42,7 +42,7 @@ object_tags = {"sensitivity_tag" = "pii", "classification" = "public"}
         project_toml.write_text("""
 project_folder = "test_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 
@@ -68,7 +68,7 @@ object_tags = {"sensitivity_tag" = "pii"}
 project_folder = "test_project"
 tags = ["analytics", "production"]
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 """)
@@ -87,7 +87,7 @@ path = ":memory:"
         project_toml.write_text("""
 project_folder = "test_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 
@@ -133,7 +133,7 @@ tags = ["schema_tag"]
         project_toml.write_text("""
 project_folder = "test_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 
@@ -172,7 +172,7 @@ tags = ["analytics"]
         project_toml.write_text("""
 project_folder = "test_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 """)
@@ -189,7 +189,7 @@ path = ":memory:"
         project_toml.write_text("""
 project_folder = "test_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 

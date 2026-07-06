@@ -26,7 +26,7 @@ class TestTestCommand:
             # Create project.toml
             project_toml = tmpdir_path / "project.toml"
             project_toml.write_text(
-                'project_folder = "test"\n[connection]\ntype = "duckdb"\npath = ":memory:"'
+                'project_folder = "test"\n[environments.dev.connection]\ntype = "duckdb"\npath = ":memory:"'
             )
             yield tmpdir_path
 
@@ -58,7 +58,7 @@ class TestTestCommand:
             else ""
         )
         project_toml.write_text(
-            f'name = "test_project"\n[connection]\ntype = "{connection_config["type"]}"\n{path_config}\n'
+            f'name = "test_project"\n[environments.dev.connection]\ntype = "{connection_config["type"]}"\n{path_config}\n'
         )
 
         # Create SQL model files

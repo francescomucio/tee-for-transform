@@ -102,7 +102,7 @@ def generate_lookups(
     """
     project_path = project_path.resolve()
     _clean_generated_dirs(project_path)
-    config = load_project_config(str(project_path), vars_dict)
+    config = load_project_config(str(project_path), vars_dict, env_name="dev")
 
     parser = ProjectParser(
         project_folder=str(project_path),

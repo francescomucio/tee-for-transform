@@ -125,7 +125,7 @@ metadata = {
         project_toml = project_path / "project.toml"
         project_toml.write_text("""
 name = "test_project"
-[connection]
+[environments.dev.connection]
 type = "snowflake"
 """)
 

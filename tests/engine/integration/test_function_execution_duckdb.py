@@ -65,7 +65,7 @@ SELECT
         project_toml = project_path / "project.toml"
         project_toml.write_text("""
 name = "test_project"
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 schema = "my_schema"
@@ -369,7 +369,7 @@ FROM my_schema.source_data
         project_toml = project_path / "project.toml"
         project_toml.write_text("""
 name = "test_project"
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 schema = "my_schema"

@@ -29,7 +29,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
       }
     },
     {
@@ -53,7 +53,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
       }
     },
     {
@@ -77,7 +77,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
       }
     },
     {
@@ -101,7 +101,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
       }
     },
     {
@@ -125,7 +125,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
       }
     },
     {
@@ -149,7 +149,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/advanced_models.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/advanced_models.py"
       }
     },
     {
@@ -196,7 +196,7 @@
         }
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/incremental_example.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/incremental_example.py"
       }
     },
     {
@@ -234,7 +234,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_first_table.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_first_table.py"
       },
       "tests": {
         "columns": {
@@ -287,7 +287,7 @@
         "type": "view"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_second_table.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_second_table.py"
       },
       "tests": {
         "columns": {
@@ -322,7 +322,7 @@
         "type": "view"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_view.py"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_view.py"
       }
     },
     {
@@ -346,7 +346,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_forth_table.sql"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_forth_table.sql"
       }
     },
     {
@@ -371,7 +371,7 @@
         "type": "table"
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/models/my_schema/my_third_table.sql"
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/models/my_schema/my_third_table.sql"
       }
     }
   ],
@@ -386,7 +386,7 @@
         "database_specific": {}
       },
       "metadata": {
-        "file_path": "/tmp/t4t-fixes/examples/t_project/functions/my_schema/calculate_percentage.py",
+        "file_path": "/opt/data/tee-for-transform/examples/t_project/functions/my_schema/calculate_percentage.py",
         "tags": [
           "math",
           "utility"

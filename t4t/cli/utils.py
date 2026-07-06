@@ -32,18 +32,43 @@ def parse_vars(vars_string: str | None) -> dict[str, Any]:
         raise ValueError(f"Invalid variables format (must be valid JSON): {e}") from e
 
 
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Deep-merge *override* into *base* (mutates base in place)."""
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
 def load_project_config(
-    project_folder: str, vars_dict: dict[str, Any] | None = None
+    project_folder: str,
+    vars_dict: dict[str, Any] | None = None,
+    env_name: str | None = None,
 ) -> dict[str, Any]:
     """
     Load project configuration from project.toml file and merge with variables.
 
+    Requires ``[environments.*]`` sections — legacy ``[connection]`` is no
+    longer supported.
+
+    When *env_name* is provided, the default environment config
+    (``[environments.default]``) is merged with the specific environment
+    config (``[environments.<env_name>]``) and stored under the ``"connection"``
+    key in the returned dict for backward compatibility with CLI commands.
+
     Args:
         project_folder: Path to the project folder
         vars_dict: Optional dictionary of variables to merge into config
+        env_name: Optional environment name to extract connection config for
 
     Returns:
         Dictionary containing project configuration with variables merged
+
+    Raises:
+        FileNotFoundError: If project.toml is not found
+        ValueError: If required configuration is missing
     """
     project_toml_path = Path(project_folder) / "project.toml"
 
@@ -60,12 +85,35 @@ def load_project_config(
     if "project_folder" not in config:
         raise ValueError("project.toml must contain 'project_folder' setting")
 
-    if "connection" not in config:
-        raise ValueError("project.toml must contain 'connection' configuration")
+    if "environments" not in config:
+        raise ValueError(
+            "project.toml must contain at least one '[environments.*]' section "
+            "(e.g. [environments.dev]) — legacy [connection] is no longer supported"
+        )
 
     # Merge variables into config
     if vars_dict:
         config["vars"] = vars_dict
+
+    # If env_name is provided, merge default + specific env into connection key
+    if env_name:
+        environments = config.get("environments", {})
+        merged_conn: dict[str, Any] = {}
+
+        # Start with [environments.default] connection
+        default_env = environments.get("default", {})
+        default_conn = default_env.get("connection", {})
+        if isinstance(default_conn, dict):
+            merged_conn.update(default_conn)
+
+        # Merge specific environment connection on top
+        specific_env = environments.get(env_name, {})
+        specific_conn = specific_env.get("connection", {})
+        if isinstance(specific_conn, dict):
+            merged_conn.update(specific_conn)
+
+        # Store as "connection" for backward compat
+        config["connection"] = merged_conn
 
     return config
 

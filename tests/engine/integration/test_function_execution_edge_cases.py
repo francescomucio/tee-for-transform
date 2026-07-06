@@ -60,7 +60,7 @@ metadata = {
         project_toml = project_path / "project.toml"
         project_toml.write_text("""
 name = "test_project"
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 schema = "my_schema"
@@ -186,7 +186,7 @@ metadata = {
         project_toml = project_path / "project.toml"
         project_toml.write_text("""
 name = "test_project"
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 schema = "my_schema"
@@ -261,7 +261,7 @@ metadata = {"function_name": "top_func", "parameters": [{"name": "x", "type": "D
         project_toml = project_path / "project.toml"
         project_toml.write_text("""
 name = "test_project"
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = ":memory:"
 schema = "my_schema"

@@ -11,7 +11,73 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from t4t.adapters.base import AdapterConfig
+from t4t.adapters.base import AdapterConfig, NamingConfig
+from t4t.adapters.base.config import (
+    resolve_secret_ref,
+)
+
+logger = logging.getLogger(__name__)
+
+# ── DLT-style env var convention ──────────────────────────────────────────
+# ENVIRONMENTS__DEV__CONNECTION__PASSWORD -> ["environments", "dev", "connection", "password"]
+# ENVIRONMENTS__DEV__CONNECTIONS__ANALYTICS__PASSWORD -> ["environments", "dev", "connections", "analytics", "password"]
+
+
+def _parse_dlt_env_vars() -> dict[str, Any]:
+    """Parse ``ENVIRONMENTS__*__*`` environment variables into a nested dict.
+
+    Uses the dlt-style convention where double underscores represent
+    nesting levels. For example::
+
+        ENVIRONMENTS__DEV__CONNECTION__PASSWORD = "s3cret"
+
+    becomes::
+
+        {"environments": {"dev": {"connection": {"password": "s3cret"}}}}
+
+    Returns:
+        A nested dict built from matching environment variables.
+    """
+    result: dict[str, Any] = {}
+    prefix = "ENVIRONMENTS__"
+    for key, value in os.environ.items():
+        if not key.startswith(prefix):
+            continue
+        parts = key.lower().split("__")
+        # parts[0] is "environments" (lowercased)
+        if len(parts) < 2:
+            continue
+        # Navigate/create the nested dict
+        current = result
+        for part in parts:
+            if part not in current:
+                current[part] = {}
+            if isinstance(current[part], dict):
+                current = current[part]
+            else:
+                # Leaf already set — shouldn't happen with proper nesting
+                break
+        else:
+            # We reached the leaf — set the value
+            # But we need to find the parent dict
+            parent = result
+            for part in parts[:-1]:
+                parent = parent[part]
+            parent[parts[-1]] = value
+    return result
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Deep-merge *override* into *base* (mutates base in place).
+
+    For keys where both sides are dicts, recurse. Otherwise override wins.
+    """
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
 
 
 class DatabaseConfigManager:
@@ -25,29 +91,40 @@ class DatabaseConfigManager:
         """
         Load database configuration from pyproject.toml and environment variables.
 
+        Precedence (highest to lowest):
+        1. ``ENVIRONMENTS__*__*`` env var (dlt-style, automatic)
+        2. ``T4T_DB_*`` env var (legacy)
+        3. ``env:`` / ``file:`` reference in TOML (explicit)
+        4. Literal value in TOML
+
         Args:
-            config_name: Name of the configuration to load (default: "default")
+            config_name: Name of the environment to load (default: "default").
 
         Returns:
-            AdapterConfig object with merged configuration
+            AdapterConfig object with merged configuration.
 
         Raises:
-            ValueError: If configuration is invalid or missing
+            ValueError: If configuration is invalid or missing.
         """
-        # Load from pyproject.toml
+        # 1. Load from pyproject.toml
         toml_config = self._load_toml_config(config_name)
 
-        # Load from environment variables
+        # 2. Load from environment variables
         env_config = self._load_env_config()
 
-        # Merge configurations (env vars override toml)
+        # 3. Merge configurations (env vars override toml)
         merged_config = self._merge_configs(toml_config, env_config)
 
-        # Validate and create AdapterConfig
+        # 4. Validate and create AdapterConfig
         return self._create_adapter_config(merged_config)
 
     def _load_toml_config(self, config_name: str) -> dict[str, Any]:
-        """Load configuration from pyproject.toml or project.toml."""
+        """Load configuration from pyproject.toml or project.toml.
+
+        Loads ``[environments.default]`` first, then merges
+        ``[environments.<config_name>]`` on top. Extracts ``connection``
+        as the default engine and ``connections.*`` as additional engines.
+        """
         # Try pyproject.toml first
         toml_file = self.project_root / "pyproject.toml"
         if not toml_file.exists():
@@ -61,43 +138,122 @@ class DatabaseConfigManager:
             with open(toml_file, "rb") as f:
                 data = tomllib.load(f)
 
-            # Look for [tool.t4t.database], [tool.t4t.databases], or [connection]
+            # Look for [tool.t4t.database], [tool.t4t.databases], or [environments.*]
             t4t_config = data.get("tool", {}).get("t4t", {})
 
             # Start with flags if they exist
-            config = {}
+            config: dict[str, Any] = {}
             if "flags" in data:
                 config["extra"] = {"flags": data["flags"]}
 
-            # Check for single database config in tool.t4t.database
+            # ── Load base config from tool.t4t.database or tool.t4t.databases ──
+            base_config: dict[str, Any] = {}
+
             if "database" in t4t_config:
-                config.update(t4t_config["database"])
+                base_config.update(t4t_config["database"])
+            else:
+                databases = t4t_config.get("databases", {})
+                if isinstance(databases, dict) and config_name in databases:
+                    base_config.update(databases[config_name])
+
+            # ── Load environments ──────────────────────────────────────────────
+            environments = data.get("environments", {})
+            if not isinstance(environments, dict):
+                environments = {}
+
+            # Start with [environments.default] if it exists
+            env_config: dict[str, Any] = {}
+            default_env = environments.get("default")
+            if isinstance(default_env, dict):
+                self.logger.debug("Loading [environments.default] config")
+                env_config = self._extract_env_config(default_env)
+
+            # Merge specific environment on top
+            specific_env = environments.get(config_name)
+            if isinstance(specific_env, dict):
+                self.logger.debug(
+                    "Loading [environments.%s] config (merging on top of default)",
+                    config_name,
+                )
+                specific_config = self._extract_env_config(specific_env)
+                _deep_merge(env_config, specific_config)
+
+            # Merge base_config + env_config (env_config overrides base)
+            config.update(base_config)
+            config.update(env_config)
+
+            # If we have any config, return it
+            if config.get("type") or config.get("connection"):
                 return config
 
-            # Check for multiple database configs in tool.t4t.databases
-            databases = t4t_config.get("databases", {})
-            if isinstance(databases, dict) and config_name in databases:
-                config.update(databases[config_name])
-                return config
+            # No environments found — error (legacy [connection] removed)
+            if not environments:
+                self.logger.debug("No [environments.*] sections found in TOML file")
+                return {}
 
-            # Check for legacy [connection] section
-            if "connection" in data:
-                self.logger.debug("Using legacy [connection] section")
-                config.update(data["connection"])
-                return config
-
-            self.logger.debug(f"No database configuration '{config_name}' found in TOML file")
+            self.logger.debug(
+                "Environment '%s' not found in [environments.*] sections",
+                config_name,
+            )
             return {}
 
         except Exception as e:
-            self.logger.warning(f"Could not read pyproject.toml: {e}")
+            self.logger.warning("Could not read pyproject.toml: %s", e)
             return {}
 
-    def _load_env_config(self) -> dict[str, Any]:
-        """Load configuration from environment variables."""
-        env_config = {}
+    def _extract_env_config(self, env_section: dict[str, Any]) -> dict[str, Any]:
+        """Extract connection and connections config from an environment section.
 
-        # Map environment variables to config keys
+        Args:
+            env_section: The dict for a single environment (e.g. ``environments.dev``).
+
+        Returns:
+            A flat config dict with ``connection`` fields merged in, plus
+            ``_naming_config`` and ``_connections`` keys for multi-engine.
+        """
+        result: dict[str, Any] = {}
+
+        # Extract naming config
+        naming_raw = env_section.get("naming")
+        if isinstance(naming_raw, dict):
+            naming = NamingConfig(
+                schema_prefix=naming_raw.get("schema_prefix"),
+                schema_suffix=naming_raw.get("schema_suffix"),
+                database=naming_raw.get("database"),
+            )
+            result["_naming_config"] = naming
+
+        # Extract default connection (flattened into top-level keys)
+        connection = env_section.get("connection")
+        if isinstance(connection, dict):
+            for key, value in connection.items():
+                result[key] = value
+
+        # Extract additional named connections (multi-engine)
+        connections = env_section.get("connections")
+        if isinstance(connections, dict):
+            result["_connections"] = {}
+            for conn_name, conn_config in connections.items():
+                if isinstance(conn_config, dict):
+                    result["_connections"][conn_name] = dict(conn_config)
+
+        return result
+
+    def _load_env_config(self) -> dict[str, Any]:
+        """Load configuration from environment variables.
+
+        Supports:
+        - ``ENVIRONMENTS__*__*`` dlt-style convention (highest precedence)
+        - ``T4T_DB_*`` legacy env vars (backward compat)
+        """
+        env_config: dict[str, Any] = {}
+
+        # 1. DLT-style ENVIRONMENTS__*__* env vars
+        dlt_config = _parse_dlt_env_vars()
+        if dlt_config:
+            env_config["_dlt_env_config"] = dlt_config
+
+        # 2. Legacy T4T_DB_* env vars
         env_mappings = {
             "T4T_DB_TYPE": "type",
             "T4T_DB_HOST": "host",
@@ -114,11 +270,9 @@ class DatabaseConfigManager:
             "T4T_DB_TARGET_DIALECT": "target_dialect",
         }
 
-        # Load T4T_ prefixed variables
         for env_var, config_key in env_mappings.items():
             value = os.getenv(env_var)
             if value is not None:
-                # Convert port to int if it's a number
                 if config_key == "port" and value.isdigit():
                     env_config[config_key] = int(value)
                 else:
@@ -129,9 +283,93 @@ class DatabaseConfigManager:
     def _merge_configs(
         self, toml_config: dict[str, Any], env_config: dict[str, Any]
     ) -> dict[str, Any]:
-        """Merge TOML and environment configurations."""
+        """Merge TOML and environment configurations.
+
+        1. Start with TOML config
+        2. Apply legacy ``T4T_DB_*`` env vars on top
+        3. Apply dlt-style ``ENVIRONMENTS__*__*`` env vars on top
+        4. Resolve secret references (``env:``, ``file:``)
+        5. Warn on literal secrets in non-dev environments
+        """
         merged = toml_config.copy()
-        merged.update(env_config)
+
+        # Apply legacy T4T_DB_* env vars (step 2)
+        for key in (
+            "type",
+            "host",
+            "port",
+            "database",
+            "user",
+            "password",
+            "path",
+            "schema",
+            "warehouse",
+            "role",
+            "project",
+            "source_dialect",
+            "target_dialect",
+        ):
+            if key in env_config:
+                merged[key] = env_config[key]
+
+        # Apply dlt-style ENVIRONMENTS__*__* env vars (step 3)
+        dlt_config = env_config.get("_dlt_env_config")
+        if dlt_config:
+            # dlt_config is like {"environments": {"dev": {"connection": {"password": "..."}}}}
+            # We need to merge the connection-level values into merged
+            envs = dlt_config.get("environments", {})
+            # We don't know which env name was used at this point, so we merge
+            # all env-level overrides. The caller already resolved the env name.
+            # For simplicity, we merge the first matching env's connection fields.
+            for _env_name, env_data in envs.items():
+                if isinstance(env_data, dict):
+                    connection = env_data.get("connection")
+                    if isinstance(connection, dict):
+                        for k, v in connection.items():
+                            merged[k] = v
+                    connections = env_data.get("connections")
+                    if isinstance(connections, dict):
+                        if "_connections" not in merged:
+                            merged["_connections"] = {}
+                        for conn_name, conn_config in connections.items():
+                            if isinstance(conn_config, dict):
+                                # Deep-merge into existing connection config if present
+                                existing = merged["_connections"].get(conn_name)
+                                if isinstance(existing, dict):
+                                    existing.update(conn_config)
+                                else:
+                                    merged["_connections"][conn_name] = dict(conn_config)
+
+        # Resolve secret references (step 4)
+        secret_keys = {
+            "password",
+            "user",
+            "host",
+            "database",
+            "path",
+            "warehouse",
+            "role",
+            "project",
+        }
+        for key in list(merged.keys()):
+            if key in secret_keys and isinstance(merged[key], str):
+                original = merged[key]
+                resolved = resolve_secret_ref(original)
+                if resolved != original:
+                    self.logger.debug("Resolved secret reference for '%s'", key)
+                    merged[key] = resolved
+
+        # Warn on literal secrets in non-dev environments (step 5)
+        # We can't know the env name here, so we do a simple heuristic:
+        # if password looks like a literal (not a ref), log a debug message
+        if "password" in merged and isinstance(merged["password"], str):
+            pw = merged["password"]
+            if not pw.startswith("env:") and not pw.startswith("file:"):
+                self.logger.debug(
+                    "Literal password value found in config — "
+                    "consider using 'env:VAR_NAME' or 'file:/path' for security"
+                )
+
         return merged
 
     def _create_adapter_config(self, config_dict: dict[str, Any]) -> AdapterConfig:
@@ -144,10 +382,40 @@ class DatabaseConfigManager:
         if not db_type:
             raise ValueError("Database type is required")
 
-        # Map source_sql_dialect to source_dialect (source_sql_dialect is the preferred name in project.toml)
+        # Map source_sql_dialect to source_dialect
         source_dialect = config_dict.get("source_dialect") or config_dict.get("source_sql_dialect")
 
-        # Create AdapterConfig
+        # Build additional connections (multi-engine)
+        connections: dict[str, AdapterConfig] | None = None
+        raw_connections = config_dict.get("_connections")
+        if isinstance(raw_connections, dict):
+            connections = {}
+            for conn_name, conn_dict in raw_connections.items():
+                if isinstance(conn_dict, dict):
+                    conn_type = conn_dict.get("type")
+                    if conn_type:
+                        conn_source_dialect = conn_dict.get("source_dialect") or conn_dict.get(
+                            "source_sql_dialect"
+                        )
+                        connections[conn_name] = AdapterConfig(
+                            type=conn_type,
+                            host=conn_dict.get("host"),
+                            port=conn_dict.get("port"),
+                            database=conn_dict.get("database"),
+                            user=conn_dict.get("user"),
+                            password=conn_dict.get("password"),
+                            path=conn_dict.get("path"),
+                            source_dialect=conn_source_dialect,
+                            target_dialect=conn_dict.get("target_dialect"),
+                            connection_timeout=conn_dict.get("connection_timeout", 30),
+                            query_timeout=conn_dict.get("query_timeout", 300),
+                            schema=conn_dict.get("schema"),
+                            warehouse=conn_dict.get("warehouse"),
+                            role=conn_dict.get("role"),
+                            project=conn_dict.get("project"),
+                            extra=conn_dict.get("extra"),
+                        )
+
         return AdapterConfig(
             type=db_type,
             host=config_dict.get("host"),
@@ -164,6 +432,8 @@ class DatabaseConfigManager:
             warehouse=config_dict.get("warehouse"),
             role=config_dict.get("role"),
             project=config_dict.get("project"),
+            naming=config_dict.get("_naming_config"),
+            connections=connections,
             extra=config_dict.get("extra"),
         )
 

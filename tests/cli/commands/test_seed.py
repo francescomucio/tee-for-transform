@@ -18,7 +18,7 @@ class TestSeedCommand:
         # Create project.toml file (required by CommandContext)
         project_toml = temp_project_dir / "project.toml"
         project_toml.write_text(
-            'project_folder = "test"\n[connection]\ntype = "duckdb"\npath = ":memory:"'
+            'project_folder = "test"\n[environments.dev.connection]\ntype = "duckdb"\npath = ":memory:"'
         )
 
         # Should not raise, just print message
@@ -33,7 +33,7 @@ class TestSeedCommand:
         # Create project.toml file (required by CommandContext)
         project_toml = temp_project_dir / "project.toml"
         project_toml.write_text(
-            'project_folder = "test"\n[connection]\ntype = "duckdb"\npath = ":memory:"'
+            'project_folder = "test"\n[environments.dev.connection]\ntype = "duckdb"\npath = ":memory:"'
         )
 
         seeds_folder = temp_project_dir / "seeds"
@@ -90,7 +90,7 @@ class TestSeedCommand:
         # Create project.toml file (required by CommandContext)
         project_toml = temp_project_dir / "project.toml"
         project_toml.write_text(
-            'project_folder = "test"\n[connection]\ntype = "duckdb"\npath = ":memory:"'
+            'project_folder = "test"\n[environments.dev.connection]\ntype = "duckdb"\npath = ":memory:"'
         )
 
         seeds_folder = temp_project_dir / "seeds"
@@ -129,7 +129,7 @@ class TestSeedCommand:
         # Create project.toml file
         project_toml = temp_project_dir / "project.toml"
         project_toml.write_text(
-            'project_folder = "test"\n[connection]\ntype = "duckdb"\npath = ":memory:"'
+            'project_folder = "test"\n[environments.dev.connection]\ntype = "duckdb"\npath = ":memory:"'
         )
 
         seeds_folder = temp_project_dir / "seeds"
@@ -198,7 +198,7 @@ class TestSeedCommand:
         # Create project.toml file
         project_toml = temp_project_dir / "project.toml"
         project_toml.write_text(
-            'project_folder = "test"\n[connection]\ntype = "duckdb"\npath = ":memory:"'
+            'project_folder = "test"\n[environments.dev.connection]\ntype = "duckdb"\npath = ":memory:"'
         )
 
         seeds_folder = temp_project_dir / "seeds"
@@ -267,7 +267,7 @@ class TestSeedCommand:
         # Create project.toml file
         project_toml = temp_project_dir / "project.toml"
         project_toml.write_text(
-            'project_folder = "test"\n[connection]\ntype = "duckdb"\npath = ":memory:"'
+            'project_folder = "test"\n[environments.dev.connection]\ntype = "duckdb"\npath = ":memory:"'
         )
 
         seeds_folder = temp_project_dir / "seeds"

@@ -82,7 +82,7 @@ class TestBuildModels:
             else ""
         )
         project_toml.write_text(
-            f'name = "test_project"\n[connection]\ntype = "{connection_config["type"]}"\n{path_config}\n'
+            f'name = "test_project"\n[environments.dev.connection]\ntype = "{connection_config["type"]}"\n{path_config}\n'
         )
 
         # Create SQL model files
