@@ -31,8 +31,12 @@ Thank you for your interest in contributing to t4t! This guide will help you get
 4. **Install the pre-commit hooks** (mechanical checks run on every commit;
    CI runs the same checks, so this saves round-trips):
    ```bash
-   uv tool install pre-commit
-   pre-commit install
+   uvx pre-commit install
+   ```
+   This installs git hooks that run `ruff check`, `ruff format`, and other
+   checks automatically before every commit. You can also run them manually:
+   ```bash
+   uvx pre-commit run --all-files
    ```
 
 ## Development Workflow
