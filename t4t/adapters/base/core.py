@@ -110,6 +110,18 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
         # Map source_sql_dialect to source_dialect (source_sql_dialect is the preferred name in project.toml)
         source_dialect = config_dict.get("source_dialect") or config_dict.get("source_sql_dialect")
 
+        # Normalize _naming_config: a raw dict from the dict-config path
+        # must be converted to NamingConfig before reaching AdapterConfig
+        naming_raw = config_dict.get("_naming_config")
+        if isinstance(naming_raw, dict):
+            from .config import NamingConfig
+
+            naming_raw = NamingConfig(
+                schema_prefix=naming_raw.get("schema_prefix"),
+                schema_suffix=naming_raw.get("schema_suffix"),
+                database=naming_raw.get("database"),
+            )
+
         return AdapterConfig(
             type=config_dict["type"],
             host=config_dict.get("host"),
@@ -126,7 +138,7 @@ class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
             warehouse=config_dict.get("warehouse"),
             role=config_dict.get("role"),
             project=config_dict.get("project"),
-            naming=config_dict.get("_naming_config"),
+            naming=naming_raw,
             extra=config_dict.get("extra"),
         )
 

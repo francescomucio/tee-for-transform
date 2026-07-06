@@ -411,3 +411,54 @@ path = ":memory:"
 
         assert adapter.apply_naming("my_schema.my_table") == "my_schema.my_table"
         assert adapter.apply_naming("my_table") == "my_table"
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# End-to-end test: t4t run with schema_prefix
+# ══════════════════════════════════════════════════════════════════════════
+
+
+def test_schema_prefix_end_to_end(tmp_path) -> None:
+    """``t4t run --env dev`` with ``schema_prefix`` must physically create
+    ``dev_<schema>`` tables in DuckDB."""
+    import duckdb
+    from typer.testing import CliRunner
+    from t4t.cli.main import app
+
+    proj = tmp_path / "demo"
+    (proj / "models" / "core").mkdir(parents=True)
+    (proj / "data").mkdir()
+    (proj / "project.toml").write_text(
+        'project_folder = "demo"\n'
+        '[environments.dev.connection]\n'
+        'type = "duckdb"\n'
+        'path = "data/demo.duckdb"\n'
+        '[environments.dev.naming]\n'
+        'schema_prefix = "dev_"\n'
+    )
+    (proj / "models" / "core" / "base_table.sql").write_text("SELECT 1 AS id, 'a' AS name")
+    (proj / "models" / "core" / "derived_table.sql").write_text(
+        "SELECT id, name FROM core.base_table WHERE id > 0"
+    )
+
+    result = CliRunner().invoke(app, ["run", str(proj), "--env", "dev"])
+    assert result.exit_code == 0, f"t4t run failed:\n{result.output}"
+
+    # Verify tables landed in dev_core, not core
+    con = duckdb.connect(str(proj / "data" / "demo.duckdb"))
+    try:
+        tables = con.execute(
+            "SELECT table_schema, table_name FROM information_schema.tables "
+            "WHERE table_schema LIKE 'dev_%' OR table_schema = 'core'"
+        ).fetchall()
+        schemas = {row[0] for row in tables}
+        assert "dev_core" in schemas, (
+            f"Expected tables in dev_core schema, got schemas: {schemas}\n"
+            f"All tables: {tables}"
+        )
+        assert "core" not in schemas, (
+            f"Tables should NOT land in unprefixed core schema\n"
+            f"All tables: {tables}"
+        )
+    finally:
+        con.close()

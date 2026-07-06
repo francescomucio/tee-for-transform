@@ -583,6 +583,40 @@ class TestAdapterConfigFieldSurvival:
         assert config.connections is None
         assert config.extra is None
 
+        # Verify fields survive the registry boundary (get_adapter → adapter.config)
+        from t4t.adapters import get_adapter
+
+        adapter = get_adapter(config)
+        for f in fields(AdapterConfig):
+            expected = getattr(config, f.name)
+            actual = getattr(adapter.config, f.name)
+            assert expected == actual, (
+                f"AdapterConfig.{f.name} was dropped at the registry boundary: "
+                f"expected={expected!r}, got={actual!r}"
+            )
+
+    def test_naming_survives_through_adapter(self, tmp_path) -> None:
+        """NamingConfig with schema_prefix survives all the way to adapter.config."""
+        toml = tmp_path / "project.toml"
+        toml.write_text("""\
+[environments.dev.connection]
+type = "duckdb"
+path = ":memory:"
+
+[environments.dev.naming]
+schema_prefix = "dev_"
+""")
+        from t4t.engine.config import DatabaseConfigManager
+        from t4t.adapters import get_adapter
+
+        config = DatabaseConfigManager(str(tmp_path)).load_config("dev")
+        assert config.naming is not None
+        assert config.naming.schema_prefix == "dev_"
+
+        adapter = get_adapter(config)
+        assert adapter.config.naming is not None
+        assert adapter.config.naming.schema_prefix == "dev_"
+
     def test_extra_survives_through_cli_path(self, tmp_path) -> None:
         """The ``extra`` dict (MotherDuck token, custom settings) survives
         ``load_project_config`` → ``config[\"connection\"]``."""
