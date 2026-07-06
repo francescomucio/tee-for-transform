@@ -61,7 +61,7 @@ class TestRetryIntegration:
         self, retry_project: Path
     ) -> None:
         runner = CliRunner()
-        last_run = retry_project / "output" / "last_run.json"
+        last_run = retry_project / "output" / "dev" / "last_run.json"
 
         r1 = runner.invoke(
             app,

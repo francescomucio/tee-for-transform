@@ -66,6 +66,7 @@ class TestBuildCommand:
         mock_ctx = Mock()
         mock_ctx.project_path = Path(mock_args.project_folder)
         mock_ctx.vars = {}
+        mock_ctx.env_name = "dev"
         mock_ctx.select_patterns = None
         mock_ctx.exclude_patterns = None
         mock_ctx.config = mock_config
@@ -113,6 +114,7 @@ class TestBuildCommand:
             select_patterns=None,
             exclude_patterns=None,
             project_config=mock_ctx.config,
+            env_name="dev",
         )
 
     @patch("t4t.cli.commands.build.build_models")
