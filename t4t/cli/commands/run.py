@@ -65,8 +65,6 @@ def cmd_run(
                 typer.style("⚠️  PROTECTED ENVIRONMENT", fg=typer.colors.YELLOW, bold=True)
                 + f": {ctx.env_name}"
             )
-            ctx.check_destructive_operation()
-
         typer.echo(f"Running t4t on project: {project_folder}")
         ctx.print_variables_info()
         ctx.print_selection_info()

@@ -67,8 +67,6 @@ def cmd_build(
                 typer.style("⚠️  PROTECTED ENVIRONMENT", fg=typer.colors.YELLOW, bold=True)
                 + f": {ctx.env_name}"
             )
-            ctx.check_destructive_operation()
-
         typer.echo(f"Building project: {project_folder}")
         ctx.print_variables_info()
         ctx.print_selection_info()
