@@ -118,7 +118,7 @@ t_project/
 # project.toml
 project_folder = "t_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "t_project/data/t_project.duckdb"
 schema = "my_schema"

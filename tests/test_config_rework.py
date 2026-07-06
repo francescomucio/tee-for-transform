@@ -512,3 +512,94 @@ host = "localhost"
         config = manager.load_config("dev")
         assert config.port == 5432
         assert isinstance(config.port, int)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# AdapterConfig field survival test
+# ══════════════════════════════════════════════════════════════════════════
+
+
+class TestAdapterConfigFieldSurvival:
+    """Every AdapterConfig field must survive project.toml → adapter.
+
+    Uses ``dataclasses.fields(AdapterConfig)`` so new fields are covered
+    automatically.  If this test fails, the new field is missing from one
+    of the conversion boundaries (``_create_adapter_config``,
+    ``load_project_config``, ``AdapterRegistry``, etc.).
+    """
+
+    def test_all_fields_survive_round_trip(self, tmp_path) -> None:
+        """All AdapterConfig fields survive DatabaseConfigManager → dict → AdapterConfig."""
+        from dataclasses import fields
+
+        from t4t.adapters.base import AdapterConfig
+
+        field_names = {f.name for f in fields(AdapterConfig)}
+
+        # Build a TOML that sets every simple field
+        toml_lines = [
+            "[environments.dev.connection]",
+            'type = "duckdb"',
+            'host = "localhost"',
+            "port = 5432",
+            'database = "test_db"',
+            'user = "test_user"',
+            'password = "literal_pw"',
+            'path = "data/test.duckdb"',
+            'source_dialect = "postgres"',
+            'target_dialect = "duckdb"',
+            "connection_timeout = 60",
+            "query_timeout = 600",
+            'schema = "test_schema"',
+            'warehouse = "TEST_WH"',
+            'role = "TEST_ROLE"',
+            'project = "test_project"',
+        ]
+        toml = tmp_path / "project.toml"
+        toml.write_text("\n".join(toml_lines))
+
+        manager = DatabaseConfigManager(str(tmp_path))
+        config = manager.load_config("dev")
+
+        # Check every simple field survived
+        assert config.type == "duckdb"
+        assert config.host == "localhost"
+        assert config.port == 5432
+        assert config.database == "test_db"
+        assert config.user == "test_user"
+        assert config.password == "literal_pw"
+        assert config.path == "data/test.duckdb"
+        assert config.source_dialect == "postgres"
+        assert config.target_dialect == "duckdb"
+        assert config.connection_timeout == 60
+        assert config.query_timeout == 600
+        assert config.schema == "test_schema"
+        assert config.warehouse == "TEST_WH"
+        assert config.role == "TEST_ROLE"
+        assert config.project == "test_project"
+
+        # Compound fields default to None
+        assert config.naming is None
+        assert config.connections is None
+        assert config.extra is None
+
+    def test_extra_survives_through_cli_path(self, tmp_path) -> None:
+        """The ``extra`` dict (MotherDuck token, custom settings) survives
+        ``load_project_config`` → ``config[\"connection\"]``."""
+        toml = tmp_path / "project.toml"
+        toml.write_text("""\
+project_folder = "test"
+[environments.dev.connection]
+type = "motherduck"
+path = "md:?token=env:MOTHERDUCK_TOKEN"
+[environments.dev.connection.extra]
+motherduck_token = "env:MOTHERDUCK_TOKEN"
+custom_setting = "hello"
+""")
+        from t4t.cli.utils import load_project_config
+
+        result = load_project_config(str(tmp_path), env_name="dev")
+        conn = result["connection"]
+        assert "extra" in conn, f"extra missing from connection dict: {list(conn.keys())}"
+        assert conn["extra"]["motherduck_token"] == "env:MOTHERDUCK_TOKEN"
+        assert conn["extra"]["custom_setting"] == "hello"

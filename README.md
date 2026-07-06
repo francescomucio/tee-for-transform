@@ -149,7 +149,7 @@ The `init` command creates:
 ```toml
 project_folder = "my_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "data/my_project.duckdb"
 

@@ -150,7 +150,7 @@ Configure tags for specific schemas:
 # project.toml
 project_folder = "my_project"
 
-[connection]
+[environments.dev.connection]
 type = "snowflake"
 # ... connection config
 
@@ -182,7 +182,7 @@ Apply tags to all schemas in the project:
 # project.toml
 project_folder = "my_project"
 
-[connection]
+[environments.dev.connection]
 type = "snowflake"
 # ... connection config
 
@@ -207,7 +207,7 @@ Simple root-level tags (dbt-style only):
 # project.toml
 project_folder = "my_project"
 
-[connection]
+[environments.dev.connection]
 type = "snowflake"
 # ... connection config
 
@@ -303,7 +303,7 @@ Here's a complete example showing all tag features:
 ```toml
 project_folder = "analytics_project"
 
-[connection]
+[environments.dev.connection]
 type = "snowflake"
 host = "account.snowflakecomputing.com"
 user = "analyst"

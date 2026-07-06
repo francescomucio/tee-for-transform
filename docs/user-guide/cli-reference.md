@@ -86,13 +86,13 @@ When using `-d motherduck`, the generated `project.toml` includes:
 ```toml
 project_folder = "my_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "md:my_project"
 database = "my_project"
 schema = "main"
 
-[connection.extra]
+[environments.dev.connection.extra]
 # MotherDuck access token (recommended: use MOTHERDUCK_TOKEN environment variable instead)
 # motherduck_token = "your_motherduck_access_token_here"
 
@@ -100,13 +100,13 @@ schema = "main"
 materialization_change_behavior = "warn"
 ```
 
-**Note:** For MotherDuck authentication, set the `MOTHERDUCK_TOKEN` environment variable (recommended) or uncomment and set `motherduck_token` in the `[connection.extra]` section.
+**Note:** For MotherDuck authentication, set the `MOTHERDUCK_TOKEN` environment variable (recommended) or uncomment and set `motherduck_token` in the `[environments.dev.connection.extra]` section.
 
 **Generated `project.toml` structure:**
 ```toml
 project_folder = "my_project"
 
-[connection]
+[environments.dev.connection]
 # Database-specific connection settings
 type = "duckdb"
 path = "data/my_project.duckdb"

@@ -17,7 +17,7 @@ SQL dialect conversion is powered by [SQLglot](https://github.com/tobymao/sqlglo
 Configure your source dialect in `project.toml`:
 
 ```toml
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "data/my_project.duckdb"
 

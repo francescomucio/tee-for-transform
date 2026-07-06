@@ -150,14 +150,18 @@ class DatabaseConfigManager:
         Loads ``[environments.default]`` first, then merges
         ``[environments.<config_name>]`` on top. Extracts ``connection``
         as the default engine and ``connections.*`` as additional engines.
+
+        Prefers ``project.toml`` over ``pyproject.toml`` when both exist,
+        because ``pyproject.toml`` may belong to a parent Python project
+        and contain no t4t configuration.
         """
-        # Try pyproject.toml first
-        toml_file = self.project_root / "pyproject.toml"
+        # Try project.toml first (t4t-specific config file)
+        toml_file = self.project_root / "project.toml"
         if not toml_file.exists():
-            # Fall back to project.toml
-            toml_file = self.project_root / "project.toml"
+            # Fall back to pyproject.toml
+            toml_file = self.project_root / "pyproject.toml"
             if not toml_file.exists():
-                self.logger.debug("No pyproject.toml or project.toml found")
+                self.logger.debug("No project.toml or pyproject.toml found")
                 return {}
 
         try:
