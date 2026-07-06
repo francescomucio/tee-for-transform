@@ -98,11 +98,15 @@ class StateManager:
 
         if table_exists:
             # Check if the environment column exists (old schema detection)
-            columns = [row[1] for row in conn.execute("PRAGMA table_info(tee_model_state)").fetchall()]
+            columns = [
+                row[1] for row in conn.execute("PRAGMA table_info(tee_model_state)").fetchall()
+            ]
             if "environment" not in columns:
                 logger.info("Detected old state schema — migrating to composite-PK schema")
                 # Step 1: Add the environment column with a default
-                conn.execute("ALTER TABLE tee_model_state ADD COLUMN environment VARCHAR DEFAULT 'default'")
+                conn.execute(
+                    "ALTER TABLE tee_model_state ADD COLUMN environment VARCHAR DEFAULT 'default'"
+                )
                 # Step 2: Rebuild the table with the new composite primary key
                 conn.execute("""
                     CREATE TABLE IF NOT EXISTS tee_model_state_new (

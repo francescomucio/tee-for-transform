@@ -48,7 +48,9 @@ class ConnectionManager:
     def create_executor(self) -> ModelExecutor:
         """Create a ModelExecutor instance."""
         if self.executor is None:
-            self.executor = ModelExecutor(self.project_folder, self.connection_config, env_name=self.env_name)
+            self.executor = ModelExecutor(
+                self.project_folder, self.connection_config, env_name=self.env_name
+            )
         return self.executor
 
     def test_connection(self) -> bool:

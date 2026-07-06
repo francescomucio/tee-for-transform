@@ -101,7 +101,10 @@ class ModelExecutor:
 
         # Create execution engine
         self.execution_engine = ExecutionEngine(
-            self.config, project_folder=self.project_folder, variables=variables, env_name=self.env_name
+            self.config,
+            project_folder=self.project_folder,
+            variables=variables,
+            env_name=self.env_name,
         )
 
         try:
