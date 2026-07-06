@@ -149,6 +149,7 @@ def cmd_docs(
                 project_path=ctx.project_path,
                 vars_dict=ctx.vars,
                 auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+                env_name=ctx.env_name,
             )
 
         # Determine output directory

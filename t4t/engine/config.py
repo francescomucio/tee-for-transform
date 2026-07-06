@@ -402,7 +402,7 @@ class DatabaseConfigManager:
         if "password" in merged and isinstance(merged["password"], str):
             pw = merged["password"]
             if not pw.startswith("env:") and not pw.startswith("file:"):
-                self.logger.debug(
+                self.logger.warning(
                     "Literal password value found in config — "
                     "consider using 'env:VAR_NAME' or 'file:/path' for security"
                 )

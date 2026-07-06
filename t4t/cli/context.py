@@ -49,6 +49,15 @@ class CommandContext:
         resolved_env = env or "dev"
         self.config = load_project_config(project_folder, self.vars, env_name=resolved_env)
 
+        # Validate that the resolved environment exists in project config
+        environments = self.config.get("environments", {})
+        if resolved_env not in environments:
+            available = sorted(environments.keys())
+            raise ValueError(
+                f"Environment '{resolved_env}' not found in project.toml. "
+                f"Available environments: {available}"
+            )
+
         # Detect if env was explicitly provided by the user
         self.env_explicit = env is not None
         self.env_name = resolved_env

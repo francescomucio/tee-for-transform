@@ -84,8 +84,52 @@ class StateManager:
         return self.conn
 
     def _initialize_database(self) -> None:
-        """Initialize the state database with required tables."""
+        """Initialize the state database with required tables.
+
+        Handles migration from old schema (no ``environment`` column,
+        single-column PK) to the new composite-PK schema.
+        """
         conn = self._get_connection()
+
+        # Check if the table already exists with the old schema
+        table_exists = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='tee_model_state'"
+        ).fetchone()
+
+        if table_exists:
+            # Check if the environment column exists (old schema detection)
+            columns = [row[1] for row in conn.execute("PRAGMA table_info(tee_model_state)").fetchall()]
+            if "environment" not in columns:
+                logger.info("Detected old state schema — migrating to composite-PK schema")
+                # Step 1: Add the environment column with a default
+                conn.execute("ALTER TABLE tee_model_state ADD COLUMN environment VARCHAR DEFAULT 'default'")
+                # Step 2: Rebuild the table with the new composite primary key
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS tee_model_state_new (
+                        model_name VARCHAR NOT NULL,
+                        materialization VARCHAR NOT NULL,
+                        last_execution_timestamp VARCHAR,
+                        sql_hash VARCHAR,
+                        config_hash VARCHAR,
+                        created_at VARCHAR,
+                        updated_at VARCHAR,
+                        last_processed_value VARCHAR,
+                        strategy VARCHAR,
+                        environment VARCHAR DEFAULT 'default',
+                        PRIMARY KEY (model_name, environment)
+                    )
+                """)
+                conn.execute("""
+                    INSERT INTO tee_model_state_new
+                    SELECT * FROM tee_model_state
+                """)
+                conn.execute("DROP TABLE tee_model_state")
+                conn.execute("ALTER TABLE tee_model_state_new RENAME TO tee_model_state")
+                logger.info("State database migrated to composite-PK schema")
+                conn.commit()
+                return
+
+        # Fresh table creation (or already migrated)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS tee_model_state (
                 model_name VARCHAR NOT NULL,

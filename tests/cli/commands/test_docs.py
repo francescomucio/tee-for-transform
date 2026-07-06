@@ -29,6 +29,7 @@ class TestDocsCommand:
         mock_ctx = Mock()
         mock_ctx.project_path = Path("/tmp/test_project")
         mock_ctx.vars = {}
+        mock_ctx.env_name = "dev"
         mock_ctx.config = {"connection": {"type": "duckdb", "path": ":memory:"}}
         mock_ctx.print_variables_info = Mock()
         mock_context_class.return_value = mock_ctx
@@ -55,6 +56,7 @@ class TestDocsCommand:
             project_path=mock_ctx.project_path,
             vars_dict=mock_ctx.vars,
             auto_resolve_level_conflicts=True,
+            env_name=mock_ctx.env_name,
         )
         mock_parser.orchestrator.build_dimensional_graph.assert_called_once_with(
             infer_from_column_names=False
@@ -78,6 +80,7 @@ class TestDocsCommand:
         mock_ctx = Mock()
         mock_ctx.project_path = Path("/tmp/test_project")
         mock_ctx.vars = {}
+        mock_ctx.env_name = "dev"
         mock_ctx.config = {"connection": {"type": "duckdb", "path": ":memory:"}}
         mock_ctx.print_variables_info = Mock()
         mock_context_class.return_value = mock_ctx
@@ -153,6 +156,7 @@ class TestDocsCommand:
         mock_ctx = Mock()
         mock_ctx.project_path = Path("/tmp/test_project")
         mock_ctx.vars = {}
+        mock_ctx.env_name = "dev"
         mock_ctx.config = {"connection": {"type": "duckdb", "path": ":memory:"}}
         mock_ctx.print_variables_info = Mock()
         mock_context_class.return_value = mock_ctx

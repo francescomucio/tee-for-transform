@@ -189,7 +189,7 @@ def execute_models(
     print("EXECUTING SQL MODELS")
     print(SECTION_SEPARATOR)
 
-    model_executor = ModelExecutor(project_folder, connection_config)
+    model_executor = ModelExecutor(project_folder, connection_config, env_name=env_name)
 
     try:
         # Execute models using the executor (pass filtered models if selection was applied)
@@ -356,7 +356,7 @@ def build_models(
     from t4t.engine import ModelExecutor
     from t4t.engine.execution_engine import ExecutionEngine
 
-    temp_executor = ModelExecutor(project_folder, connection_config)
+    temp_executor = ModelExecutor(project_folder, connection_config, env_name=env_name)
     temp_executor.execution_engine = ExecutionEngine(
         temp_executor.config, project_folder=project_folder, variables=variables
     )
@@ -406,7 +406,7 @@ def build_models(
 
     try:
         model_executor, test_executor = build_helpers.initialize_build_executors(
-            project_folder, connection_config, variables, load_seeds=False
+            project_folder, connection_config, variables, load_seeds=False, env_name=env_name
         )
 
         # Evaluate Python models before execution

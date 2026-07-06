@@ -27,6 +27,7 @@ class ConnectionManager:
         project_folder: str,
         connection_config: dict[str, Any],
         variables: dict[str, Any] | None = None,
+        env_name: str | None = None,
     ) -> None:
         """
         Initialize the connection manager.
@@ -35,17 +36,19 @@ class ConnectionManager:
             project_folder: Path to the project folder
             connection_config: Database connection configuration
             variables: Optional variables for model execution
+            env_name: Environment name for scoping state
         """
         self.project_folder = project_folder
         self.connection_config = connection_config
         self.variables = variables or {}
+        self.env_name = env_name
         self.executor = None
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def create_executor(self) -> ModelExecutor:
         """Create a ModelExecutor instance."""
         if self.executor is None:
-            self.executor = ModelExecutor(self.project_folder, self.connection_config)
+            self.executor = ModelExecutor(self.project_folder, self.connection_config, env_name=self.env_name)
         return self.executor
 
     def test_connection(self) -> bool:

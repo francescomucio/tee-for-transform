@@ -67,6 +67,7 @@ def cmd_build(
                 typer.style("⚠️  PROTECTED ENVIRONMENT", fg=typer.colors.YELLOW, bold=True)
                 + f": {ctx.env_name}"
             )
+            ctx.check_destructive_operation()
 
         typer.echo(f"Building project: {project_folder}")
         ctx.print_variables_info()
@@ -77,6 +78,7 @@ def cmd_build(
             project_path=ctx.project_path,
             vars_dict=ctx.vars,
             auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+            env_name=ctx.env_name,
         )
 
         # Create unified connection manager
@@ -84,6 +86,7 @@ def cmd_build(
             project_folder=str(ctx.project_path),
             connection_config=ctx.config["connection"],
             variables=ctx.vars,
+            env_name=ctx.env_name,
         )
 
         if retry and ctx.select_patterns:

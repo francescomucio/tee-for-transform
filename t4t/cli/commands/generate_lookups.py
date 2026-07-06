@@ -31,6 +31,7 @@ def cmd_generate_lookups(
             project_path=ctx.project_path,
             vars_dict=ctx.vars,
             auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+            env_name=ctx.env_name,
         )
         if created:
             typer.echo(f"  ✅ Created {len(created) // 2} lookup table(s)")

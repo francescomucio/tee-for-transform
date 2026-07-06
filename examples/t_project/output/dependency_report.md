@@ -189,7 +189,7 @@ The following tests are defined and integrated into the dependency graph:
 
 **Type**: Table
 
-**Depends on**: `my_schema.my_second_table`, `my_schema.my_first_table`
+**Depends on**: `my_schema.my_first_table`, `my_schema.my_second_table`
 
 **Used by**: `my_schema.my_third_table_from_loop`
 

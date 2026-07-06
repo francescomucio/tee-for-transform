@@ -61,6 +61,7 @@ def initialize_build_executors(
     connection_config: dict[str, Any] | AdapterConfig,
     variables: dict[str, Any] | None,
     load_seeds: bool = True,
+    env_name: str | None = None,
 ) -> tuple[ModelExecutor, TestExecutor]:
     """
     Initialize model and test executors and connect to database.
@@ -70,11 +71,12 @@ def initialize_build_executors(
         connection_config: Database connection configuration
         variables: Optional variables for SQL substitution
         load_seeds: Whether to load seeds (default: True). Set to False if seeds were already loaded.
+        env_name: Environment name for scoping state
 
     Returns:
         Tuple of (model_executor, test_executor)
     """
-    model_executor = ModelExecutor(project_folder, connection_config)
+    model_executor = ModelExecutor(project_folder, connection_config, env_name=env_name)
 
     from t4t.engine.execution_engine import ExecutionEngine
 

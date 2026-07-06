@@ -130,18 +130,25 @@ _BUILTIN_SECRET_PROVIDERS: list[SecretProvider] = [
 
 # Keys whose values may contain secret references (env:/file:).
 # Shared between config loading and CLI utils so they stay in sync.
+# Narrowed to only truly sensitive fields — path/host/database are too
+# broad and could accidentally resolve legitimate file: references.
 SECRET_KEYS: frozenset[str] = frozenset(
     {
         "password",
-        "user",
-        "host",
-        "database",
-        "path",
-        "warehouse",
-        "role",
-        "project",
     }
 )
+
+
+def redact_secrets(config_dict: dict[str, Any]) -> dict[str, Any]:
+    """Return a copy of *config_dict* with secret values masked for logging.
+
+    Only masks keys in ``SECRET_KEYS`` that have non-None values.
+    """
+    redacted = dict(config_dict)
+    for key in SECRET_KEYS:
+        if key in redacted and redacted[key] is not None:
+            redacted[key] = "****"
+    return redacted
 
 
 def resolve_secret_ref(value: str, providers: list[SecretProvider] | None = None) -> str:
