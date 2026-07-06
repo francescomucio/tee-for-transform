@@ -1,9 +1,7 @@
 """Tests for prod guardrails (#31) and environment-scoped state (#32)."""
 
-import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 import typer
@@ -17,8 +15,7 @@ from t4t.state.manifest import (
     results_to_manifest,
     utc_now_iso,
 )
-from t4t.state.retry import compute_retry_set, prepare_retry_select_patterns
-
+from t4t.state.retry import compute_retry_set
 
 # ── RunManifest tests ──────────────────────────────────────────────────────
 
@@ -163,7 +160,9 @@ def test_backend_append_and_read_with_env():
 
 
 def test_backend_read_latest_from_other_env():
-    """read_latest(env_name=...) should read from a different env scope."""
+    """read_latest should read from the backend's own env scope.
+    To read from a different env, create a new backend instance.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         output = Path(tmpdir) / "output"
         # Write to prod scope
@@ -204,13 +203,13 @@ def test_backend_read_latest_from_other_env():
         )
         dev_backend.append_run(m_dev)
 
-        # Read from prod scope using read_latest with env_name
-        read_prod = prod_backend.read_latest(env_name="prod")
+        # Read from prod scope using a prod-scoped backend
+        read_prod = LocalStateBackend(output, env_name="prod").read_latest()
         assert read_prod is not None
         assert read_prod.run_id == "r-prod"
 
-        # Read from dev scope using read_latest with env_name
-        read_dev = dev_backend.read_latest(env_name="dev")
+        # Read from dev scope using a dev-scoped backend
+        read_dev = LocalStateBackend(output, env_name="dev").read_latest()
         assert read_dev is not None
         assert read_dev.run_id == "r-dev"
 
@@ -272,7 +271,7 @@ def test_retry_set_computation():
 
 
 def test_is_env_protected():
-    from t4t.executor import _is_env_protected
+    from t4t.engine.config import is_env_protected
 
     with tempfile.TemporaryDirectory() as tmpdir:
         project = Path(tmpdir)
@@ -283,16 +282,16 @@ protected = true
 
 [environments.dev]
 """)
-        assert _is_env_protected(str(project), "prod") is True
-        assert _is_env_protected(str(project), "dev") is False
-        assert _is_env_protected(str(project), None) is False
+        assert is_env_protected(str(project), "prod") is True
+        assert is_env_protected(str(project), "dev") is False
+        assert is_env_protected(str(project), None) is False
 
 
 def test_is_env_protected_no_toml():
-    from t4t.executor import _is_env_protected
+    from t4t.engine.config import is_env_protected
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        assert _is_env_protected(tmpdir, "prod") is False
+        assert is_env_protected(tmpdir, "prod") is False
 
 
 # ── CommandContext protected env tests ─────────────────────────────────────

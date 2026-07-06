@@ -48,8 +48,9 @@ class IncrementalStateManager:
             environment: Environment name for scoping state
         """
         if state_database_path is None:
-            # Default to t4t_state.db in the current directory
-            state_database_path = "t4t_state.db"
+            # Default to t4t_state.db in the current directory.
+            # If environment is set, scope it under an env subdirectory.
+            state_database_path = f"t4t_state_{environment}.db" if environment else "t4t_state.db"
 
         self.state_database_path = Path(state_database_path)
         self.environment = environment

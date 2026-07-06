@@ -13,6 +13,7 @@ from typing import Any
 
 from t4t.adapters.base import AdapterConfig, NamingConfig
 from t4t.adapters.base.config import (
+    SECRET_KEYS,
     resolve_secret_ref,
 )
 
@@ -21,6 +22,13 @@ logger = logging.getLogger(__name__)
 # ── DLT-style env var convention ──────────────────────────────────────────
 # ENVIRONMENTS__DEV__CONNECTION__PASSWORD -> ["environments", "dev", "connection", "password"]
 # ENVIRONMENTS__DEV__CONNECTIONS__ANALYTICS__PASSWORD -> ["environments", "dev", "connections", "analytics", "password"]
+#
+# NOTE: The DLT parser produces UPPERCASE keys (ENVIRONMENTS, DEV, CONNECTION,
+# PASSWORD) because env var names are conventionally uppercase. The merge code
+# in _merge_configs lowercases them when applying to the config dict so that
+# they match the lowercase keys from TOML. This is intentional — env vars are
+# case-insensitive on most platforms but uppercase is the convention, while
+# TOML keys are lowercase by convention.
 
 
 def _parse_dlt_env_vars() -> dict[str, Any]:
@@ -69,6 +77,33 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
         else:
             base[key] = value
     return base
+
+
+def is_env_protected(project_folder: str | Path, env_name: str | None) -> bool:
+    """Check if an environment is marked as protected in project.toml.
+
+    Args:
+        project_folder: Path to the project folder containing project.toml.
+        env_name: The environment name to check. Returns False if None.
+
+    Returns:
+        True if the environment exists and has ``protected = true``.
+    """
+    if not env_name:
+        return False
+    toml_path = Path(project_folder) / "project.toml"
+    if not toml_path.exists():
+        return False
+    try:
+        with open(toml_path, "rb") as f:
+            config = tomllib.load(f)
+        environments = config.get("environments", {})
+        env_config = environments.get(env_name, {})
+        if not isinstance(env_config, dict):
+            return False
+        return bool(env_config.get("protected", False))
+    except Exception:
+        return False
 
 
 class DatabaseConfigManager:
@@ -338,18 +373,8 @@ class DatabaseConfigManager:
                                 merged["_connections"][conn_name.lower()] = normalized
 
         # Resolve secret references (step 4)
-        secret_keys = {
-            "password",
-            "user",
-            "host",
-            "database",
-            "path",
-            "warehouse",
-            "role",
-            "project",
-        }
         for key in list(merged.keys()):
-            if key in secret_keys and isinstance(merged[key], str):
+            if key in SECRET_KEYS and isinstance(merged[key], str):
                 original = merged[key]
                 resolved = resolve_secret_ref(original)
                 if resolved != original:
@@ -362,7 +387,7 @@ class DatabaseConfigManager:
             for conn_name, conn_dict in raw_connections.items():
                 if isinstance(conn_dict, dict):
                     for key in list(conn_dict.keys()):
-                        if key in secret_keys and isinstance(conn_dict[key], str):
+                        if key in SECRET_KEYS and isinstance(conn_dict[key], str):
                             original = conn_dict[key]
                             resolved = resolve_secret_ref(original)
                             if resolved != original:

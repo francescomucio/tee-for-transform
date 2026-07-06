@@ -43,15 +43,22 @@ def cmd_build(
     allow_destructive: bool = False,
 ) -> None:
     """Execute the build command."""
-    ctx = CommandContext(
-        project_folder=project_folder,
-        vars=vars,
-        verbose=verbose,
-        select=select,
-        exclude=exclude,
-        env=env,
-        allow_destructive=allow_destructive,
-    )
+    try:
+        ctx = CommandContext(
+            project_folder=project_folder,
+            vars=vars,
+            verbose=verbose,
+            select=select,
+            exclude=exclude,
+            env=env,
+            allow_destructive=allow_destructive,
+        )
+    except ValueError as e:
+        typer.echo(
+            typer.style("Error: ", fg=typer.colors.RED, bold=True) + str(e),
+            err=True,
+        )
+        raise typer.Exit(1) from None
     connection_manager = None
 
     try:

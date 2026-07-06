@@ -128,6 +128,21 @@ _BUILTIN_SECRET_PROVIDERS: list[SecretProvider] = [
     FileSecretProvider(),
 ]
 
+# Keys whose values may contain secret references (env:/file:).
+# Shared between config loading and CLI utils so they stay in sync.
+SECRET_KEYS: frozenset[str] = frozenset(
+    {
+        "password",
+        "user",
+        "host",
+        "database",
+        "path",
+        "warehouse",
+        "role",
+        "project",
+    }
+)
+
 
 def resolve_secret_ref(value: str, providers: list[SecretProvider] | None = None) -> str:
     """Resolve a secret reference string using registered providers.

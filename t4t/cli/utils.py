@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from t4t.adapters.base.config import resolve_secret_ref
+from t4t.adapters.base.config import SECRET_KEYS, resolve_secret_ref
 
 
 def parse_vars(vars_string: str | None) -> dict[str, Any]:
@@ -105,18 +105,8 @@ def load_project_config(
             merged_conn.update(specific_conn)
 
         # Resolve secret references in the merged connection config
-        secret_keys = {
-            "password",
-            "user",
-            "host",
-            "database",
-            "path",
-            "warehouse",
-            "role",
-            "project",
-        }
         for key in list(merged_conn.keys()):
-            if key in secret_keys and isinstance(merged_conn[key], str):
+            if key in SECRET_KEYS and isinstance(merged_conn[key], str):
                 original = merged_conn[key]
                 resolved = resolve_secret_ref(original)
                 if resolved != original:

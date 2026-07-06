@@ -22,7 +22,7 @@ SCHEMA_USER_VERSION = 1
 @runtime_checkable
 class StateBackend(Protocol):
     def append_run(self, manifest: RunManifest) -> None: ...
-    def read_latest(self, env_name: str | None = None) -> RunManifest | None: ...
+    def read_latest(self) -> RunManifest | None: ...
 
 
 class LocalStateBackend:
@@ -69,21 +69,14 @@ class LocalStateBackend:
         finally:
             conn.close()
 
-    def read_latest(self, env_name: str | None = None) -> RunManifest | None:
-        """Read the latest run manifest, optionally from a specific environment scope.
+    def read_latest(self) -> RunManifest | None:
+        """Read the latest run manifest from this backend's scoped path.
 
-        If *env_name* is provided, reads from ``output/<env_name>/`` instead of
-        the default scoped path. This allows reading manifests from other
-        environments without re-creating the backend.
+        The path is determined by the ``env_name`` passed at construction time:
+        ``output/<env_name>/`` if set, otherwise ``output/``.
         """
-        json_path: Path
-        db_path: Path
-        if env_name is not None:
-            json_path = self.output_dir / env_name / JSON_NAME
-            db_path = self.output_dir / env_name / SQLITE_NAME
-        else:
-            json_path = self._json_path
-            db_path = self._db_path
+        json_path = self._json_path
+        db_path = self._db_path
 
         if json_path.is_file():
             try:

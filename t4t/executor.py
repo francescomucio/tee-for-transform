@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from t4t.compiler import CompilationError, compile_project
 from t4t.engine import ModelExecutor
+from t4t.engine.config import is_env_protected
 from t4t.executor_helpers import build_helpers, shared_helpers
 from t4t.parser import ProjectParser
 from t4t.parser.shared.exceptions import ParserError
@@ -19,28 +20,6 @@ if TYPE_CHECKING:
 
 # Constants for output formatting
 SECTION_SEPARATOR = "=" * 50
-
-
-def _is_env_protected(project_folder: str, env_name: str | None) -> bool:
-    """Check if an environment is marked as protected in project.toml."""
-    if not env_name:
-        return False
-    import tomllib
-    from pathlib import Path
-
-    toml_path = Path(project_folder) / "project.toml"
-    if not toml_path.exists():
-        return False
-    try:
-        with open(toml_path, "rb") as f:
-            config = tomllib.load(f)
-        environments = config.get("environments", {})
-        env_config = environments.get(env_name, {})
-        if not isinstance(env_config, dict):
-            return False
-        return bool(env_config.get("protected", False))
-    except Exception:
-        return False
 
 
 def _try_persist_run_manifest(
@@ -161,7 +140,7 @@ def execute_models(
             variables=variables,
             function_names=fnames or None,
             environment=env_name,
-            protected=_is_env_protected(project_folder, env_name),
+            protected=is_env_protected(project_folder, env_name),
         )
         return empty
 
@@ -201,7 +180,7 @@ def execute_models(
                 variables=variables,
                 function_names=fnames or None,
                 environment=env_name,
-                protected=_is_env_protected(project_folder, env_name),
+                protected=is_env_protected(project_folder, env_name),
             )
             return empty
 
@@ -283,7 +262,7 @@ def execute_models(
             variables=variables,
             function_names=fnames or None,
             environment=env_name,
-            protected=_is_env_protected(project_folder, env_name),
+            protected=is_env_protected(project_folder, env_name),
         )
         return results
 
@@ -411,7 +390,7 @@ def build_models(
             variables=variables,
             function_names=None,
             environment=env_name,
-            protected=_is_env_protected(project_folder, env_name),
+            protected=is_env_protected(project_folder, env_name),
         )
         return empty_results
 
@@ -490,7 +469,7 @@ def build_models(
             variables=variables,
             function_names=fn_build or None,
             environment=env_name,
-            protected=_is_env_protected(project_folder, env_name),
+            protected=is_env_protected(project_folder, env_name),
         )
         return results
 

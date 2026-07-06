@@ -73,56 +73,28 @@ class CommandContext:
     def _check_protected_env(
         self, project_folder: str, resolved_env: str, explicit_env: str | None
     ) -> None:
-        """Check if the resolved environment is protected and refuse implicit selection."""
-        import tomllib
-        from pathlib import Path
+        """Check if the resolved environment is protected and refuse implicit selection.
 
-        toml_path = Path(project_folder) / "project.toml"
-        if not toml_path.exists():
-            return
+        Raises:
+            ValueError: If the environment is protected and was selected implicitly.
+        """
+        from t4t.engine.config import is_env_protected
 
-        with open(toml_path, "rb") as f:
-            config = tomllib.load(f)
-
-        environments = config.get("environments", {})
-        env_config = environments.get(resolved_env, {})
-
-        if not isinstance(env_config, dict):
-            return
-
-        protected = env_config.get("protected", False)
-        if not protected:
+        if not is_env_protected(project_folder, resolved_env):
             return
 
         # If env was resolved implicitly (not via --env), refuse
         if not explicit_env:
-            import typer
-
-            typer.echo(
-                typer.style("Error: ", fg=typer.colors.RED, bold=True)
-                + f"Environment '{resolved_env}' is protected and cannot be selected implicitly. "
-                "Use --env to explicitly select it.",
-                err=True,
+            raise ValueError(
+                f"Environment '{resolved_env}' is protected and cannot be selected implicitly. "
+                "Use --env to explicitly select it."
             )
-            raise typer.Exit(1)
 
     def is_protected_env(self) -> bool:
         """Check if the current environment is protected."""
-        import tomllib
-        from pathlib import Path
+        from t4t.engine.config import is_env_protected
 
-        toml_path = self.project_path / "project.toml"
-        if not toml_path.exists():
-            return False
-
-        with open(toml_path, "rb") as f:
-            config = tomllib.load(f)
-
-        environments = config.get("environments", {})
-        env_config = environments.get(self.env_name, {})
-        if not isinstance(env_config, dict):
-            return False
-        return bool(env_config.get("protected", False))
+        return is_env_protected(str(self.project_path), self.env_name)
 
     def check_destructive_operation(self) -> None:
         """Check if a destructive operation is allowed on a protected environment."""
