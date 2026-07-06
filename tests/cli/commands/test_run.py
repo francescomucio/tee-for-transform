@@ -58,6 +58,7 @@ class TestRunCommand:
         mock_ctx.select_patterns = None
         mock_ctx.exclude_patterns = None
         mock_ctx.config = {"connection": {"type": "duckdb", "path": ":memory:"}}
+        mock_ctx.env = None
         mock_ctx.print_variables_info = Mock()
         mock_ctx.print_selection_info = Mock()
         mock_context_class.return_value = mock_ctx
@@ -90,6 +91,7 @@ class TestRunCommand:
             select_patterns=None,
             exclude_patterns=None,
             project_config=mock_ctx.config,
+            environment=None,
         )
 
     @patch("t4t.cli.commands.run.execute_models")

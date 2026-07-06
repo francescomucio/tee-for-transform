@@ -76,6 +76,15 @@ def load_project_config(
                 f"Environment '{env}' in project.toml must contain a 'connection' section"
             )
         config["connection"] = env_config["connection"]
+        # Merge env-level variables into config
+        if "variables" in env_config:
+            env_vars = env_config["variables"]
+            if isinstance(env_vars, dict):
+                existing_vars = config.get("vars", {})
+                if isinstance(existing_vars, dict):
+                    config["vars"] = {**existing_vars, **env_vars}
+                else:
+                    config["vars"] = env_vars
     elif "connection" not in config:
         raise ValueError("project.toml must contain 'connection' configuration")
 

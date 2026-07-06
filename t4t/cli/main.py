@@ -291,6 +291,7 @@ def docs(
         "--infer-dim-from-column-names",
         help="Infer dimensional links from fact column names matching dimension/lookup primary keys.",
     ),
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Generate static documentation site with dependency graph."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -302,6 +303,7 @@ def docs(
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
         skip_lookups=skip_lookups,
         infer_dim_from_column_names=infer_dim_from_column_names,
+        env=env,
     )
 
 
@@ -316,6 +318,7 @@ def generate_lookups(
         "--auto-resolve-level-conflicts",
         help="Automatically resolve duplicate hierarchy level names as <dimension>_<level>.",
     ),
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Generate lookup tables from hierarchical dimensions."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -324,6 +327,7 @@ def generate_lookups(
         vars=vars,
         verbose=verbose,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+        env=env,
     )
 
 
@@ -426,6 +430,7 @@ def ots_run(
     verbose: bool = VERBOSE_OPTION,
     select: list[str] | None = SELECT_OPTION,
     exclude: list[str] | None = EXCLUDE_OPTION,
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Execute OTS modules."""
     _check_required_argument(ctx, "ots_path", ots_path)
@@ -436,6 +441,7 @@ def ots_run(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        env=env,
     )
 
 
