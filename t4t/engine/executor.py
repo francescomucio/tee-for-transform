@@ -75,6 +75,20 @@ class ModelExecutor:
         else:
             self.config = config
 
+        # If the dict had a _naming_config, ensure it's on the AdapterConfig
+        if isinstance(config, dict) and "_naming_config" in config:
+            from t4t.adapters.base.config import NamingConfig
+
+            naming_raw = config["_naming_config"]
+            if isinstance(naming_raw, dict):
+                self.config.naming = NamingConfig(
+                    schema_prefix=naming_raw.get("schema_prefix"),
+                    schema_suffix=naming_raw.get("schema_suffix"),
+                    database=naming_raw.get("database"),
+                )
+            elif isinstance(naming_raw, NamingConfig):
+                self.config.naming = naming_raw
+
         self.execution_engine = None
         self.logger = logging.getLogger(self.__class__.__name__)
 

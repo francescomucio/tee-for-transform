@@ -166,14 +166,14 @@ class TestApplyNaming:
         assert adapter.apply_naming("my_table") == "test_public.my_table"
 
     def test_schema_prefix_with_dotted_schema(self) -> None:
-        """Multi-level qualified names (database.schema.table) only prefix the first part."""
+        """Three-part names (database.schema.table) prefix the schema, not the database."""
         naming = NamingConfig(schema_prefix="dev_")
         config = AdapterConfig(type="duckdb", path=":memory:", naming=naming)
         adapter = FakeAdapter({"type": "duckdb", "path": ":memory:", "_naming_config": naming})
         adapter.config = config
-        # Only the first dot-separated part is treated as schema
+        # The second-to-last part (schema) gets the prefix, not the first part (database)
         result = adapter.apply_naming("my_db.my_schema.my_table")
-        assert result == "dev_my_db.my_schema.my_table"
+        assert result == "my_db.dev_my_schema.my_table"
 
     def test_empty_prefix(self) -> None:
         """Empty prefix is effectively a no-op."""
