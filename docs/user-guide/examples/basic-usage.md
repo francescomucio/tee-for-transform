@@ -17,7 +17,7 @@ executor = ModelExecutor("/path/to/project", config)
 
 # Execute a single model
 sql = """
-SELECT 
+SELECT
     id,
     name,
     email,
@@ -73,7 +73,7 @@ executor = ModelExecutor("/path/to/project", config)
 
 # This PostgreSQL SQL will be automatically converted to Snowflake
 sql = """
-SELECT 
+SELECT
     EXTRACT(YEAR FROM created_at) as year,
     COUNT(*) as user_count
 FROM users
@@ -98,7 +98,7 @@ executor = ModelExecutor("/path/to/project", config)
 # Test connection
 if executor.test_connection():
     print("✅ Database connection successful")
-    
+
     # Get database info
     info = executor.get_database_info()
     print(f"Database: {info['database_type']}")
@@ -114,18 +114,18 @@ Handle execution errors gracefully:
 ```python
 try:
     results = executor.execute_models(parsed_models, execution_order)
-    
+
     # Check for failures
     if results["failed_tables"]:
         print("Some models failed:")
         for failure in results["failed_tables"]:
             print(f"  - {failure['table']}: {failure['error']}")
-    
+
     # Check execution log
     for log_entry in results["execution_log"]:
         status = "✅" if log_entry["status"] == "success" else "❌"
         print(f"{status} {log_entry['table']}")
-        
+
 except Exception as e:
     print(f"Execution failed: {e}")
 ```

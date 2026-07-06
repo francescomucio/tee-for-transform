@@ -12,7 +12,7 @@ This guide helps dbt users understand t4t by mapping familiar dbt concepts to th
 | **`{{ config(...) }}`** | **Python metadata** | Model configuration is Python-based, not Jinja-based |
 | **`schema.yml` / `schema.yaml`** | **Python metadata files** | Per-model `.py` files with typed `ModelMetadata` dicts |
 | **`dbt_project.yml`** | **`project.toml`** | Project-level configuration in TOML format |
-| **`profiles.yml`** | **`project.toml` `[connection]`** | Database connection settings in the project config |
+| **`profiles.yml`** | **`project.toml` `[environments.<name>.connection]`** | Database connection settings in the project config |
 | **`dbt test`** | **`t4t test`** | Run data quality tests |
 | **`dbt run`** | **`t4t run`** | Execute models |
 | **`dbt build`** | **`t4t build`** | Run models + tests interleaved |

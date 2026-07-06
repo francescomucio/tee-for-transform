@@ -1,4 +1,4 @@
-SELECT 
+SELECT
     id,
     name,
     CURRENT_TIMESTAMP as created_at,

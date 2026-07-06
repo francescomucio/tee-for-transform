@@ -29,5 +29,5 @@ for table_name in STAGING_TABLES:
     create_model(
         table_name=table_name + "_from_loop",
         sql=f"SELECT * FROM {table_name}",
-        description=f"Select from  my_schema.{table_name}"
+        description=f"Select from  my_schema.{table_name}",
     )

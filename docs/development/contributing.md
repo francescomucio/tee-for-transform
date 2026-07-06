@@ -31,8 +31,12 @@ Thank you for your interest in contributing to t4t! This guide will help you get
 4. **Install the pre-commit hooks** (mechanical checks run on every commit;
    CI runs the same checks, so this saves round-trips):
    ```bash
-   uv tool install pre-commit
-   pre-commit install
+   uvx pre-commit install
+   ```
+   This installs git hooks that run `ruff check`, `ruff format`, and other
+   checks automatically before every commit. You can also run them manually:
+   ```bash
+   uvx pre-commit run --all-files
    ```
 
 ## Development Workflow
@@ -139,15 +143,15 @@ def execute_model(
 ) -> Dict[str, Any]:
     """
     Execute a SQL model.
-    
+
     Args:
         model_name: Name of the model to execute
         sql: SQL query to execute
         variables: Optional variables for SQL substitution
-        
+
     Returns:
         Dictionary containing execution results
-        
+
     Raises:
         ExecutionError: If execution fails
     """
@@ -192,10 +196,10 @@ def test_cmd_run_success():
     with patch('t4t.cli.commands.run.ProjectParser') as mock_parser:
         # Setup
         mock_parser.return_value.collect_models.return_value = []
-        
+
         # Execute
         cmd_run(project_folder="./test_project", verbose=False)
-        
+
         # Assert
         mock_parser.assert_called_once()
 ```
@@ -376,4 +380,3 @@ If you have questions about contributing:
 - Ask in GitHub Discussions
 
 Thank you for contributing to t4t! 🎉
-

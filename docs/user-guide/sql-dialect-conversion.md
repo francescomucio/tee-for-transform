@@ -17,7 +17,7 @@ SQL dialect conversion is powered by [SQLglot](https://github.com/tobymao/sqlglo
 Configure your source dialect in `project.toml`:
 
 ```toml
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "data/my_project.duckdb"
 
@@ -41,7 +41,7 @@ The conversion happens automatically - you don't need to do anything special.
 
 ```sql
 -- models/users.sql
-SELECT 
+SELECT
     DATE_TRUNC('month', created_at) as month,
     COUNT(*) as user_count
 FROM users
@@ -54,7 +54,7 @@ ORDER BY month DESC
 
 ```sql
 -- Automatically converted
-SELECT 
+SELECT
     DATE_TRUNC('month', created_at) as month,
     COUNT(*) as user_count
 FROM users
@@ -67,7 +67,7 @@ ORDER BY month DESC
 
 ```sql
 -- Automatically converted
-SELECT 
+SELECT
     DATE_TRUNC('month', created_at) as month,
     COUNT(*) as user_count
 FROM users
@@ -170,7 +170,7 @@ Window functions are generally well-supported across dialects:
 
 ```sql
 -- Works in PostgreSQL, Snowflake, DuckDB, BigQuery
-SELECT 
+SELECT
     id,
     name,
     ROW_NUMBER() OVER (PARTITION BY category ORDER BY created_at) as row_num
@@ -262,4 +262,3 @@ Each model is converted to the target database as needed.
 - [Database Adapters](database-adapters.md) - Learn about adapter system
 - [Configuration](../getting-started/configuration.md) - Configuration options
 - [Execution Engine](execution-engine.md) - How models are executed
-

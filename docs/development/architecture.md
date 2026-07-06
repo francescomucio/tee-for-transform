@@ -220,7 +220,7 @@ class BaseAdapter(ABC):
     @abstractmethod
     def execute_query(self, sql: str) -> Any:
         pass
-    
+
     @abstractmethod
     def create_table(self, name: str, sql: str) -> None:
         pass
@@ -259,10 +259,10 @@ Dependency graph building:
 class DependencyGraphBuilder:
     def add_node(self, model: ParsedModel) -> None:
         ...
-    
+
     def add_edge(self, from_model: str, to_model: str) -> None:
         ...
-    
+
     def build(self) -> DependencyGraph:
         ...
 ```
@@ -430,4 +430,3 @@ CLI Arguments > Environment Variables > project.toml > Defaults
 - [Execution Engine](../user-guide/execution-engine.md) - Execution engine details
 - [Database Adapters](../user-guide/database-adapters.md) - Adapter system
 - [Contributing](contributing.md) - How to contribute
-

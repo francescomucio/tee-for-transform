@@ -71,14 +71,14 @@ logger = logging.getLogger(__name__)
 
 class SchemaComparator:
     """Compares transformation output schema with existing table schema."""
-    
+
     def __init__(self, adapter: DatabaseAdapter):
         self.adapter = adapter
-    
+
     def infer_query_schema(self, sql_query: str) -> list[dict[str, Any]]:
         """
         Infer schema from SQL query output.
-        
+
         Returns:
             List of column definitions: [{"name": "col1", "type": "VARCHAR"}, ...]
         """
@@ -87,26 +87,26 @@ class SchemaComparator:
         # 2. Use adapter's query result metadata
         # 3. Or use DESCRIBE/EXPLAIN on the query
         pass
-    
+
     def get_table_schema(self, table_name: str) -> list[dict[str, Any]]:
         """
         Get schema from existing table.
-        
+
         Returns:
             List of column definitions: [{"name": "col1", "type": "VARCHAR"}, ...]
         """
         # Use adapter.get_table_info() or adapter.get_table_columns()
         # Different adapters may need different approaches
         pass
-    
+
     def compare_schemas(
-        self, 
-        query_schema: list[dict[str, Any]], 
+        self,
+        query_schema: list[dict[str, Any]],
         table_schema: list[dict[str, Any]]
     ) -> dict[str, Any]:
         """
         Compare two schemas and identify differences.
-        
+
         Returns:
             {
                 "new_columns": [...],  # Columns in query but not in table
@@ -143,10 +143,10 @@ logger = logging.getLogger(__name__)
 
 class SchemaChangeHandler:
     """Handles schema changes for incremental materialization."""
-    
+
     def __init__(self, adapter: DatabaseAdapter):
         self.adapter = adapter
-    
+
     def handle_schema_changes(
         self,
         table_name: str,
@@ -156,7 +156,7 @@ class SchemaChangeHandler:
     ) -> None:
         """
         Handle schema changes based on on_schema_change setting.
-        
+
         Args:
             table_name: Target table name
             query_schema: Schema from transformation output
@@ -164,53 +164,53 @@ class SchemaChangeHandler:
             on_schema_change: Behavior setting
         """
         from .schema_comparator import SchemaComparator
-        
+
         comparator = SchemaComparator(self.adapter)
         differences = comparator.compare_schemas(query_schema, table_schema)
-        
+
         if not differences["has_changes"]:
             logger.debug(f"No schema changes detected for {table_name}")
             return
-        
+
         if on_schema_change == "fail":
             raise ValueError(
                 f"Schema changes detected for {table_name} but on_schema_change='fail'. "
                 f"New columns: {differences['new_columns']}, "
                 f"Missing columns: {differences['missing_columns']}"
             )
-        
+
         if on_schema_change == "ignore":
             logger.info(f"Ignoring schema changes for {table_name}")
             return
-        
+
         if on_schema_change == "append_new_columns":
             self._append_new_columns(table_name, differences["new_columns"])
-        
+
         elif on_schema_change == "sync_all_columns":
             self._sync_all_columns(
-                table_name, 
+                table_name,
                 differences["new_columns"],
                 differences["missing_columns"]
             )
-        
+
         elif on_schema_change == "full_refresh":
             self._full_refresh(table_name, sql_query)
-        
+
         elif on_schema_change == "full_incremental_refresh":
             self._full_incremental_refresh(table_name, sql_query, config)
-        
+
         elif on_schema_change == "recreate_empty":
             self._recreate_empty(table_name, query_schema)
-    
+
     def _append_new_columns(
-        self, 
-        table_name: str, 
+        self,
+        table_name: str,
         new_columns: list[dict[str, Any]]
     ) -> None:
         """Add new columns to existing table."""
         for column in new_columns:
             self._add_column(table_name, column)
-    
+
     def _sync_all_columns(
         self,
         table_name: str,
@@ -221,7 +221,7 @@ class SchemaChangeHandler:
         # Add new columns
         for column in new_columns:
             self._add_column(table_name, column)
-        
+
         # Remove missing columns (with warning)
         if missing_columns:
             logger.warning(
@@ -229,7 +229,7 @@ class SchemaChangeHandler:
             )
             for column in missing_columns:
                 self._drop_column(table_name, column)
-    
+
     def _add_column(self, table_name: str, column: dict[str, Any]) -> None:
         """Add a column to a table (database-specific)."""
         # Delegate to adapter for database-specific DDL
@@ -238,7 +238,7 @@ class SchemaChangeHandler:
         else:
             # Fallback: generate ALTER TABLE ADD COLUMN
             self._generate_add_column_ddl(table_name, column)
-    
+
     def _drop_column(self, table_name: str, column: dict[str, Any]) -> None:
         """Drop a column from a table (database-specific)."""
         # Delegate to adapter for database-specific DDL
@@ -247,16 +247,16 @@ class SchemaChangeHandler:
         else:
             # Fallback: generate ALTER TABLE DROP COLUMN
             self._generate_drop_column_ddl(table_name, column["name"])
-    
+
     def _generate_add_column_ddl(
-        self, 
-        table_name: str, 
+        self,
+        table_name: str,
         column: dict[str, Any]
     ) -> str:
         """Generate ALTER TABLE ADD COLUMN DDL (database-specific)."""
         # Use adapter's SQL dialect to generate correct syntax
         pass
-    
+
     def _generate_drop_column_ddl(self, table_name: str, column_name: str) -> str:
         """Generate ALTER TABLE DROP COLUMN DDL (database-specific)."""
         pass
@@ -280,29 +280,29 @@ def execute_append_strategy(
     on_schema_change: OnSchemaChange | None = "fail",  # NEW - default: "fail"
 ) -> None:
     """Execute append-only incremental strategy."""
-    
+
     # NEW: Handle schema changes if table exists
     # Default to "fail" if not specified
     if on_schema_change is None:
         on_schema_change = "fail"
-    
+
     if adapter.table_exists(table_name) and on_schema_change:
         from .schema_change_handler import SchemaChangeHandler
         from .schema_comparator import SchemaComparator
-        
+
         handler = SchemaChangeHandler(adapter)
         comparator = SchemaComparator(adapter)
-        
+
         query_schema = comparator.infer_query_schema(sql_query)
         table_schema = comparator.get_table_schema(table_name)
-        
+
         handler.handle_schema_changes(
-            table_name, 
-            query_schema, 
-            table_schema, 
+            table_name,
+            query_schema,
+            table_schema,
             on_schema_change
         )
-    
+
     # Continue with existing append logic...
     # ... rest of the method
 ```
@@ -321,12 +321,12 @@ def _execute_incremental_materialization(
 ) -> None:
     """Execute incremental materialization using the universal state manager."""
     # ... existing code ...
-    
+
     # Extract on_schema_change (default: "fail" per OTS 0.2.1)
     on_schema_change = incremental_config.get("on_schema_change", "fail")
-    
+
     # ... existing strategy execution ...
-    
+
     if strategy == "append":
         # ... existing code ...
         executor.execute_append_strategy(
@@ -353,18 +353,18 @@ def _convert_incremental_config(
 ) -> tuple[dict[str, Any] | None, list[str]]:
     """Convert dbt incremental config to t4t incremental config."""
     # ... existing code ...
-    
+
     on_schema_change = config.get("on_schema_change")
-    
+
     result: dict[str, Any] = {"strategy": t4t_strategy}
-    
+
     # NEW: Convert on_schema_change instead of warning
     if on_schema_change:
         # dbt uses same values: "ignore", "append_new_columns", "sync_all_columns", "fail"
         result["on_schema_change"] = on_schema_change
-    
+
     # Remove the warning code for on_schema_change
-    
+
     # ... rest of the method ...
 ```
 
@@ -379,7 +379,7 @@ Add optional methods to the base adapter interface:
 def add_column(self, table_name: str, column: dict[str, Any]) -> None:
     """
     Add a column to an existing table.
-    
+
     Args:
         table_name: Name of the table
         column: Column definition with "name" and "type" keys
@@ -390,7 +390,7 @@ def add_column(self, table_name: str, column: dict[str, Any]) -> None:
 def drop_column(self, table_name: str, column_name: str) -> None:
     """
     Drop a column from an existing table.
-    
+
     Args:
         table_name: Name of the table
         column_name: Name of the column to drop
@@ -482,5 +482,3 @@ def orders():
 - Some databases may not support all operations (e.g., dropping columns)
 - Type changes may need separate handling or manual intervention
 - Consider performance implications of schema comparison queries
-
-

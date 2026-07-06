@@ -149,4 +149,3 @@ uv pip list
 - Use `print()` for user-facing CLI output
 - Use `logging` for internal/debug messages
 - Project name shorthand is "t4t" (not "TEE" or "Tee")
-

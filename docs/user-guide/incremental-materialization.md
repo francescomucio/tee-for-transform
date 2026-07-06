@@ -76,8 +76,8 @@ metadata = metadata_merge  # Currently using merge strategy
 -- models/my_schema/incremental_example.sql
 -- metadata: {"materialization": "incremental", "incremental": {"strategy": "append", "append": {"filter_column": "created_at", "start_value": "2024-01-01", "lookback": "7 days"}}}
 
-SELECT id, name, created_at, updated_at, status 
-FROM t_project.source_table 
+SELECT id, name, created_at, updated_at, status
+FROM t_project.source_table
 WHERE status = 'active'
 ```
 
@@ -130,8 +130,8 @@ metadata: ModelMetadata = {
 
 **User Query (Explicit - Includes ID Column):**
 ```sql
-SELECT 
-    row_number() over (order by brand) as brand_id, 
+SELECT
+    row_number() over (order by brand) as brand_id,
     brand as brand_name
 FROM source_table
 WHERE brand IS NOT NULL
@@ -151,8 +151,8 @@ GROUP BY brand
 **Example Transformation:**
 ```sql
 -- Original query (full refresh)
-SELECT 
-    row_number() over (order by brand) as brand_id, 
+SELECT
+    row_number() over (order by brand) as brand_id,
     brand as brand_name
 FROM source_table
 WHERE brand IS NOT NULL
@@ -160,8 +160,8 @@ GROUP BY brand
 
 -- Incremental run (system automatically modifies)
 WITH source_data AS (
-    SELECT 
-        row_number() over (order by brand) as brand_id, 
+    SELECT
+        row_number() over (order by brand) as brand_id,
         brand as brand_name
     FROM source_table
     WHERE brand IS NOT NULL
@@ -264,14 +264,14 @@ for dimension in dimensions:
     # For full refresh: query executes as-is (IDs will be 1, 2, 3, ...)
     # For incremental: system automatically adds MAX(id) to ROW_NUMBER() expression
     sql = f"""
-        SELECT 
-            row_number() over (order by {dimension}) as {dimension}_id, 
+        SELECT
+            row_number() over (order by {dimension}) as {dimension}_id,
             {dimension} as {dimension}_name
         FROM {source_table}
         WHERE {dimension} IS NOT NULL
         GROUP BY {dimension}
     """
-    
+
     metadata = {
         "description": f"{dimension.capitalize()} dimension table",
         "materialization": "incremental",
@@ -295,7 +295,7 @@ for dimension in dimensions:
             }
         ]
     }
-    
+
     create_model(
         table_name=f"dim_{dimension}",
         sql=sql,
@@ -340,16 +340,16 @@ The append strategy adds new records to existing tables without modifying existi
 ```sql
 -- First run
 CREATE TABLE my_schema.incremental_example AS
-SELECT id, name, created_at, updated_at, status 
-FROM t_project.source_table 
-WHERE status = 'active' 
+SELECT id, name, created_at, updated_at, status
+FROM t_project.source_table
+WHERE status = 'active'
 AND created_at >= '2024-01-01'
 
 -- Subsequent runs
 INSERT INTO my_schema.incremental_example
-SELECT id, name, created_at, updated_at, status 
-FROM t_project.source_table 
-WHERE status = 'active' 
+SELECT id, name, created_at, updated_at, status
+FROM t_project.source_table
+WHERE status = 'active'
 AND created_at > '2024-01-15'  -- Last processed timestamp
 ```
 
@@ -380,25 +380,25 @@ The merge strategy performs upsert operations, updating existing records and ins
 ```sql
 -- First run
 CREATE TABLE my_schema.incremental_example AS
-SELECT id, name, created_at, updated_at, status 
-FROM t_project.source_table 
+SELECT id, name, created_at, updated_at, status
+FROM t_project.source_table
 WHERE status = 'active'
 
 -- Subsequent runs
 MERGE INTO my_schema.incremental_example AS target
 USING (
-    SELECT id, name, created_at, updated_at, status 
-    FROM t_project.source_table 
-    WHERE status = 'active' 
+    SELECT id, name, created_at, updated_at, status
+    FROM t_project.source_table
+    WHERE status = 'active'
     AND updated_at > (SELECT COALESCE(MAX(updated_at) - INTERVAL '3 hours', '1900-01-01') FROM my_schema.incremental_example)
 ) AS source
 ON target.id = source.id
-WHEN MATCHED THEN UPDATE SET 
-    name = source.name, 
-    created_at = source.created_at, 
-    updated_at = source.updated_at, 
+WHEN MATCHED THEN UPDATE SET
+    name = source.name,
+    created_at = source.created_at,
+    updated_at = source.updated_at,
     status = source.status
-WHEN NOT MATCHED THEN INSERT (id, name, created_at, updated_at, status) 
+WHEN NOT MATCHED THEN INSERT (id, name, created_at, updated_at, status)
 VALUES (source.id, source.name, source.created_at, source.updated_at, source.status)
 ```
 
@@ -428,18 +428,18 @@ The delete+insert strategy removes old data and inserts fresh data for a specifi
 ```sql
 -- First run
 CREATE TABLE my_schema.incremental_example AS
-SELECT id, name, created_at, updated_at, status 
-FROM t_project.source_table 
+SELECT id, name, created_at, updated_at, status
+FROM t_project.source_table
 WHERE status = 'active'
 
 -- Subsequent runs
-DELETE FROM my_schema.incremental_example 
+DELETE FROM my_schema.incremental_example
 WHERE updated_at >= CAST('2024-01-01' AS DATE)
 
 INSERT INTO my_schema.incremental_example
-SELECT id, name, created_at, updated_at, status 
-FROM t_project.source_table 
-WHERE status = 'active' 
+SELECT id, name, created_at, updated_at, status
+FROM t_project.source_table
+WHERE status = 'active'
 AND updated_at >= '2024-01-01'
 ```
 
@@ -660,7 +660,7 @@ metadata: ModelMetadata = {
 
 ```sql
 -- models/my_schema/user_events.sql
-SELECT 
+SELECT
     user_id,
     event_id,
     event_type,

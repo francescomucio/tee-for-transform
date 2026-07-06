@@ -11,31 +11,19 @@ metadata = {
     "function_type": "scalar",
     "language": "sql",
     "parameters": [
-        {
-            "name": "numerator",
-            "type": "FLOAT",
-            "description": "The numerator value"
-        },
-        {
-            "name": "denominator",
-            "type": "FLOAT",
-            "description": "The denominator value"
-        }
+        {"name": "numerator", "type": "FLOAT", "description": "The numerator value"},
+        {"name": "denominator", "type": "FLOAT", "description": "The denominator value"},
     ],
     "return_type": "FLOAT",
     "schema": "my_schema",
     "deterministic": True,
     "tags": ["math", "utility"],
-    "object_tags": {
-        "category": "calculation",
-        "complexity": "simple"
-    },
+    "object_tags": {"category": "calculation", "complexity": "simple"},
     "tests": [
         {
             "name": "test_calculate_percentage",
             "expected": 50.0,
-            "params": {"numerator": 10.0, "denominator": 20.0}
+            "params": {"numerator": 10.0, "denominator": 20.0},
         }
-    ]
+    ],
 }
-

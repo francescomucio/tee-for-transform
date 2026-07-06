@@ -105,6 +105,9 @@ class ModelExecutor:
 
                 model_data = parsed_models[table_name]
 
+                # Apply naming strategy to the table name (env-aware schema prefix)
+                mapped_name = self.adapter.apply_naming(table_name)
+
                 # Get SQL query (prefer resolved_sql, fallback to original_sql)
                 sql_query = self._extract_sql_query(model_data, table_name)
                 if not sql_query:
@@ -112,6 +115,15 @@ class ModelExecutor:
                         {"table": table_name, "error": "No SQL query found"}
                     )
                     continue
+
+                # Remap dependency references in SQL when naming is active
+                if (
+                    self.config
+                    and hasattr(self.config, "naming")
+                    and self.config.naming
+                    and self.config.naming.schema_prefix
+                ):
+                    sql_query = self._remap_sql_references(sql_query, table_name, execution_order)
 
                 # Log dialect conversion if applicable
                 if (
@@ -137,21 +149,21 @@ class ModelExecutor:
 
                 # Check for materialization changes and database existence
                 self.state_checker.check_model_state(
-                    table_name, materialization, metadata, self.adapter
+                    mapped_name, materialization, metadata, self.adapter
                 )
 
-                # Execute the model
+                # Execute the model using the mapped name
                 self.materialization_handler.materialize(
-                    table_name, sql_query, materialization, metadata, self.config
+                    mapped_name, sql_query, materialization, metadata, self.config
                 )
 
                 # Save model state after successful execution
                 self.state_checker.save_model_state(
-                    table_name, materialization, sql_query, metadata
+                    mapped_name, materialization, sql_query, metadata
                 )
 
                 # Get table information
-                table_info = self.adapter.get_table_info(table_name)
+                table_info = self.adapter.get_table_info(mapped_name)
 
                 results["executed_tables"].append(table_name)
                 results["table_info"][table_name] = table_info
@@ -165,7 +177,7 @@ class ModelExecutor:
                 )
 
                 logger.debug(
-                    f"Successfully executed {table_name} with {table_info['row_count']} rows"
+                    f"Successfully executed {table_name} (mapped to {mapped_name}) with {table_info['row_count']} rows"
                 )
 
             except Exception as e:
@@ -255,6 +267,67 @@ class ModelExecutor:
         if "." in table_name:
             return table_name.split(".", 1)[0]
         return None
+
+    def _remap_sql_references(
+        self, sql_query: str, current_table: str, execution_order: list[str]
+    ) -> str:
+        """Remap upstream model references in SQL using sqlglot AST rewriting.
+
+        When a ``schema_prefix`` is active, models are materialised under
+        the prefixed schema (e.g. ``dev_my_schema.my_table``).  This method
+        rewrites references to upstream models in *sql_query* so they point
+        to the correct prefixed location.
+
+        Uses sqlglot AST rewriting to avoid substring collisions, quoted
+        identifiers, and string literals that plague string-based replacement.
+        Falls back to longest-first string replacement if sqlglot parsing fails.
+        """
+        import sqlglot
+
+        # Build mapping of logical -> mapped names for upstream models
+        dep_mapping: dict[str, str] = {}
+        for dep_name in execution_order:
+            if dep_name == current_table:
+                break
+            if dep_name.startswith("test:"):
+                continue
+            dep_mapped = self.adapter.apply_naming(dep_name)
+            if dep_mapped != dep_name:
+                dep_mapping[dep_name] = dep_mapped
+
+        if not dep_mapping:
+            return sql_query
+
+        # Parse SQL and rewrite table references using sqlglot AST
+        dialect = self.adapter.get_default_dialect()
+
+        def _rewrite_table(node):
+            if isinstance(node, sqlglot.exp.Table):
+                full_name = node.sql(dialect=dialect)
+                if full_name in dep_mapping:
+                    mapped_parts = dep_mapping[full_name].split(".")
+                    if len(mapped_parts) == 2:
+                        return sqlglot.exp.Table(
+                            this=sqlglot.exp.Identifier(this=mapped_parts[1]),
+                            db=sqlglot.exp.Identifier(this=mapped_parts[0]),
+                        )
+                    elif len(mapped_parts) == 3:
+                        return sqlglot.exp.Table(
+                            this=sqlglot.exp.Identifier(this=mapped_parts[2]),
+                            db=sqlglot.exp.Identifier(this=mapped_parts[1]),
+                            catalog=sqlglot.exp.Identifier(this=mapped_parts[0]),
+                        )
+            return node
+
+        try:
+            tree = sqlglot.parse_one(sql_query, dialect=dialect)
+            tree = tree.transform(_rewrite_table)
+            return tree.sql(dialect=dialect)
+        except Exception:
+            # Fall back to string replacement if sqlglot parsing fails
+            for logical_name in sorted(dep_mapping, key=len, reverse=True):
+                sql_query = sql_query.replace(logical_name, dep_mapping[logical_name])
+            return sql_query
 
     def _attach_schema_tags_if_needed(self, schema_name: str) -> None:
         """

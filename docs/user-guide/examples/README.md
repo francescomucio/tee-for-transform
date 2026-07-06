@@ -25,7 +25,7 @@ metadata: ModelMetadata = {
 
 ```sql
 -- models/my_table.sql
-SELECT 
+SELECT
     id,
     name,
     created_at
@@ -56,7 +56,7 @@ metadata: ModelMetadata = {
 
 ```sql
 -- models/incremental_table.sql
-SELECT 
+SELECT
     id,
     name,
     updated_at,
@@ -118,7 +118,7 @@ t_project/
 # project.toml
 project_folder = "t_project"
 
-[connection]
+[environments.dev.connection]
 type = "duckdb"
 path = "t_project/data/t_project.duckdb"
 schema = "my_schema"

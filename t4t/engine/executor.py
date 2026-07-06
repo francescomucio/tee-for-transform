@@ -71,9 +71,26 @@ class ModelExecutor:
             if "source_sql_dialect" in config and "source_dialect" not in config:
                 config["source_dialect"] = config.pop("source_sql_dialect")
 
+        # Pop _naming_config before constructing AdapterConfig (not a valid field)
+        naming_raw = config.pop("_naming_config", None) if isinstance(config, dict) else None
+
+        if isinstance(config, dict):
             self.config = AdapterConfig(**config)
         else:
             self.config = config
+
+        # Apply naming config if present
+        if naming_raw:
+            from t4t.adapters.base.config import NamingConfig
+
+            if isinstance(naming_raw, dict):
+                self.config.naming = NamingConfig(
+                    schema_prefix=naming_raw.get("schema_prefix"),
+                    schema_suffix=naming_raw.get("schema_suffix"),
+                    database=naming_raw.get("database"),
+                )
+            elif isinstance(naming_raw, NamingConfig):
+                self.config.naming = naming_raw
 
         self.execution_engine = None
         self.logger = logging.getLogger(self.__class__.__name__)

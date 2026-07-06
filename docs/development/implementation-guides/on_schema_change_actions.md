@@ -454,5 +454,3 @@ These actions may be considered for future versions:
 - `sync_all_columns` should require explicit confirmation or flag for production
 - Type changes may need separate configuration or manual handling
 - Column order handling may require explicit column mapping in INSERT statements
-
-

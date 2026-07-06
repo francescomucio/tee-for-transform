@@ -86,6 +86,7 @@ class AdapterRegistry:
                 "role": config.role,
                 "project": config.project,
                 "extra": config.extra,
+                "_naming_config": config.naming,
             }
         else:
             config_dict = config

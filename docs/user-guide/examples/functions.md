@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION my_schema.calculate_percentage(
     numerator FLOAT,
     denominator FLOAT
 ) RETURNS FLOAT AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100
     END
@@ -39,7 +39,7 @@ Using it in a model:
 
 ```sql
 -- models/revenue_analysis.sql
-SELECT 
+SELECT
     product_id,
     sales,
     costs,
@@ -59,11 +59,11 @@ from t4t.parser.processing.function_decorator import functions
 def format_currency(amount: float, currency: str = "USD") -> str:
     """
     Format amount as currency string.
-    
+
     Args:
         amount: The amount to format
         currency: Currency code (default: USD)
-    
+
     Returns:
         Formatted currency string
     """
@@ -86,7 +86,7 @@ CREATE OR REPLACE FUNCTION my_schema.calculate_percentage(
     numerator FLOAT,
     denominator FLOAT
 ) RETURNS FLOAT AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100
     END
@@ -101,7 +101,7 @@ CREATE OR REPLACE FUNCTION my_schema.calculate_percentage(
 ) RETURNS FLOAT
 LANGUAGE SQL
 AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100
     END
@@ -111,7 +111,7 @@ $$;
 ```sql
 -- functions/my_schema/calculate_percentage.duckdb.sql (DuckDB-specific)
 CREATE OR REPLACE MACRO my_schema.calculate_percentage(numerator, denominator) AS (
-    CASE 
+    CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100
     END
@@ -128,7 +128,7 @@ CREATE OR REPLACE FUNCTION my_schema.calculate_percentage(
     numerator FLOAT,
     denominator FLOAT
 ) RETURNS FLOAT AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100
     END
@@ -137,7 +137,7 @@ $$;
 
 ```sql
 -- functions/my_schema/calculate_metric.sql
-CREATE OR REPLACE FUNCTION my_schema.calculate_metric(value FLOAT) 
+CREATE OR REPLACE FUNCTION my_schema.calculate_metric(value FLOAT)
 RETURNS FLOAT AS $$
     SELECT my_schema.calculate_percentage(value, 100.0) * 2.0
 $$;
@@ -151,7 +151,7 @@ t4t automatically creates `calculate_percentage` before `calculate_metric`.
 
 ```sql
 -- tests/functions/test_calculate_percentage.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(10.0, 20.0) = 50.0 AS test_passed
 ```
 
@@ -178,13 +178,13 @@ metadata = {
 
 ```sql
 -- tests/functions/test_calculate_percentage.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(@param1, @param2) AS result
 ```
 
 ```sql
 -- tests/functions/test_calculate_percentage_zero.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(@param1, @param2) IS NULL AS test_passed
 ```
 
@@ -201,7 +201,7 @@ CREATE OR REPLACE FUNCTION my_schema.get_top_products(
     product_name VARCHAR,
     sales FLOAT
 ) AS $$
-    SELECT 
+    SELECT
         product_id,
         product_name,
         SUM(sales) as sales
@@ -241,9 +241,9 @@ SELECT * FROM my_schema.get_top_products(10)
 
 ```sql
 -- functions/my_schema/normalize_value.sql
-CREATE OR REPLACE FUNCTION my_schema.normalize_value(value FLOAT) 
+CREATE OR REPLACE FUNCTION my_schema.normalize_value(value FLOAT)
 RETURNS FLOAT AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN value < 0 THEN 0
         WHEN value > 100 THEN 100
         ELSE value
@@ -257,7 +257,7 @@ CREATE OR REPLACE FUNCTION my_schema.calculate_percentage(
     numerator FLOAT,
     denominator FLOAT
 ) RETURNS FLOAT AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100
     END
@@ -309,5 +309,3 @@ Tags can be used for organization, filtering, and database-level tagging (where 
 ## Complete Project Example
 
 See the `examples/t_project` and `examples/t_project_sno` directories for complete working examples with functions, models, and tests.
-
-

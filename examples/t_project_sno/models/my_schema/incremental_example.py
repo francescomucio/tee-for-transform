@@ -10,24 +10,24 @@ metadata_append: ModelMetadata = {
         "append": {
             "filter_column": "created_at",
             "start_value": "@start_date",  # Use variable from CLI
-            "lookback": "7 days"
-        }
-    }
+            "lookback": "7 days",
+        },
+    },
 }
 
 # Example 2: Merge incremental
 metadata_merge: ModelMetadata = {
     "description": "Incremental table using merge strategy",
-    "materialization": "incremental", 
+    "materialization": "incremental",
     "incremental": {
         "strategy": "merge",
         "merge": {
             "unique_key": ["id"],
             "filter_column": "updated_at",
             "start_value": "auto",  # Will use max(filter_column) from target table
-            "lookback": "3 hours"
-        }
-    }
+            "lookback": "3 hours",
+        },
+    },
 }
 
 # Example 3: Delete+insert incremental
@@ -40,8 +40,8 @@ metadata_delete_insert: ModelMetadata = {
             "where_condition": "updated_at >= '@start_date'",
             "filter_column": "updated_at",
             "start_value": "@start_date",
-        }
-    }
+        },
+    },
 }
 
 # Choose which strategy to use by assigning to 'metadata'

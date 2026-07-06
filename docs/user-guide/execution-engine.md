@@ -144,7 +144,7 @@ For detailed information, see the [Incremental Materialization Guide](incrementa
 
 1. **DatabaseConnection (Abstract Base Class)**: Defines the interface for database connections
 2. **DuckDBConnection**: DuckDB-specific implementation
-3. **SQLiteConnection**: SQLite-specific implementation  
+3. **SQLiteConnection**: SQLite-specific implementation
 4. **PostgreSQLConnection**: PostgreSQL-specific implementation
 5. **ExecutionEngine**: Main orchestrator that manages execution
 6. **IncrementalExecutor**: Handles incremental materialization strategies
@@ -242,31 +242,31 @@ class MyDatabaseConnection(DatabaseConnection):
     def __init__(self, connection_config: Dict[str, Any]):
         super().__init__(connection_config)
         # Initialize your database client
-    
+
     def connect(self) -> None:
         # Establish connection
         pass
-    
+
     def disconnect(self) -> None:
         # Close connection
         pass
-    
+
     def execute_query(self, query: str) -> Any:
         # Execute query and return results
         pass
-    
+
     def create_table(self, table_name: str, query: str, table_mapping: Dict[str, str] = None) -> None:
         # Create table from query
         pass
-    
+
     def table_exists(self, table_name: str) -> bool:
         # Check if table exists
         pass
-    
+
     def drop_table(self, table_name: str) -> None:
         # Drop table
         pass
-    
+
     def get_table_info(self, table_name: str) -> Dict[str, Any]:
         # Get table information
         pass

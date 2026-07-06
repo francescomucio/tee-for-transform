@@ -15,4 +15,3 @@ metadata = {
 
 # Automatically creates test from companion check_name_length.sql file
 test = SqlTestMetadata(**metadata)
-

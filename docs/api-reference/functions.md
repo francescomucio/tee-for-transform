@@ -142,7 +142,7 @@ Test SQL files are placed in `tests/functions/`:
 
 ```sql
 -- tests/functions/test_calculate_percentage.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(@param1, @param2) AS result
 ```
 
@@ -254,5 +254,3 @@ adapter.drop_function(
     signature="FLOAT, FLOAT"  # Optional: For overloaded functions
 )
 ```
-
-

@@ -132,4 +132,3 @@ When adding new features:
 2. Add unit tests
 3. Update user documentation
 4. Update limitations documentation if needed
-

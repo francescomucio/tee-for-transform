@@ -88,6 +88,15 @@ def load_project_config(
 
     # If env_name is provided, use DatabaseConfigManager as single source of truth
     if env_name:
+        # Validate env exists before delegating to DCM (for a friendly error)
+        environments = config.get("environments", {})
+        if env_name not in environments:
+            available = sorted(environments.keys())
+            raise ValueError(
+                f"Environment '{env_name}' not found in project.toml. "
+                f"Available environments: {available}"
+            )
+
         from t4t.engine.config import DatabaseConfigManager
 
         manager = DatabaseConfigManager(project_folder)
@@ -97,9 +106,12 @@ def load_project_config(
         # that expect config["connection"] to be a dict
         conn_dict = asdict(adapter_config)
         # Remove fields that aren't simple connection params
-        conn_dict.pop("naming", None)
         conn_dict.pop("connections", None)
-        conn_dict.pop("extra", None)
+        # Pass naming config through for ModelExecutor to apply
+        naming = conn_dict.pop("naming", None)
+        if naming is not None:
+            conn_dict["_naming_config"] = naming
+        # Keep extra (MotherDuck token, custom settings) — it's a dict, not a connection param
         # Filter out None values for cleaner dict
         conn_dict = {k: v for k, v in conn_dict.items() if v is not None}
 

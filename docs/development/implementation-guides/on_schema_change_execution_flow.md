@@ -129,7 +129,7 @@ def execute_append_strategy(...):
         comparator = SchemaComparator(adapter)
         query_schema = comparator.infer_query_schema(sql_query)
         table_schema = comparator.get_table_schema(table_name)
-        
+
         # 3. Handle schema changes (this is where on_schema_change is used)
         handler.handle_schema_changes(
             table_name,
@@ -140,7 +140,7 @@ def execute_append_strategy(...):
             full_incremental_refresh_config=full_incremental_refresh_config,
             incremental_config=incremental_config,
         )
-    
+
     # 4. Continue with incremental execution
     # (time filtering, append/merge/delete_insert logic)
 ```
@@ -193,4 +193,3 @@ handler.materialize(
 )
 # → Table exists → Schema change detected → Adds 'email' column → Continues with incremental
 ```
-

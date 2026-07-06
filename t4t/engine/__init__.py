@@ -8,7 +8,7 @@ This module provides the main execution engine that supports:
 - Database-specific optimizations and features
 """
 
-from t4t.adapters import AdapterConfig, AdapterRegistry, get_adapter
+from t4t.adapters import AdapterConfig, AdapterRegistry, NamingConfig, get_adapter
 
 from .config import DatabaseConfigManager, load_database_config
 from .execution_engine import ExecutionEngine
@@ -22,5 +22,6 @@ __all__ = [
     "DatabaseConfigManager",
     "get_adapter",
     "AdapterConfig",
+    "NamingConfig",
     "AdapterRegistry",
 ]

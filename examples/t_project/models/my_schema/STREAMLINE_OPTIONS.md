@@ -115,4 +115,3 @@ metadata: ModelMetadata = {
 ## Recommendation
 
 **Use Option 1 (`ModelBuilder()`)** - it's the cleanest, most Pythonic, and clearest about intent while still being very streamlined.
-
