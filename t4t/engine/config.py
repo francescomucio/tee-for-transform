@@ -11,7 +11,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from t4t.adapters.base import AdapterConfig
+from t4t.adapters.base import AdapterConfig, NamingConfig
 from t4t.adapters.base.config import (
     SECRET_KEYS,
     resolve_secret_ref,
@@ -235,9 +235,19 @@ class DatabaseConfigManager:
 
         Returns:
             A flat config dict with ``connection`` fields merged in, plus
-            ``_connections`` keys for multi-engine.
+            ``_naming_config`` and ``_connections`` keys for multi-engine.
         """
         result: dict[str, Any] = {}
+
+        # Extract naming config
+        naming_raw = env_section.get("naming")
+        if isinstance(naming_raw, dict):
+            naming = NamingConfig(
+                schema_prefix=naming_raw.get("schema_prefix"),
+                schema_suffix=naming_raw.get("schema_suffix"),
+                database=naming_raw.get("database"),
+            )
+            result["_naming_config"] = naming
 
         # Extract default connection (flattened into top-level keys)
         connection = env_section.get("connection")
@@ -459,6 +469,7 @@ class DatabaseConfigManager:
             warehouse=config_dict.get("warehouse"),
             role=config_dict.get("role"),
             project=config_dict.get("project"),
+            naming=config_dict.get("_naming_config"),
             connections=connections,
             extra=config_dict.get("extra"),
         )

@@ -97,9 +97,12 @@ def load_project_config(
         # that expect config["connection"] to be a dict
         conn_dict = asdict(adapter_config)
         # Remove fields that aren't simple connection params
-        conn_dict.pop("naming", None)
         conn_dict.pop("connections", None)
         conn_dict.pop("extra", None)
+        # Pass naming config through for ModelExecutor to apply
+        naming = conn_dict.pop("naming", None)
+        if naming is not None:
+            conn_dict["_naming_config"] = naming
         # Filter out None values for cleaner dict
         conn_dict = {k: v for k, v in conn_dict.items() if v is not None}
 
