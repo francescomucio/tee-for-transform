@@ -25,6 +25,7 @@ class CommandContext:
         select: list[str] | None = None,
         exclude: list[str] | None = None,
         env: str | None = None,
+        allow_destructive: bool = False,
     ) -> None:
         """
         Initialize command context from parameters.
@@ -38,6 +39,7 @@ class CommandContext:
             env: Environment name (e.g. "dev", "prod") — if provided, the
                  connection config for that environment is loaded into
                  ``config["connection"]``. Defaults to "dev" if not specified.
+            allow_destructive: Allow destructive operations on protected environments
         """
         # Parse variables if provided
         self.vars = parse_vars(vars)
@@ -46,6 +48,13 @@ class CommandContext:
         # Default to "dev" environment if none specified
         resolved_env = env or "dev"
         self.config = load_project_config(project_folder, self.vars, env_name=resolved_env)
+
+        # Detect if env was explicitly provided by the user
+        self.env_explicit = env is not None
+        self.env_name = resolved_env
+
+        # Check if the resolved environment is protected
+        self._check_protected_env(project_folder, resolved_env, env)
 
         # Set up logging
         self.verbose = verbose
@@ -57,6 +66,76 @@ class CommandContext:
         # Extract selection criteria
         self.select_patterns = select
         self.exclude_patterns = exclude
+
+        # Destructive operations flag
+        self.allow_destructive = allow_destructive
+
+    def _check_protected_env(
+        self, project_folder: str, resolved_env: str, explicit_env: str | None
+    ) -> None:
+        """Check if the resolved environment is protected and refuse implicit selection."""
+        import tomllib
+        from pathlib import Path
+
+        toml_path = Path(project_folder) / "project.toml"
+        if not toml_path.exists():
+            return
+
+        with open(toml_path, "rb") as f:
+            config = tomllib.load(f)
+
+        environments = config.get("environments", {})
+        env_config = environments.get(resolved_env, {})
+
+        if not isinstance(env_config, dict):
+            return
+
+        protected = env_config.get("protected", False)
+        if not protected:
+            return
+
+        # If env was resolved implicitly (not via --env), refuse
+        if not explicit_env:
+            import typer
+
+            typer.echo(
+                typer.style("Error: ", fg=typer.colors.RED, bold=True)
+                + f"Environment '{resolved_env}' is protected and cannot be selected implicitly. "
+                "Use --env to explicitly select it.",
+                err=True,
+            )
+            raise typer.Exit(1)
+
+    def is_protected_env(self) -> bool:
+        """Check if the current environment is protected."""
+        import tomllib
+        from pathlib import Path
+
+        toml_path = self.project_path / "project.toml"
+        if not toml_path.exists():
+            return False
+
+        with open(toml_path, "rb") as f:
+            config = tomllib.load(f)
+
+        environments = config.get("environments", {})
+        env_config = environments.get(self.env_name, {})
+        if not isinstance(env_config, dict):
+            return False
+        return bool(env_config.get("protected", False))
+
+    def check_destructive_operation(self) -> None:
+        """Check if a destructive operation is allowed on a protected environment."""
+        if self.is_protected_env() and not self.allow_destructive:
+            import typer
+
+            typer.echo(
+                typer.style("Error: ", fg=typer.colors.RED, bold=True)
+                + f"Environment '{self.env_name}' is protected. "
+                "Use --allow-destructive to perform destructive operations.",
+                err=True,
+            )
+            raise typer.Exit(1)
 
     def handle_error(self, error: Exception, show_traceback: bool = None) -> None:
         """

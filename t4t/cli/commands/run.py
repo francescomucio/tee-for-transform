@@ -37,6 +37,8 @@ def cmd_run(
     exclude: list[str] | None = None,
     retry: bool = False,
     auto_resolve_level_conflicts: bool = True,
+    env: str | None = None,
+    allow_destructive: bool = False,
 ) -> None:
     """Execute the run command."""
     ctx = CommandContext(
@@ -45,10 +47,18 @@ def cmd_run(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        env=env,
+        allow_destructive=allow_destructive,
     )
     connection_manager = None
 
     try:
+        if ctx.is_protected_env():
+            typer.echo(
+                typer.style("⚠️  PROTECTED ENVIRONMENT", fg=typer.colors.YELLOW, bold=True)
+                + f": {ctx.env_name}"
+            )
+
         typer.echo(f"Running t4t on project: {project_folder}")
         ctx.print_variables_info()
         ctx.print_selection_info()
@@ -83,6 +93,7 @@ def cmd_run(
                     ctx.config["connection"],
                     ctx.vars,
                     ctx.config,
+                    env_name=ctx.env_name,
                 )
             except ValueError as e:
                 typer.echo(
@@ -102,6 +113,7 @@ def cmd_run(
             select_patterns=select_patterns,
             exclude_patterns=ctx.exclude_patterns,
             project_config=ctx.config,
+            env_name=ctx.env_name,
         )
 
         # Calculate statistics

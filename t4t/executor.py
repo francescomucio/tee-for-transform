@@ -21,6 +21,28 @@ if TYPE_CHECKING:
 SECTION_SEPARATOR = "=" * 50
 
 
+def _is_env_protected(project_folder: str, env_name: str | None) -> bool:
+    """Check if an environment is marked as protected in project.toml."""
+    if not env_name:
+        return False
+    import tomllib
+    from pathlib import Path
+
+    toml_path = Path(project_folder) / "project.toml"
+    if not toml_path.exists():
+        return False
+    try:
+        with open(toml_path, "rb") as f:
+            config = tomllib.load(f)
+        environments = config.get("environments", {})
+        env_config = environments.get(env_name, {})
+        if not isinstance(env_config, dict):
+            return False
+        return bool(env_config.get("protected", False))
+    except Exception:
+        return False
+
+
 def _try_persist_run_manifest(
     project_folder: str,
     results: dict[str, Any],
@@ -31,6 +53,8 @@ def _try_persist_run_manifest(
     variables: dict[str, Any] | None = None,
     function_names: set[str] | None = None,
     cli_args: dict[str, Any] | None = None,
+    environment: str | None = None,
+    protected: bool = False,
 ) -> None:
     """Write last_run.json and append to runs.sqlite; failures are logged only."""
     logger = logging.getLogger(__name__)
@@ -48,8 +72,10 @@ def _try_persist_run_manifest(
             variables=variables,
             cli_args=cli_args,
             function_names=function_names,
+            environment=environment,
+            protected=protected,
         )
-        backend = LocalStateBackend(Path(project_folder) / "output")
+        backend = LocalStateBackend(Path(project_folder) / "output", env_name=environment)
         backend.append_run(manifest)
     except Exception as e:
         logger.warning("Could not persist run manifest: %s", e)
@@ -63,6 +89,7 @@ def execute_models(
     select_patterns: list[str] | None = None,
     exclude_patterns: list[str] | None = None,
     project_config: dict[str, Any] | None = None,
+    env_name: str | None = None,
 ) -> dict[str, Any]:
     """
     Execute SQL models by compiling to OTS modules and running them in dependency order.
@@ -133,6 +160,8 @@ def execute_models(
             project_config=project_config,
             variables=variables,
             function_names=fnames or None,
+            environment=env_name,
+            protected=_is_env_protected(project_folder, env_name),
         )
         return empty
 
@@ -171,6 +200,8 @@ def execute_models(
                 project_config=project_config,
                 variables=variables,
                 function_names=fnames or None,
+                environment=env_name,
+                protected=_is_env_protected(project_folder, env_name),
             )
             return empty
 
@@ -251,6 +282,8 @@ def execute_models(
             project_config=project_config,
             variables=variables,
             function_names=fnames or None,
+            environment=env_name,
+            protected=_is_env_protected(project_folder, env_name),
         )
         return results
 
@@ -267,6 +300,7 @@ def build_models(
     select_patterns: list[str] | None = None,
     exclude_patterns: list[str] | None = None,
     project_config: dict[str, Any] | None = None,
+    env_name: str | None = None,
 ) -> dict[str, Any]:
     """
     Build models with interleaved test execution, stopping on test failures.
@@ -376,6 +410,8 @@ def build_models(
             project_config=project_config,
             variables=variables,
             function_names=None,
+            environment=env_name,
+            protected=_is_env_protected(project_folder, env_name),
         )
         return empty_results
 
@@ -453,6 +489,8 @@ def build_models(
             project_config=project_config,
             variables=variables,
             function_names=fn_build or None,
+            environment=env_name,
+            protected=_is_env_protected(project_folder, env_name),
         )
         return results
 

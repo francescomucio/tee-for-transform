@@ -38,6 +38,7 @@ class ExecutionEngine:
         config_name: str = "default",
         project_folder: str = ".",
         variables: dict[str, Any] | None = None,
+        env_name: str | None = None,
     ) -> None:
         """
         Initialize the execution engine.
@@ -47,15 +48,17 @@ class ExecutionEngine:
             config_name: Configuration name to load (if config is None)
             project_folder: Project folder path for state management
             variables: Optional dictionary of variables for model execution
+            env_name: Environment name for scoping state
         """
         self.config = config or load_database_config(config_name)
         self.adapter = get_adapter(self.config)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.project_folder = project_folder
         self.variables = variables or {}
+        self.env_name = env_name
 
         # Initialize components
-        self.state_checker = StateChecker(project_folder)
+        self.state_checker = StateChecker(project_folder, env_name=env_name)
         self.metadata_extractor = MetadataExtractor()
         self.materialization_handler = MaterializationHandler(
             self.adapter, self.state_checker.state_manager, self.variables

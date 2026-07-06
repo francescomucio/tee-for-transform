@@ -11,15 +11,17 @@ logger = logging.getLogger(__name__)
 class StateChecker:
     """Manages model state checking and updates."""
 
-    def __init__(self, project_folder: str) -> None:
+    def __init__(self, project_folder: str, env_name: str | None = None) -> None:
         """
         Initialize the state checker.
 
         Args:
             project_folder: Project folder path for state management
+            env_name: Environment name for scoping state
         """
-        self.state_manager = ModelStateManager(project_folder=project_folder)
+        self.state_manager = ModelStateManager(project_folder=project_folder, environment=env_name)
         self.project_folder = project_folder
+        self.env_name = env_name
 
     def generate_sql_hash(self, sql_query: str) -> str:
         """

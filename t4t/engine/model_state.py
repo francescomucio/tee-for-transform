@@ -22,15 +22,23 @@ class ModelStateManager:
     This is a wrapper around the centralized StateManager for backward compatibility.
     """
 
-    def __init__(self, state_database_path: str | None = None, project_folder: str = ".") -> None:
+    def __init__(
+        self,
+        state_database_path: str | None = None,
+        project_folder: str = ".",
+        environment: str | None = None,
+    ) -> None:
         """
         Initialize the model state manager.
 
         Args:
             state_database_path: Path to the state database file
             project_folder: Project folder path
+            environment: Environment name for scoping state
         """
-        self.state_manager = StateManager(state_database_path, project_folder)
+        self.state_manager = StateManager(
+            state_database_path, project_folder, environment=environment
+        )
         self.project_folder = project_folder
         self.state_database_path = self.state_manager.state_database_path
 

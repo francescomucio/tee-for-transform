@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from typing import Any, Literal
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 NodeStatus = Literal["success", "failed", "skipped"]
 FuncStatus = Literal["success", "failed"]
@@ -65,6 +65,8 @@ class RunManifest:
     nodes: list[NodeResult]
     functions: list[FunctionResult]
     cli_args: dict[str, Any] | None = None
+    environment: str | None = None
+    protected: bool = False
 
 
 def manifest_to_dict(manifest: RunManifest) -> dict[str, Any]:
@@ -89,6 +91,8 @@ def manifest_from_dict(d: dict[str, Any]) -> RunManifest:
         nodes=nodes,
         functions=functions,
         cli_args=d.get("cli_args"),
+        environment=d.get("environment"),
+        protected=bool(d.get("protected", False)),
     )
 
 
@@ -117,6 +121,8 @@ def results_to_manifest(
     variables: dict[str, Any] | None = None,
     cli_args: dict[str, Any] | None = None,
     function_names: set[str] | None = None,
+    environment: str | None = None,
+    protected: bool = False,
 ) -> RunManifest:
     """Normalize execute_models or build_models result dicts into a RunManifest."""
     analysis = results.get("analysis") or {}
@@ -231,6 +237,8 @@ def results_to_manifest(
         nodes=nodes_out,
         functions=func_out,
         cli_args=cli_args,
+        environment=environment,
+        protected=protected,
     )
 
 
