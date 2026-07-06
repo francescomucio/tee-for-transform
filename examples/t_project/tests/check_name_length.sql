@@ -4,4 +4,3 @@
 SELECT id, name
 FROM @table_name
 WHERE LENGTH(name) > 100
-

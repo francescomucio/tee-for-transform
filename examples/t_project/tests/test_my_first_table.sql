@@ -6,4 +6,3 @@
 SELECT id, name
 FROM my_schema.my_first_table
 WHERE name LIKE '%invalid%'
-

@@ -98,7 +98,7 @@ The parser extracts model information via AST analysis, so this function primari
 create_model(
     table_name="daily_sales",
     sql="""
-    SELECT 
+    SELECT
         *,
         CURRENT_TIMESTAMP() as updated_at
     FROM staging.sales
@@ -225,4 +225,3 @@ For joins that do not match this convention, use explicit **`fk_to`** on the col
 - [Tags and Metadata](../user-guide/tags-and-metadata.md) - Comprehensive guide to tags and metadata
 - [Execution Engine](../user-guide/execution-engine.md) - Running models
 - [CLI Reference](../user-guide/cli-reference.md) - Command-line usage
-

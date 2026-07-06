@@ -93,7 +93,7 @@ handler.materialize(table_name, initial_query, "incremental", metadata)
    ```python
    state_manager.update_processed_value(table_name, current_time, "append")
    ```
-   **Important Note**: 
+   **Important Note**:
    - `update_processed_value()` only updates `last_processed_value`
    - **CRITICAL**: `update_processed_value()` requires state to exist first (line 190-192)
    - If no state exists, it just logs a warning and returns (does nothing!)
@@ -141,19 +141,19 @@ handler.materialize(table_name, new_query, "incremental", metadata)
 3. `should_run_incremental()` is called:
    ```python
    state = state_manager.get_model_state(table_name)  # Returns state (exists now!)
-   
+
    # Check if SQL changed
    current_sql_hash = state_manager.compute_sql_hash(new_query)
    if state.sql_hash != current_sql_hash:
        return False  # SQL changed → Full load
    ```
-   
+
    **Important Note**: In this test, the SQL query changes (we add `value` to SELECT), so the SQL hash will be different IF the state has a saved SQL hash. However, since we're calling `MaterializationHandler` directly (not through `ModelExecutor`), the SQL hash might not be properly saved in Step 1.
-   
+
    **What actually happens in the test:**
    - If state has `sql_hash == "unknown"` or no SQL hash: `should_run_incremental()` can return `True` for append strategy (it doesn't strictly require SQL hash match for append)
    - If state has a different SQL hash: `should_run_incremental()` returns `False` → Full load
-   
+
    **In real-world scenarios**:
    - SQL query stays the same: `SELECT * FROM source_events`
    - Source table schema changes (adds a column)
@@ -167,18 +167,18 @@ handler.materialize(table_name, new_query, "incremental", metadata)
      if adapter.table_exists(table_name):  # True - table exists
          handler = SchemaChangeHandler(adapter)
          comparator = SchemaComparator(adapter)
-         
+
          query_schema = comparator.infer_query_schema(sql_query)
-         # Returns: [{"name": "event_id", "type": "INTEGER"}, 
+         # Returns: [{"name": "event_id", "type": "INTEGER"},
          #           {"name": "event_name", "type": "VARCHAR"},
          #           {"name": "event_date", "type": "DATE"},
          #           {"name": "value", "type": "INTEGER"}]  # ← New column!
-         
+
          table_schema = comparator.get_table_schema(table_name)
          # Returns: [{"name": "event_id", "type": "INTEGER"},
          #           {"name": "event_name", "type": "VARCHAR"},
          #           {"name": "event_date", "type": "DATE"}]  # ← Old schema
-         
+
          handler.handle_schema_changes(
              table_name,
              query_schema,
@@ -189,7 +189,7 @@ handler.materialize(table_name, new_query, "incremental", metadata)
              incremental_config=incremental_config,
          )
      ```
-   
+
 5. **SchemaChangeHandler.handle_schema_changes()**:
    - Compares schemas → Detects new column: `value`
    - Calls `_handle_append_new_columns()`
@@ -375,8 +375,8 @@ SchemaComparator.infer_query_schema(sql_query)  # Get query output schema
 SchemaComparator.get_table_schema(table_name)    # Get existing table schema
   ↓
 SchemaChangeHandler.handle_schema_changes(
-    query_schema, 
-    table_schema, 
+    query_schema,
+    table_schema,
     on_schema_change,  # ← From metadata["incremental"]["on_schema_change"]
     ...
 )

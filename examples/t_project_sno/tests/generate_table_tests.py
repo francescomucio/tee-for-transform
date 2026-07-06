@@ -34,4 +34,3 @@ for table in TABLES_TO_TEST:
         severity="error",
         description=f"Check that {table}.id contains only positive values",
     )
-

@@ -82,7 +82,7 @@ Once loaded, seeds are available as tables in your SQL models:
 
 ```sql
 -- models/user_analytics.sql
-SELECT 
+SELECT
     u.id,
     u.name,
     COUNT(o.id) as order_count
@@ -112,7 +112,7 @@ When seeds are in a schema folder, reference them with the schema prefix:
 
 ```sql
 -- models/order_summary.sql
-SELECT 
+SELECT
     o.id,
     o.amount,
     c.name as customer_name
@@ -313,7 +313,7 @@ If you see:
 ℹ️  No seed files found in seeds folder
 ```
 
-**Solution**: 
+**Solution**:
 - Check that files have `.csv`, `.json`, or `.tsv` extensions
 - Verify files are in the `seeds/` folder (not subdirectories unless using schemas)
 
@@ -349,7 +349,7 @@ UK,United Kingdom,Europe
 **Usage in model:**
 ```sql
 -- models/user_by_country.sql
-SELECT 
+SELECT
     c.name as country,
     COUNT(u.id) as user_count
 FROM users u
@@ -403,7 +403,7 @@ Then your models can reference seed tables:
 
 ```sql
 -- models/enriched_orders.sql
-SELECT 
+SELECT
     o.id,
     o.amount,
     u.name as user_name,
@@ -443,7 +443,7 @@ For advanced use cases, you can:
 
 ```sql
 -- models/enriched_users.sql
-SELECT 
+SELECT
     u.*,
     c.name as country_name,
     s.status as account_status
@@ -462,4 +462,3 @@ Seeds provide a simple way to load static reference data into your database:
 - ✅ Standalone command for testing
 
 Use seeds for reference data, configuration, and small static datasets that your models depend on.
-

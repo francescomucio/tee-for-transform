@@ -8,14 +8,14 @@ metadata: ModelMetadata = {
             "name": "id",
             "datatype": "number",
             "description": "Unique identifier for the record",
-            "tests": ["not_null", "unique"]
+            "tests": ["not_null", "unique"],
         },
         {
             "name": "name",
             "datatype": "string",
             "description": "Name of the record",
-            "tests": ["not_null"]
-        }
+            "tests": ["not_null"],
+        },
     ],
     "partitions": ["id"],
     "materialization": "table",

@@ -139,15 +139,15 @@ def execute_model(
 ) -> Dict[str, Any]:
     """
     Execute a SQL model.
-    
+
     Args:
         model_name: Name of the model to execute
         sql: SQL query to execute
         variables: Optional variables for SQL substitution
-        
+
     Returns:
         Dictionary containing execution results
-        
+
     Raises:
         ExecutionError: If execution fails
     """
@@ -192,10 +192,10 @@ def test_cmd_run_success():
     with patch('t4t.cli.commands.run.ProjectParser') as mock_parser:
         # Setup
         mock_parser.return_value.collect_models.return_value = []
-        
+
         # Execute
         cmd_run(project_folder="./test_project", verbose=False)
-        
+
         # Assert
         mock_parser.assert_called_once()
 ```
@@ -376,4 +376,3 @@ If you have questions about contributing:
 - Ask in GitHub Discussions
 
 Thank you for contributing to t4t! 🎉
-

@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION my_schema.calculate_percentage(
     numerator FLOAT,
     denominator FLOAT
 ) RETURNS FLOAT AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100
     END
@@ -40,16 +40,16 @@ def calculate_percentage(
 ) -> float:
     """
     Calculate percentage with null handling.
-    
+
     Args:
         numerator: The numerator value
         denominator: The denominator value
-    
+
     Returns:
         Percentage value or None if denominator is zero
     """
     return f"""
-        CASE 
+        CASE
             WHEN {denominator} = 0 THEN NULL
             ELSE ({numerator} / {denominator}) * 100
         END
@@ -140,7 +140,7 @@ Once a function is defined, you can use it in your SQL models:
 
 ```sql
 -- models/revenue_analysis.sql
-SELECT 
+SELECT
     product_id,
     sales,
     costs,
@@ -156,7 +156,7 @@ Functions can depend on other functions or tables:
 
 ```sql
 -- functions/my_schema/calculate_metric.sql
-CREATE OR REPLACE FUNCTION my_schema.calculate_metric(value FLOAT) 
+CREATE OR REPLACE FUNCTION my_schema.calculate_metric(value FLOAT)
 RETURNS FLOAT AS $$
     SELECT my_schema.calculate_percentage(value, 100.0) * 2.0
 $$;
@@ -170,7 +170,7 @@ Functions can be tested using SQL tests in the `tests/functions/` folder. This s
 
 ```sql
 -- tests/functions/test_calculate_percentage.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(10.0, 20.0) = 50.0 AS test_passed
 ```
 
@@ -182,7 +182,7 @@ The test SQL returns a boolean - `TRUE` means the test passed:
 
 ```sql
 -- tests/functions/test_calculate_percentage.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(10.0, 20.0) = 50.0 AS test_passed
 ```
 
@@ -206,7 +206,7 @@ metadata = {
 
 ```sql
 -- tests/functions/test_calculate_percentage.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(@param1, @param2) AS result
 ```
 
@@ -273,4 +273,3 @@ See the [Function Examples](examples/functions.md) guide for complete examples i
 - Database-specific overrides
 - Function dependencies
 - Function testing
-

@@ -6,14 +6,14 @@ This document lists known limitations, unsupported features, and workarounds for
 
 ### 1. Source Freshness Tests
 
-**Status:** ❌ Not Supported  
+**Status:** ❌ Not Supported
 **Issue:** [GitHub Issue #1](https://github.com/francescomucio/tee-for-transform/issues/1)
 
 **What:** dbt source freshness tests (defined in `__sources.yml`)
 
 **Behavior:** Freshness tests are detected and skipped during import with a warning logged in the import report.
 
-**Workaround:** 
+**Workaround:**
 - Freshness tests are documented in the import report
 - You can manually create freshness tests in t4t once support is added
 - For now, use regular data quality tests to check data recency
@@ -29,12 +29,12 @@ sources:
 
 ### 2. Source Metadata
 
-**Status:** ⚠️ Partially Supported  
+**Status:** ⚠️ Partially Supported
 **Issue:** [GitHub Issue #2](https://github.com/francescomucio/tee-for-transform/issues/2)
 
 **What:** dbt source metadata (descriptions, tags, etc. in `__sources.yml`)
 
-**Behavior:** 
+**Behavior:**
 - Source references (`{{ source('schema', 'table') }}`) are converted to `schema.table`
 - Source metadata is logged but not preserved in t4t format
 
@@ -44,8 +44,8 @@ sources:
 
 ### 3. Missing Incremental Strategies
 
-**Status:** ⚠️ Partially Supported  
-**Issues:** 
+**Status:** ⚠️ Partially Supported
+**Issues:**
 - [GitHub Issue #3](https://github.com/francescomucio/tee-for-transform/issues/3) - Generic missing strategies
 - [GitHub Issue #5](https://github.com/francescomucio/tee-for-transform/issues/5) - Spark `insert_overwrite`
 - [GitHub Issue #6](https://github.com/francescomucio/tee-for-transform/issues/6) - `on_schema_change`
@@ -127,7 +127,7 @@ sources:
 
 ### 7. Dependency Resolution (`model+`, `+model`)
 
-**Status:** ❌ Not Supported  
+**Status:** ❌ Not Supported
 **Issue:** [GitHub Issue #8](https://github.com/francescomucio/tee-for-transform/issues/8)
 
 **What:** dbt-style dependency selection (`model+`, `+model`)
@@ -155,7 +155,7 @@ t4t import ./dbt_project ./t4t_project \
 
 ### 8. Full Jinja2 Support
 
-**Status:** ⚠️ Coming Soon  
+**Status:** ⚠️ Coming Soon
 **Issue:** [GitHub Issue #4](https://github.com/francescomucio/tee-for-transform/issues/4)
 
 **What:** Full Jinja2 template rendering in t4t
@@ -288,4 +288,3 @@ If you encounter issues not covered here:
 - [dbt Import Guide](dbt-import.md) - Complete import guide
 - [CLI Reference](cli-reference.md) - Command reference
 - [GitHub Issues](https://github.com/francescomucio/tee-for-transform/issues) - Track feature requests
-

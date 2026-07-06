@@ -67,7 +67,7 @@ metadata: ModelMetadata = {
 
 **`models/my_schema/users.sql`:**
 ```sql
-SELECT 
+SELECT
     user_id,
     email,
     status,
@@ -136,7 +136,7 @@ metadata: ModelMetadata = {
 
 **`models/my_schema/orders.sql`:**
 ```sql
-SELECT 
+SELECT
     o.order_id,
     o.user_id,
     o.amount,
@@ -352,4 +352,3 @@ If test always returns rows:
 - [Data Quality Tests Guide](../data-quality-tests.md) - Complete testing documentation
 - [Execution Engine](../execution-engine.md) - Learn about model execution
 - [Basic Usage](basic-usage.md) - More examples
-

@@ -55,7 +55,7 @@ The parser discovers and processes models in two phases:
 
 ### Scenario 2: `.py` and `.sql` File (Companion Files)
 
-**Example**: 
+**Example**:
 - `models/my_schema/my_table.sql` (SQL)
 - `models/my_schema/my_table.py` (Python metadata)
 
@@ -231,4 +231,3 @@ metadata: ModelMetadata = {
 - **Python Parser**: `t4t/parser/parsers/python_parser.py` - `parse()`, `evaluate_model_function()`
 - **File Discovery**: `t4t/parser/processing/file_discovery.py`
 - **Companion File Finder**: `t4t/parser/shared/file_utils.py` - `find_metadata_file()`
-

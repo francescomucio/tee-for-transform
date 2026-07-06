@@ -25,7 +25,7 @@ metadata: ModelMetadata = {
 
 ```sql
 -- models/my_table.sql
-SELECT 
+SELECT
     id,
     name,
     created_at
@@ -56,7 +56,7 @@ metadata: ModelMetadata = {
 
 ```sql
 -- models/incremental_table.sql
-SELECT 
+SELECT
     id,
     name,
     updated_at,

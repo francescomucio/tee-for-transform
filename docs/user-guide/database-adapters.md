@@ -185,14 +185,14 @@ from t4t.engine.adapters.base import DatabaseAdapter, MaterializationType
 class MyDatabaseAdapter(DatabaseAdapter):
     def get_default_dialect(self):
         return "mydb"
-    
+
     def get_supported_materializations(self):
         return [MaterializationType.TABLE, MaterializationType.VIEW]
-    
+
     def connect(self):
         # Implementation
         pass
-    
+
     # ... implement other required methods
 ```
 

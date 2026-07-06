@@ -85,7 +85,7 @@ for table in MART_TABLES:
     create_model(
         table_name=table["name"],
         sql=f"""
-        SELECT 
+        SELECT
             *,
             CURRENT_TIMESTAMP() as updated_at
         FROM staging.{table["source"]}
@@ -115,7 +115,7 @@ metadata = {
 
 ```sql
 -- models/users.sql
-SELECT 
+SELECT
     id,
     name,
     email,
@@ -350,7 +350,7 @@ from t4t.parser.processing.model import model
 )
 def orders_model():
     return """
-    SELECT 
+    SELECT
         order_id,
         user_id,
         order_date,
@@ -463,4 +463,3 @@ uv run t4t run ./my_project -v
 - [Configuration](../getting-started/configuration.md) - Project configuration
 - [Database Adapters](database-adapters.md) - Database-specific features
 - [Execution Engine](execution-engine.md) - Model execution and selection
-

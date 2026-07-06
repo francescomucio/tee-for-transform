@@ -145,4 +145,3 @@ See the [Configuration Documentation](../../docs/getting-started/configuration.m
 - See the [main README](../../README.md) for installation and setup
 - Check the [User Guide](../../docs/user-guide/) for detailed documentation
 - Review [Examples Documentation](../../docs/user-guide/examples/) for more examples
-

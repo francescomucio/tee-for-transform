@@ -19,4 +19,3 @@ For now, please refer to:
 - [CLI Reference](../user-guide/cli-reference.md) — command-line interface
 - [User Guide](../user-guide/overview.md) — concepts and examples
 - Source — docstrings under `t4t/`
-

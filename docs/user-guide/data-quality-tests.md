@@ -674,7 +674,7 @@ This allows OTS-compliant tools to discover and use your test definitions.
 
 - **Generic SQL Tests**: Tests with placeholders like `@table_name` are exported to `generic_tests`
 - **Singular SQL Tests**: Tests with hardcoded table names are exported to `singular_tests`
-- **Metadata Extraction**: 
+- **Metadata Extraction**:
   - Description extracted from SQL comments
   - Parameters extracted from `@param:default` syntax
   - Test level (table/column) inferred from SQL content
@@ -940,15 +940,15 @@ from t4t.testing import TestRegistry
 class MyCustomTest(StandardTest):
     def __init__(self):
         super().__init__("my_custom_test", severity=TestSeverity.ERROR)
-    
+
     def validate_params(self, params, column_name):
         # Validate parameters
         pass
-    
+
     def get_test_query(self, adapter, table_name, column_name, params):
         # Generate SQL query
         return f"SELECT COUNT(*) FROM {table_name} WHERE ..."
-    
+
     def check_passed(self, count):
         # Custom logic for determining pass/fail
         return count == 0
@@ -981,7 +981,7 @@ The test SQL returns a boolean - `TRUE` means the test passed:
 
 ```sql
 -- tests/functions/test_calculate_percentage.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(10.0, 20.0) = 50.0 AS test_passed
 ```
 
@@ -1005,7 +1005,7 @@ metadata = {
 
 ```sql
 -- tests/functions/test_calculate_percentage.sql
-SELECT 
+SELECT
     my_schema.calculate_percentage(@param1, @param2) AS result
 ```
 
@@ -1023,4 +1023,3 @@ Function tests support placeholders:
 - [Execution Engine](execution-engine.md) - Learn about model execution
 - [Database Adapters](database-adapters.md) - Database-specific features
 - [Examples](examples/README.md) - Practical usage examples
-

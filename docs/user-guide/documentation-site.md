@@ -161,10 +161,10 @@ The documentation site is completely static and can be:
    ```bash
    # Python
    python -m http.server 8000 --directory output/docs
-   
+
    # Node.js
    npx serve output/docs
-   
+
    # Any static file server
    ```
 
@@ -197,4 +197,3 @@ The documentation site is useful for:
 - [CLI Reference](cli-reference.md) - Complete command reference
 - [Models API](../api-reference/models.md) - Model creation and metadata
 - [Tags and Metadata](tags-and-metadata.md) - Adding descriptions and metadata to models
-

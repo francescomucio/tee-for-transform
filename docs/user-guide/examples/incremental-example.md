@@ -90,7 +90,7 @@ metadata = metadata_merge  # Currently using merge strategy
 -- Incremental example model
 -- This demonstrates how to use incremental materialization
 
-SELECT 
+SELECT
     id,
     name,
     created_at,
@@ -187,7 +187,7 @@ USING (
     AND updated_at > (SELECT COALESCE(MAX(updated_at) - INTERVAL '3 hours', '1900-01-01') FROM my_schema.incremental_example)
 ) AS source
 ON target.id = source.id
-WHEN MATCHED THEN UPDATE SET 
+WHEN MATCHED THEN UPDATE SET
     name = source.name,
     created_at = source.created_at,
     updated_at = source.updated_at,

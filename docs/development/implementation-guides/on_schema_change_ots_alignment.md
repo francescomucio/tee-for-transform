@@ -273,7 +273,7 @@ When `on_schema_change="recreate_empty"`:
 1. **Update Implementation Guide**: Revise `on_schema_change_implementation.md` to match OTS 0.2.1
 2. **Add New Sections**: Document `full_incremental_refresh` implementation
 3. **Update Type Definitions First**: Get types right before implementation
-4. **Implement in Order**: 
+4. **Implement in Order**:
    - Simple behaviors first (`fail`, `append_new_columns`, `sync_all_columns`, `full_refresh`, `recreate_empty`)
    - Complex behavior last (`full_incremental_refresh`)
 5. **Test Thoroughly**: Especially `full_incremental_refresh` chunking logic
@@ -284,4 +284,3 @@ When `on_schema_change="recreate_empty"`:
 2. Update type definitions
 3. Create detailed design for `full_incremental_refresh` chunking logic
 4. Proceed with implementation following updated plan
-

@@ -4,4 +4,3 @@ INACTIVE,Inactive,Record is currently inactive,status
 PENDING,Pending,Record is pending approval,status
 COMPLETED,Completed,Process has been completed,status
 CANCELLED,Cancelled,Process has been cancelled,status
-

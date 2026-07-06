@@ -5,7 +5,6 @@ from t4t.parser.model import model
 def auto_table_one():
     return "SELECT * FROM my_first_table"
 
-
     # return [{
     #     "id": "1",
     #     "name": "John Doe"

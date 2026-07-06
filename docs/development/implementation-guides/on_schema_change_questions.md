@@ -46,7 +46,7 @@
 
 **Question**: How should we handle column order differences?
 
-**Context**: 
+**Context**:
 - INSERT statements may insert data into wrong columns if order differs
 - Some adapters (Snowflake) already handle this by explicitly listing columns in INSERT
 - Documentation mentions "Support for column reordering" as future enhancement
@@ -81,8 +81,8 @@
 
 **Question**: Should `on_schema_change` default to `"ignore"` or be required?
 
-**Context**: 
-- Documentation says "ignore (default)" 
+**Context**:
+- Documentation says "ignore (default)"
 - Backward compatibility is important
 - If not specified, should we default or require explicit setting?
 
@@ -166,7 +166,7 @@
 
 **Current flow**:
 1. Get state
-2. Generate time filter  
+2. Generate time filter
 3. Apply filter to SQL
 4. Execute strategy (calls adapter method)
 
@@ -199,5 +199,3 @@ Based on the codebase patterns and documentation:
 10. ✅ Start with DuckDB adapter, then Snowflake, then others
 11. ✅ Use inferred types as-is initially
 12. ✅ Integration point confirmed (after SQL filtering, before execution)
-
-

@@ -6,15 +6,15 @@ metadata: ModelMetadata = {
         {
             "name": "id",
             "datatype": "number",
-            "description": "Foreign key reference to my_first_table"
+            "description": "Foreign key reference to my_first_table",
         },
         {
             "name": "name",
             "datatype": "string",
             "description": "Additional information",
-            "tests": ["not_null"]
-        }
+            "tests": ["not_null"],
+        },
     ],
     "materialization": "view",
-    "tests": ["row_count_gt_0", "unique"]
+    "tests": ["row_count_gt_0", "unique"],
 }

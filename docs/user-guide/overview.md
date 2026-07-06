@@ -16,7 +16,7 @@ SQL models are the building blocks of t4t. Each model is a SQL file that defines
 
 ```sql
 -- models/users.sql
-SELECT 
+SELECT
     id,
     name,
     email,
@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION my_schema.calculate_percentage(
     numerator FLOAT,
     denominator FLOAT
 ) RETURNS FLOAT AS $$
-    SELECT CASE 
+    SELECT CASE
         WHEN denominator = 0 THEN NULL
         ELSE (numerator / denominator) * 100
     END
@@ -230,4 +230,3 @@ Ready to get started? Check out:
 - [Data Quality Tests](data-quality-tests.md) - Understand testing framework
 - [Incremental Materialization](incremental-materialization.md) - Efficient data processing
 - [Tags and Metadata](tags-and-metadata.md) - Organize and filter models
-
