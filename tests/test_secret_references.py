@@ -13,7 +13,6 @@ Covers:
 import logging
 import os
 import tempfile
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -342,23 +341,24 @@ host = "snowflake.example.com"
 
     def test_load_config_with_file_ref(self, manager: DatabaseConfigManager) -> None:
         """Full load_config resolves file: references."""
-        toml_content = """
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".secret") as f:
+            f.write("file-password\n")
+            fpath = f.name
+        try:
+            toml_content = f"""
 [tool.t4t.database]
 type = "snowflake"
 user = "admin"
-password = "file:/tmp/test_secret_file"
+password = "file:{fpath}"
 host = "snowflake.example.com"
 """
-        toml_file = manager.project_root / "pyproject.toml"
-        toml_file.write_text(toml_content)
+            toml_file = manager.project_root / "pyproject.toml"
+            toml_file.write_text(toml_content)
 
-        secret_path = Path("/tmp/test_secret_file")
-        try:
-            secret_path.write_text("file-password\n")
             config = manager.load_config("default")
             assert config.password == "file-password"
         finally:
-            secret_path.unlink(missing_ok=True)
+            os.unlink(fpath)
 
     def test_t4t_env_override_still_works(self, manager: DatabaseConfigManager) -> None:
         """T4T_DB_PASSWORD env var overrides TOML env: reference in full flow."""

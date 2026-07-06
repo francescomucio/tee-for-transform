@@ -6,6 +6,7 @@ and environment variables with proper precedence and validation.
 
 import logging
 import os
+import re
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -13,25 +14,49 @@ from typing import Any
 from t4t.adapters.base import AdapterConfig
 
 # Keys that are considered secret-bearing and should be redacted in logs
-_SECRET_KEYS = frozenset({"password", "token", "secret"})
+_SECRET_KEYS = frozenset(
+    {
+        "password",
+        "token",
+        "secret",
+        "api_key",
+        "private_key",
+        "access_key",
+        "client_secret",
+    }
+)
 
 # Reference prefix scheme — extensible to future managers (vault:, aws-sm:, ...)
 _REF_PREFIXES = frozenset({"env:", "file:"})
 
+# Regex for a valid reference prefix word (letters, digits, hyphens, underscores)
+_REF_PREFIX_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_-]*$")
+
 
 def _looks_like_reference(value: str) -> bool:
-    """Check if a string value looks like a reference (prefix:rest).
+    """Check if a string value looks like a known reference (prefix:rest).
 
-    A value looks like a reference if it matches the pattern ``word:``
-    at the start, where ``word`` contains only letters, digits, hyphens,
-    and underscores.  This catches unknown prefixes such as ``vault:``
-    or ``aws-sm:`` so we can raise a clear error instead of silently
-    treating them as literal values.
+    A value looks like a reference if its prefix is one of the known
+    prefixes in ``_REF_PREFIXES``.  This avoids false positives such as
+    ``localhost:5432`` or ``C:/path``.
     """
     if ":" not in value:
         return False
     prefix, _, _ = value.partition(":")
-    return bool(prefix) and prefix.isidentifier()
+    return f"{prefix}:" in _REF_PREFIXES
+
+
+def _looks_like_any_reference(value: str) -> bool:
+    """Check if a string matches the general ``word:rest`` reference pattern.
+
+    Unlike ``_looks_like_reference``, this does not require the prefix to
+    be known — it catches unknown prefixes such as ``vault:`` or ``aws-sm:``
+    so we can raise a clear error.
+    """
+    if ":" not in value:
+        return False
+    prefix, _, _ = value.partition(":")
+    return bool(prefix) and bool(_REF_PREFIX_RE.match(prefix))
 
 
 class DatabaseConfigManager:
@@ -92,21 +117,18 @@ class DatabaseConfigManager:
             # Check for single database config in tool.t4t.database
             if "database" in t4t_config:
                 config.update(t4t_config["database"])
-                self._warn_literal_secrets(config)
                 return config
 
             # Check for multiple database configs in tool.t4t.databases
             databases = t4t_config.get("databases", {})
             if isinstance(databases, dict) and config_name in databases:
                 config.update(databases[config_name])
-                self._warn_literal_secrets(config)
                 return config
 
             # Check for legacy [connection] section
             if "connection" in data:
                 self.logger.debug("Using legacy [connection] section")
                 config.update(data["connection"])
-                self._warn_literal_secrets(config)
                 return config
 
             self.logger.debug(f"No database configuration '{config_name}' found in TOML file")
@@ -155,6 +177,10 @@ class DatabaseConfigManager:
         """Merge TOML and environment configurations."""
         merged = toml_config.copy()
         merged.update(env_config)
+        # Warn about literal secrets in the merged config (before resolution,
+        # so env: references are still detected as non-literal and env var
+        # overrides suppress warnings for overridden TOML values).
+        self._warn_literal_secrets(merged)
         # Resolve secret references after env var merge, so T4T_DB_* overrides
         # still work and don't need the reference syntax themselves.
         merged = self._resolve_secret_refs(merged)
@@ -196,8 +222,12 @@ class DatabaseConfigManager:
                 file_path = value[len("file:") :]
                 if not file_path:
                     raise ValueError(f"Empty file: reference for key '{key}'")
+                # Resolve relative paths against project_root
+                p = Path(file_path)
+                if not p.is_absolute():
+                    p = self.project_root / p
                 try:
-                    file_val = Path(file_path).read_text(encoding="utf-8").rstrip("\n")
+                    file_val = p.read_text(encoding="utf-8").rstrip("\n")
                 except FileNotFoundError:
                     raise ValueError(
                         f"Secret file '{file_path}' referenced in config key '{key}' not found"
@@ -214,7 +244,7 @@ class DatabaseConfigManager:
                     ) from None
                 resolved[key] = file_val
 
-            elif _looks_like_reference(value):
+            elif _looks_like_any_reference(value):
                 # Value looks like a reference (e.g. "vault:my-secret") but
                 # uses an unsupported prefix.
                 prefix = value.split(":", 1)[0] + ":"
