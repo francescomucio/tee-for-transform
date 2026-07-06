@@ -123,9 +123,7 @@ class ModelExecutor:
                     and self.config.naming
                     and self.config.naming.schema_prefix
                 ):
-                    sql_query = self._remap_sql_references(
-                        sql_query, table_name, execution_order
-                    )
+                    sql_query = self._remap_sql_references(sql_query, table_name, execution_order)
 
                 # Log dialect conversion if applicable
                 if (
