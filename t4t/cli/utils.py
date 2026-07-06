@@ -6,10 +6,9 @@ Pure, stateless utility functions used across CLI commands.
 
 import json
 import logging
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
-
-from t4t.adapters.base.config import SECRET_KEYS, resolve_secret_ref
 
 
 def parse_vars(vars_string: str | None) -> dict[str, Any]:
@@ -45,10 +44,10 @@ def load_project_config(
     Requires ``[environments.*]`` sections — legacy ``[connection]`` is no
     longer supported.
 
-    When *env_name* is provided, the default environment config
-    (``[environments.default]``) is merged with the specific environment
-    config (``[environments.<env_name>]``) and stored under the ``"connection"``
-    key in the returned dict for backward compatibility with CLI commands.
+    When *env_name* is provided, the connection config for that environment
+    is loaded via ``DatabaseConfigManager`` (the single source of truth for
+    config parsing) and stored under the ``"connection"`` key in the returned
+    dict for backward compatibility with CLI commands.
 
     Args:
         project_folder: Path to the project folder
@@ -87,33 +86,24 @@ def load_project_config(
     if vars_dict:
         config["vars"] = vars_dict
 
-    # If env_name is provided, merge default + specific env into connection key
+    # If env_name is provided, use DatabaseConfigManager as single source of truth
     if env_name:
-        environments = config.get("environments", {})
-        merged_conn: dict[str, Any] = {}
+        from t4t.engine.config import DatabaseConfigManager
 
-        # Start with [environments.default] connection
-        default_env = environments.get("default", {})
-        default_conn = default_env.get("connection", {})
-        if isinstance(default_conn, dict):
-            merged_conn.update(default_conn)
+        manager = DatabaseConfigManager(project_folder)
+        adapter_config = manager.load_config(env_name)
 
-        # Merge specific environment connection on top
-        specific_env = environments.get(env_name, {})
-        specific_conn = specific_env.get("connection", {})
-        if isinstance(specific_conn, dict):
-            merged_conn.update(specific_conn)
+        # Convert AdapterConfig to dict for backward compat with CLI commands
+        # that expect config["connection"] to be a dict
+        conn_dict = asdict(adapter_config)
+        # Remove fields that aren't simple connection params
+        conn_dict.pop("naming", None)
+        conn_dict.pop("connections", None)
+        conn_dict.pop("extra", None)
+        # Filter out None values for cleaner dict
+        conn_dict = {k: v for k, v in conn_dict.items() if v is not None}
 
-        # Resolve secret references in the merged connection config
-        for key in list(merged_conn.keys()):
-            if key in SECRET_KEYS and isinstance(merged_conn[key], str):
-                original = merged_conn[key]
-                resolved = resolve_secret_ref(original)
-                if resolved != original:
-                    merged_conn[key] = resolved
-
-        # Store as "connection" for backward compat
-        config["connection"] = merged_conn
+        config["connection"] = conn_dict
 
     return config
 
