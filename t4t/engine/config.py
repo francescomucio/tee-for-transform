@@ -1,5 +1,4 @@
-"""
-Database configuration management.
+"""Database configuration management.
 
 This module handles loading database configurations from pyproject.toml
 and environment variables with proper precedence and validation.
@@ -12,6 +11,27 @@ from pathlib import Path
 from typing import Any
 
 from t4t.adapters.base import AdapterConfig
+
+# Keys that are considered secret-bearing and should be redacted in logs
+_SECRET_KEYS = frozenset({"password", "token", "secret"})
+
+# Reference prefix scheme — extensible to future managers (vault:, aws-sm:, ...)
+_REF_PREFIXES = frozenset({"env:", "file:"})
+
+
+def _looks_like_reference(value: str) -> bool:
+    """Check if a string value looks like a reference (prefix:rest).
+
+    A value looks like a reference if it matches the pattern ``word:``
+    at the start, where ``word`` contains only letters, digits, hyphens,
+    and underscores.  This catches unknown prefixes such as ``vault:``
+    or ``aws-sm:`` so we can raise a clear error instead of silently
+    treating them as literal values.
+    """
+    if ":" not in value:
+        return False
+    prefix, _, _ = value.partition(":")
+    return bool(prefix) and prefix.isidentifier()
 
 
 class DatabaseConfigManager:
@@ -72,18 +92,21 @@ class DatabaseConfigManager:
             # Check for single database config in tool.t4t.database
             if "database" in t4t_config:
                 config.update(t4t_config["database"])
+                self._warn_literal_secrets(config)
                 return config
 
             # Check for multiple database configs in tool.t4t.databases
             databases = t4t_config.get("databases", {})
             if isinstance(databases, dict) and config_name in databases:
                 config.update(databases[config_name])
+                self._warn_literal_secrets(config)
                 return config
 
             # Check for legacy [connection] section
             if "connection" in data:
                 self.logger.debug("Using legacy [connection] section")
                 config.update(data["connection"])
+                self._warn_literal_secrets(config)
                 return config
 
             self.logger.debug(f"No database configuration '{config_name}' found in TOML file")
@@ -132,12 +155,109 @@ class DatabaseConfigManager:
         """Merge TOML and environment configurations."""
         merged = toml_config.copy()
         merged.update(env_config)
+        # Resolve secret references after env var merge, so T4T_DB_* overrides
+        # still work and don't need the reference syntax themselves.
+        merged = self._resolve_secret_refs(merged)
         return merged
+
+    def _resolve_secret_refs(self, config: dict[str, Any]) -> dict[str, Any]:
+        """Resolve env: and file: secret references in config values.
+
+        Args:
+            config: Configuration dictionary with possible reference values.
+
+        Returns:
+            New dictionary with all references resolved to their actual values.
+            Literal (non-reference) values pass through unchanged.
+
+        Raises:
+            ValueError: If a reference prefix is unknown or a referenced
+                environment variable / file cannot be read.
+        """
+        resolved = {}
+        for key, value in config.items():
+            if not isinstance(value, str):
+                resolved[key] = value
+                continue
+
+            if value.startswith("env:"):
+                var_name = value[len("env:") :]
+                if not var_name:
+                    raise ValueError(f"Empty env: reference for key '{key}'")
+                env_val = os.getenv(var_name)
+                if env_val is None:
+                    raise ValueError(
+                        f"Environment variable '{var_name}' referenced in config key "
+                        f"'{key}' is not set"
+                    )
+                resolved[key] = env_val
+
+            elif value.startswith("file:"):
+                file_path = value[len("file:") :]
+                if not file_path:
+                    raise ValueError(f"Empty file: reference for key '{key}'")
+                try:
+                    file_val = Path(file_path).read_text(encoding="utf-8").rstrip("\n")
+                except FileNotFoundError:
+                    raise ValueError(
+                        f"Secret file '{file_path}' referenced in config key '{key}' not found"
+                    ) from None
+                except PermissionError:
+                    raise ValueError(
+                        f"Permission denied reading secret file '{file_path}' "
+                        f"referenced in config key '{key}'"
+                    ) from None
+                except OSError as e:
+                    raise ValueError(
+                        f"Error reading secret file '{file_path}' referenced in "
+                        f"config key '{key}': {e}"
+                    ) from None
+                resolved[key] = file_val
+
+            elif _looks_like_reference(value):
+                # Value looks like a reference (e.g. "vault:my-secret") but
+                # uses an unsupported prefix.
+                prefix = value.split(":", 1)[0] + ":"
+                raise ValueError(
+                    f"Unknown reference prefix '{prefix}' for key '{key}'. "
+                    f"Supported prefixes: {', '.join(sorted(_REF_PREFIXES))}"
+                )
+
+            else:
+                resolved[key] = value
+
+        return resolved
+
+    def _redact_secrets(self, config: dict[str, Any]) -> dict[str, Any]:
+        """Return a copy of *config* with secret values replaced by ``'****'``.
+
+        This is safe for logging and error messages — it never leaks resolved
+        secret values.
+        """
+        return {key: ("****" if key in _SECRET_KEYS else value) for key, value in config.items()}
+
+    def _warn_literal_secrets(self, config: dict[str, Any]) -> None:
+        """Emit a lint-style warning when a secret key holds a literal value.
+
+        Literal secrets in committed config files are a security risk. Users
+        should use ``env:`` or ``file:`` references instead.
+        """
+        for key in _SECRET_KEYS:
+            value = config.get(key)
+            if value is not None and isinstance(value, str) and not _looks_like_reference(value):
+                self.logger.warning(
+                    "Literal %s found in config — consider using env: or file: "
+                    "reference instead for security",
+                    key,
+                )
 
     def _create_adapter_config(self, config_dict: dict[str, Any]) -> AdapterConfig:
         """Create AdapterConfig from dictionary."""
         if not config_dict:
             raise ValueError("No database configuration found")
+
+        # Log the config with secrets redacted
+        self.logger.debug("Creating adapter config: %s", self._redact_secrets(config_dict))
 
         # Extract required fields
         db_type = config_dict.get("type")
