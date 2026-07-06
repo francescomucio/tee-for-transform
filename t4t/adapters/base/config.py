@@ -2,6 +2,7 @@
 Configuration types and structures for database adapters.
 """
 
+import os
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Protocol, runtime_checkable
@@ -89,7 +90,7 @@ class EnvSecretProvider:
             ValueError: If the environment variable is not set or empty.
         """
         var_name = ref[len(self.prefix) :]
-        value = __import__("os").environ.get(var_name)
+        value = os.environ.get(var_name)
         if value is None:
             raise ValueError(
                 f"Environment variable '{var_name}' is not set (referenced by '{ref}')"

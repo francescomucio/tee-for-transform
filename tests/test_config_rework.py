@@ -126,10 +126,10 @@ class TestDltEnvVars:
         monkeypatch.setenv("ENVIRONMENTS__DEV__CONNECTION__PASSWORD", "s3cret")
         result = _parse_dlt_env_vars()
         assert result == {
-            "environments": {
-                "dev": {
-                    "connection": {
-                        "password": "s3cret",
+            "ENVIRONMENTS": {
+                "DEV": {
+                    "CONNECTION": {
+                        "PASSWORD": "s3cret",
                     },
                 },
             },
@@ -141,16 +141,16 @@ class TestDltEnvVars:
         monkeypatch.setenv("ENVIRONMENTS__DEV__CONNECTION__DATABASE", "dev_db")
         monkeypatch.setenv("ENVIRONMENTS__PROD__CONNECTION__PASSWORD", "prod_pw")
         result = _parse_dlt_env_vars()
-        assert result["environments"]["dev"]["connection"]["password"] == "dev_pw"
-        assert result["environments"]["dev"]["connection"]["database"] == "dev_db"
-        assert result["environments"]["prod"]["connection"]["password"] == "prod_pw"
+        assert result["ENVIRONMENTS"]["DEV"]["CONNECTION"]["PASSWORD"] == "dev_pw"
+        assert result["ENVIRONMENTS"]["DEV"]["CONNECTION"]["DATABASE"] == "dev_db"
+        assert result["ENVIRONMENTS"]["PROD"]["CONNECTION"]["PASSWORD"] == "prod_pw"
 
     def test_connections_multi_engine(self, monkeypatch) -> None:
         """ENVIRONMENTS__DEV__CONNECTIONS__ANALYTICS__PASSWORD is parsed."""
         monkeypatch.setenv("ENVIRONMENTS__DEV__CONNECTIONS__ANALYTICS__PASSWORD", "analytics_pw")
         result = _parse_dlt_env_vars()
         assert (
-            result["environments"]["dev"]["connections"]["analytics"]["password"] == "analytics_pw"
+            result["ENVIRONMENTS"]["DEV"]["CONNECTIONS"]["ANALYTICS"]["PASSWORD"] == "analytics_pw"
         )
 
     def test_ignores_non_environments_vars(self, monkeypatch) -> None:

@@ -9,6 +9,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from t4t.adapters.base.config import resolve_secret_ref
+
 
 def parse_vars(vars_string: str | None) -> dict[str, Any]:
     """
@@ -30,16 +32,6 @@ def parse_vars(vars_string: str | None) -> dict[str, Any]:
         return json.loads(vars_string)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid variables format (must be valid JSON): {e}") from e
-
-
-def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
-    """Deep-merge *override* into *base* (mutates base in place)."""
-    for key, value in override.items():
-        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-            _deep_merge(base[key], value)
-        else:
-            base[key] = value
-    return base
 
 
 def load_project_config(
@@ -111,6 +103,24 @@ def load_project_config(
         specific_conn = specific_env.get("connection", {})
         if isinstance(specific_conn, dict):
             merged_conn.update(specific_conn)
+
+        # Resolve secret references in the merged connection config
+        secret_keys = {
+            "password",
+            "user",
+            "host",
+            "database",
+            "path",
+            "warehouse",
+            "role",
+            "project",
+        }
+        for key in list(merged_conn.keys()):
+            if key in secret_keys and isinstance(merged_conn[key], str):
+                original = merged_conn[key]
+                resolved = resolve_secret_ref(original)
+                if resolved != original:
+                    merged_conn[key] = resolved
 
         # Store as "connection" for backward compat
         config["connection"] = merged_conn

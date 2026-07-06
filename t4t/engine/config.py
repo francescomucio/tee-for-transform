@@ -33,7 +33,7 @@ def _parse_dlt_env_vars() -> dict[str, Any]:
 
     becomes::
 
-        {"environments": {"dev": {"connection": {"password": "s3cret"}}}}
+        {"ENVIRONMENTS": {"DEV": {"CONNECTION": {"PASSWORD": "s3cret"}}}}
 
     Returns:
         A nested dict built from matching environment variables.
@@ -43,27 +43,18 @@ def _parse_dlt_env_vars() -> dict[str, Any]:
     for key, value in os.environ.items():
         if not key.startswith(prefix):
             continue
-        parts = key.lower().split("__")
-        # parts[0] is "environments" (lowercased)
+        if not value:
+            continue
+        parts = key.split("__")
         if len(parts) < 2:
             continue
-        # Navigate/create the nested dict
-        current = result
-        for part in parts:
-            if part not in current:
-                current[part] = {}
-            if isinstance(current[part], dict):
-                current = current[part]
-            else:
-                # Leaf already set — shouldn't happen with proper nesting
-                break
-        else:
-            # We reached the leaf — set the value
-            # But we need to find the parent dict
-            parent = result
-            for part in parts[:-1]:
-                parent = parent[part]
-            parent[parts[-1]] = value
+        # Navigate/create the nested dict and set the leaf value
+        parent = result
+        for part in parts[:-1]:
+            if part not in parent:
+                parent[part] = {}
+            parent = parent[part]
+        parent[parts[-1]] = value
     return result
 
 
@@ -113,7 +104,7 @@ class DatabaseConfigManager:
         env_config = self._load_env_config()
 
         # 3. Merge configurations (env vars override toml)
-        merged_config = self._merge_configs(toml_config, env_config)
+        merged_config = self._merge_configs(toml_config, env_config, config_name)
 
         # 4. Validate and create AdapterConfig
         return self._create_adapter_config(merged_config)
@@ -281,13 +272,16 @@ class DatabaseConfigManager:
         return env_config
 
     def _merge_configs(
-        self, toml_config: dict[str, Any], env_config: dict[str, Any]
+        self,
+        toml_config: dict[str, Any],
+        env_config: dict[str, Any],
+        config_name: str = "default",
     ) -> dict[str, Any]:
         """Merge TOML and environment configurations.
 
         1. Start with TOML config
         2. Apply legacy ``T4T_DB_*`` env vars on top
-        3. Apply dlt-style ``ENVIRONMENTS__*__*`` env vars on top
+        3. Apply dlt-style ``ENVIRONMENTS__*__*`` env vars for the requested env on top
         4. Resolve secret references (``env:``, ``file:``)
         5. Warn on literal secrets in non-dev environments
         """
@@ -312,33 +306,36 @@ class DatabaseConfigManager:
             if key in env_config:
                 merged[key] = env_config[key]
 
-        # Apply dlt-style ENVIRONMENTS__*__* env vars (step 3)
+        # Apply dlt-style ENVIRONMENTS__*__* env vars (step 3) — only for requested env
         dlt_config = env_config.get("_dlt_env_config")
         if dlt_config:
-            # dlt_config is like {"environments": {"dev": {"connection": {"password": "..."}}}}
-            # We need to merge the connection-level values into merged
-            envs = dlt_config.get("environments", {})
-            # We don't know which env name was used at this point, so we merge
-            # all env-level overrides. The caller already resolved the env name.
-            # For simplicity, we merge the first matching env's connection fields.
-            for _env_name, env_data in envs.items():
-                if isinstance(env_data, dict):
-                    connection = env_data.get("connection")
-                    if isinstance(connection, dict):
-                        for k, v in connection.items():
-                            merged[k] = v
-                    connections = env_data.get("connections")
-                    if isinstance(connections, dict):
-                        if "_connections" not in merged:
-                            merged["_connections"] = {}
-                        for conn_name, conn_config in connections.items():
-                            if isinstance(conn_config, dict):
-                                # Deep-merge into existing connection config if present
-                                existing = merged["_connections"].get(conn_name)
-                                if isinstance(existing, dict):
-                                    existing.update(conn_config)
-                                else:
-                                    merged["_connections"][conn_name] = dict(conn_config)
+            envs = dlt_config.get("ENVIRONMENTS", {})
+            # Look up the requested environment (case-insensitive match on env name)
+            env_data = None
+            for env_name, data in envs.items():
+                if env_name.upper() == config_name.upper():
+                    env_data = data
+                    break
+            if env_data is None and config_name.lower() == "default" and "DEFAULT" in envs:
+                env_data = envs["DEFAULT"]
+            if isinstance(env_data, dict):
+                connection = env_data.get("CONNECTION")
+                if isinstance(connection, dict):
+                    for k, v in connection.items():
+                        merged[k.lower()] = v
+                connections = env_data.get("CONNECTIONS")
+                if isinstance(connections, dict):
+                    if "_connections" not in merged:
+                        merged["_connections"] = {}
+                    for conn_name, conn_config in connections.items():
+                        if isinstance(conn_config, dict):
+                            # Lowercase the keys for consistency with TOML config
+                            normalized = {k.lower(): v for k, v in conn_config.items()}
+                            existing = merged["_connections"].get(conn_name.lower())
+                            if isinstance(existing, dict):
+                                existing.update(normalized)
+                            else:
+                                merged["_connections"][conn_name.lower()] = normalized
 
         # Resolve secret references (step 4)
         secret_keys = {
@@ -358,6 +355,21 @@ class DatabaseConfigManager:
                 if resolved != original:
                     self.logger.debug("Resolved secret reference for '%s'", key)
                     merged[key] = resolved
+
+        # Resolve secrets in additional connections
+        raw_connections = merged.get("_connections")
+        if isinstance(raw_connections, dict):
+            for conn_name, conn_dict in raw_connections.items():
+                if isinstance(conn_dict, dict):
+                    for key in list(conn_dict.keys()):
+                        if key in secret_keys and isinstance(conn_dict[key], str):
+                            original = conn_dict[key]
+                            resolved = resolve_secret_ref(original)
+                            if resolved != original:
+                                self.logger.debug(
+                                    "Resolved secret reference for '%s.%s'", conn_name, key
+                                )
+                                conn_dict[key] = resolved
 
         # Warn on literal secrets in non-dev environments (step 5)
         # We can't know the env name here, so we do a simple heuristic:
