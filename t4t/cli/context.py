@@ -2,6 +2,7 @@
 Command context for shared setup across CLI commands.
 """
 
+import os
 from pathlib import Path
 
 import typer
@@ -15,6 +16,12 @@ class CommandContext:
 
     Handles common setup: parsing variables, loading config, setting up logging,
     and extracting selection criteria.
+
+    Environment resolution order (highest to lowest priority):
+      1. ``--env`` CLI flag (explicit)
+      2. ``T4T_ENV`` environment variable
+      3. ``default_environment`` key in ``project.toml``
+      4. Legacy ``[connection]`` section (no named environment)
     """
 
     def __init__(
@@ -24,6 +31,7 @@ class CommandContext:
         verbose: bool = False,
         select: list[str] | None = None,
         exclude: list[str] | None = None,
+        env: str | None = None,
     ) -> None:
         """
         Initialize command context from parameters.
@@ -34,12 +42,24 @@ class CommandContext:
             verbose: Enable verbose output
             select: Selection patterns
             exclude: Exclusion patterns
+            env: Optional environment name to use
         """
         # Parse variables if provided
         self.vars = parse_vars(vars)
 
-        # Load project configuration
-        self.config = load_project_config(project_folder, self.vars)
+        # Resolve environment: --env flag > T4T_ENV env var > default_environment > legacy
+        self.env = env
+        if self.env is None:
+            self.env = os.environ.get("T4T_ENV")
+
+        # Load project configuration (pass env so load_project_config can resolve it)
+        self.config = load_project_config(project_folder, self.vars, self.env)
+
+        # If still no env, check for default_environment in config
+        if self.env is None and "default_environment" in self.config:
+            self.env = self.config["default_environment"]
+            # Reload config with the default environment
+            self.config = load_project_config(project_folder, self.vars, self.env)
 
         # Set up logging
         self.verbose = verbose
@@ -51,6 +71,13 @@ class CommandContext:
         # Extract selection criteria
         self.select_patterns = select
         self.exclude_patterns = exclude
+
+    def echo_environment(self) -> None:
+        """Print the active environment name."""
+        if self.env:
+            typer.echo(f"Environment: {self.env}")
+        else:
+            typer.echo("Environment: default (legacy [connection])")
 
     def handle_error(self, error: Exception, show_traceback: bool = None) -> None:
         """

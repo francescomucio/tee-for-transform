@@ -31,6 +31,7 @@ def _try_persist_run_manifest(
     variables: dict[str, Any] | None = None,
     function_names: set[str] | None = None,
     cli_args: dict[str, Any] | None = None,
+    environment: str | None = None,
 ) -> None:
     """Write last_run.json and append to runs.sqlite; failures are logged only."""
     logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ def _try_persist_run_manifest(
             variables=variables,
             cli_args=cli_args,
             function_names=function_names,
+            environment=environment,
         )
         backend = LocalStateBackend(Path(project_folder) / "output")
         backend.append_run(manifest)
@@ -63,6 +65,7 @@ def execute_models(
     select_patterns: list[str] | None = None,
     exclude_patterns: list[str] | None = None,
     project_config: dict[str, Any] | None = None,
+    environment: str | None = None,
 ) -> dict[str, Any]:
     """
     Execute SQL models by compiling to OTS modules and running them in dependency order.
@@ -133,6 +136,7 @@ def execute_models(
             project_config=project_config,
             variables=variables,
             function_names=fnames or None,
+            environment=environment,
         )
         return empty
 
@@ -171,6 +175,7 @@ def execute_models(
                 project_config=project_config,
                 variables=variables,
                 function_names=fnames or None,
+                environment=environment,
             )
             return empty
 
@@ -251,6 +256,7 @@ def execute_models(
             project_config=project_config,
             variables=variables,
             function_names=fnames or None,
+            environment=environment,
         )
         return results
 
@@ -267,6 +273,7 @@ def build_models(
     select_patterns: list[str] | None = None,
     exclude_patterns: list[str] | None = None,
     project_config: dict[str, Any] | None = None,
+    environment: str | None = None,
 ) -> dict[str, Any]:
     """
     Build models with interleaved test execution, stopping on test failures.
@@ -376,6 +383,7 @@ def build_models(
             project_config=project_config,
             variables=variables,
             function_names=None,
+            environment=environment,
         )
         return empty_results
 
@@ -453,6 +461,7 @@ def build_models(
             project_config=project_config,
             variables=variables,
             function_names=fn_build or None,
+            environment=environment,
         )
         return results
 

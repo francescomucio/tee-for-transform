@@ -39,6 +39,7 @@ def cmd_build(
     exclude: list[str] | None = None,
     retry: bool = False,
     auto_resolve_level_conflicts: bool = True,
+    env: str | None = None,
 ) -> None:
     """Execute the build command."""
     ctx = CommandContext(
@@ -47,7 +48,9 @@ def cmd_build(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        env=env,
     )
+    ctx.echo_environment()
     connection_manager = None
 
     try:
@@ -104,6 +107,7 @@ def cmd_build(
             select_patterns=select_patterns,
             exclude_patterns=ctx.exclude_patterns,
             project_config=ctx.config,
+            environment=ctx.env,
         )
 
         # Calculate statistics

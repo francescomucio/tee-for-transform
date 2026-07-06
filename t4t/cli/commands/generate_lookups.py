@@ -13,6 +13,7 @@ def cmd_generate_lookups(
     vars: str | None = None,
     verbose: bool = False,
     auto_resolve_level_conflicts: bool = False,
+    env: str | None = None,
 ) -> None:
     """
     Generate lookup tables from hierarchical dimensions.
@@ -23,7 +24,9 @@ def cmd_generate_lookups(
         project_folder=project_folder,
         vars=vars,
         verbose=verbose,
+        env=env,
     )
+    ctx.echo_environment()
 
     try:
         typer.echo(f"Generating lookups for project: {ctx.project_path}")

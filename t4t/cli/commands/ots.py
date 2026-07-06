@@ -18,6 +18,7 @@ def cmd_ots_run(
     verbose: bool = False,
     select: list[str] | None = None,
     exclude: list[str] | None = None,
+    env: str | None = None,
 ) -> None:
     """
     Execute OTS modules.
@@ -29,6 +30,7 @@ def cmd_ots_run(
         verbose: Enable verbose output
         select: Select models (can be used multiple times)
         exclude: Exclude models (can be used multiple times)
+        env: Optional environment name to use
     """
     ots_path_obj = Path(ots_path)
 
@@ -67,7 +69,9 @@ def cmd_ots_run(
                 verbose=verbose,
                 select=select,
                 exclude=exclude,
+                env=env,
             )
+            ctx.echo_environment()
             connection_config = ctx.config["connection"]
             project_path = ctx.project_path
             variables = ctx.vars

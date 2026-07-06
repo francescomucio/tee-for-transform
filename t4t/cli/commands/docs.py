@@ -114,6 +114,7 @@ def cmd_docs(
     auto_resolve_level_conflicts: bool = True,
     skip_lookups: bool = False,
     infer_dim_from_column_names: bool = False,
+    env: str | None = None,
 ) -> None:
     """
     Generate static documentation site with dependency graph.
@@ -133,7 +134,9 @@ def cmd_docs(
         project_folder=project_folder,
         vars=vars,
         verbose=verbose,
+        env=env,
     )
+    ctx.echo_environment()
 
     try:
         typer.echo(f"Generating documentation for project: {project_folder}")

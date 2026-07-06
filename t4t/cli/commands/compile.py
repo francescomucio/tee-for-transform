@@ -18,6 +18,7 @@ def cmd_compile(
     vars: str | None = None,
     verbose: bool = False,
     format: OutputFormat = "json",
+    env: str | None = None,
 ) -> None:
     """
     Compile t4t project to OTS modules.
@@ -35,12 +36,15 @@ def cmd_compile(
         vars: Optional variables for SQL substitution (JSON format)
         verbose: Enable verbose output
         format: Output format ("json" or "yaml")
+        env: Optional environment name to use
     """
     ctx = CommandContext(
         project_folder=project_folder,
         vars=vars,
         verbose=verbose,
+        env=env,
     )
+    ctx.echo_environment()
 
     try:
         typer.echo(f"Compiling project: {project_folder}")

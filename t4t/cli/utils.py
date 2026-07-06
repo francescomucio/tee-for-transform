@@ -33,7 +33,7 @@ def parse_vars(vars_string: str | None) -> dict[str, Any]:
 
 
 def load_project_config(
-    project_folder: str, vars_dict: dict[str, Any] | None = None
+    project_folder: str, vars_dict: dict[str, Any] | None = None, env: str | None = None
 ) -> dict[str, Any]:
     """
     Load project configuration from project.toml file and merge with variables.
@@ -41,6 +41,7 @@ def load_project_config(
     Args:
         project_folder: Path to the project folder
         vars_dict: Optional dictionary of variables to merge into config
+        env: Optional environment name to use for connection resolution
 
     Returns:
         Dictionary containing project configuration with variables merged
@@ -60,7 +61,22 @@ def load_project_config(
     if "project_folder" not in config:
         raise ValueError("project.toml must contain 'project_folder' setting")
 
-    if "connection" not in config:
+    # Resolve connection config based on environment
+    if env:
+        # Use named environment from [environments.<env>]
+        environments = config.get("environments", {})
+        if env not in environments:
+            raise ValueError(
+                f"Environment '{env}' not found in project.toml. "
+                f"Available environments: {', '.join(environments.keys())}"
+            )
+        env_config = environments[env]
+        if "connection" not in env_config:
+            raise ValueError(
+                f"Environment '{env}' in project.toml must contain a 'connection' section"
+            )
+        config["connection"] = env_config["connection"]
+    elif "connection" not in config:
         raise ValueError("project.toml must contain 'connection' configuration")
 
     # Merge variables into config

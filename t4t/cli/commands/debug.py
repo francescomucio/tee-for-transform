@@ -14,13 +14,16 @@ def cmd_debug(
     project_folder: str,
     vars: str | None = None,
     verbose: bool = False,
+    env: str | None = None,
 ) -> None:
     """Execute the debug command to test database connectivity."""
     ctx = CommandContext(
         project_folder=project_folder,
         vars=vars,
         verbose=verbose,
+        env=env,
     )
+    ctx.echo_environment()
     connection_manager = None
 
     try:

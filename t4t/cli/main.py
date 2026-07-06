@@ -119,6 +119,7 @@ def run(
         "--auto-resolve-level-conflicts",
         help="Automatically resolve duplicate hierarchy level names as <dimension>_<level> during lookup generation.",
     ),
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Parse and execute SQL models."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -130,6 +131,7 @@ def run(
         exclude=exclude,
         retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+        env=env,
     )
 
 
@@ -139,6 +141,7 @@ def debug(
     project_folder: str | None = PROJECT_FOLDER_ARG,
     verbose: bool = VERBOSE_OPTION,
     vars: str | None = VARS_OPTION,
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Test database connectivity and configuration."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -146,6 +149,7 @@ def debug(
         project_folder=project_folder,
         vars=vars,
         verbose=verbose,
+        env=env,
     )
 
 
@@ -157,6 +161,7 @@ def test(
     vars: str | None = VARS_OPTION,
     select: list[str] | None = SELECT_OPTION,
     exclude: list[str] | None = EXCLUDE_OPTION,
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Run data quality tests on models."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -166,6 +171,7 @@ def test(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        env=env,
     )
 
 
@@ -183,6 +189,7 @@ def build(
         "--auto-resolve-level-conflicts",
         help="Automatically resolve duplicate hierarchy level names as <dimension>_<level> during lookup generation.",
     ),
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Build models with tests (stops on test failure)."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -194,6 +201,7 @@ def build(
         exclude=exclude,
         retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
+        env=env,
     )
 
 
@@ -203,6 +211,7 @@ def seed(
     project_folder: str | None = PROJECT_FOLDER_ARG,
     verbose: bool = VERBOSE_OPTION,
     vars: str | None = VARS_OPTION,
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Load seed files (CSV, JSON, TSV) into database tables."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -210,6 +219,7 @@ def seed(
         project_folder=project_folder,
         vars=vars,
         verbose=verbose,
+        env=env,
     )
 
 
@@ -244,6 +254,7 @@ def compile(
     format: OutputFormat = typer.Option(
         "json", "-f", "--format", help="Output format: json or yaml", callback=validate_format
     ),
+    env: str | None = typer.Option(None, "--env", help="Environment name to use"),
 ) -> None:
     """Compile t4t project to OTS modules."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -252,6 +263,7 @@ def compile(
         vars=vars,
         verbose=verbose,
         format=format,
+        env=env,
     )
 
 

@@ -37,6 +37,7 @@ def cmd_run(
     exclude: list[str] | None = None,
     retry: bool = False,
     auto_resolve_level_conflicts: bool = True,
+    env: str | None = None,
 ) -> None:
     """Execute the run command."""
     ctx = CommandContext(
@@ -45,7 +46,9 @@ def cmd_run(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        env=env,
     )
+    ctx.echo_environment()
     connection_manager = None
 
     try:
@@ -102,6 +105,7 @@ def cmd_run(
             select_patterns=select_patterns,
             exclude_patterns=ctx.exclude_patterns,
             project_config=ctx.config,
+            environment=ctx.env,
         )
 
         # Calculate statistics

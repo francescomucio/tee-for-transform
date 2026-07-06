@@ -20,6 +20,7 @@ def cmd_test(
     verbose: bool = False,
     select: list[str] | None = None,
     exclude: list[str] | None = None,
+    env: str | None = None,
 ) -> None:
     """Execute the test command."""
     ctx = CommandContext(
@@ -28,7 +29,9 @@ def cmd_test(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        env=env,
     )
+    ctx.echo_environment()
 
     try:
         typer.echo(f"Running tests for project: {project_folder}")

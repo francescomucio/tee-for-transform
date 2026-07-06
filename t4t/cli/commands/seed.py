@@ -13,13 +13,16 @@ def cmd_seed(
     project_folder: str,
     vars: str | None = None,
     verbose: bool = False,
+    env: str | None = None,
 ) -> None:
     """Execute the seed command to load seed files into the database."""
     ctx = CommandContext(
         project_folder=project_folder,
         vars=vars,
         verbose=verbose,
+        env=env,
     )
+    ctx.echo_environment()
 
     try:
         typer.echo(f"Loading seeds from project: {project_folder}")
