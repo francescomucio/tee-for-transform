@@ -83,12 +83,26 @@ in the issue text would have been.
    end that nothing actually works end to end. Last step is always: run
    the acceptance-criteria test from the previous step.
 
-9. **Second pass on your own fix.** Before presenting a proposed fix as
-   settled, try to state it as an exact mechanism — file, line, function.
-   If you can't, you haven't verified it yet; go trace it for real. This
-   step alone caught a fix that was both riskier than necessary and
-   silently missing an entire code path, on an issue that had already
-   been through one refinement round.
+9. **Second pass on your own fix — precision is not the same as correctness.**
+   Before presenting a proposed fix as settled, try to state it as an exact
+   mechanism — file, line, function. If you can't, you haven't verified it
+   yet; go trace it for real. This catches vague fixes, but it does **not**
+   catch a fix that is stated with complete precision and is simply wrong —
+   a claim like "database X supports SQL feature Y" can be exact and still
+   false. For any claim about a **third-party system's behavior** (a
+   database's SQL dialect support, a library's normalization rules, another
+   tool's documented feature), **test it directly against a real instance
+   when one is available** — a local, embeddable database costs nothing to
+   spin up — rather than trust general or training-time knowledge. A claim
+   that a widely-used embedded database supports the SQL-standard `IDENTITY`
+   column syntax the same way a large RDBMS does is exactly the kind of
+   precisely-stated, plausible, and wrong claim this step exists to catch;
+   testing it directly took one query and found it was false. When you
+   genuinely can't test something (no live credentials for a cloud
+   service), say so explicitly in the issue text — mark it as
+   asserted-from-documentation, not verified — so a reader knows which
+   claims to double-check first rather than trusting every sentence in the
+   issue with equal confidence.
 
 10. **If refining an already-open issue**, edit the issue body directly
     (don't just comment) so a reader gets the complete, current design in
