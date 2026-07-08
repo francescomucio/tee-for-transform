@@ -6,12 +6,12 @@ labels: needs-design
 ---
 
 <!--
-This template exists because of a real, expensive lesson (2026-07, issues
-#13/#14/#19/#30, PRs #71-#78): a "needs-design" label alone did not stop an
-issue from going straight to implementation without the design actually
-being settled. The result was six review rounds where component tests
-passed and the feature was completely inert, because no boundary the
-config crossed was checked end-to-end.
+This template exists because of a real, expensive lesson (2026-07): a
+"needs-design" label alone did not stop an issue from going straight to
+implementation without the design actually being settled. The result was
+six review rounds where component tests passed and the feature was
+completely inert, because no boundary the config crossed was checked
+end-to-end.
 
 Every section below is required before this issue is assigned to an
 implementing agent — not a nice-to-have, not something the implementer
@@ -38,10 +38,11 @@ implementation, and the person who has to live with the UX daily is the
 one who should react to it first.
 
 If this issue is a foundational/library piece with no direct developer-
-facing surface (e.g. #13's fingerprint computation, which is only exposed
-indirectly through #14's selector), say so explicitly and point to which
-downstream issue's usage example will demonstrate it end-to-end — don't
-force an artificial CLI example onto a piece that doesn't have one.
+facing surface (e.g. a fingerprint-computation function that's only
+exposed indirectly through a CLI selector built in a later issue), say so
+explicitly and point to which downstream issue's usage example will
+demonstrate it end-to-end — don't force an artificial CLI example onto a
+piece that doesn't have one.
 
 ## Existing-state audit
 
@@ -67,8 +68,8 @@ not memory. Two failure modes to check for specifically:
   keeping the old name would have promised behavior t4t doesn't have.)
 - **Architecture mismatches**: does the reference tool's approach conflict
   with a decision t4t has already made? (SQLMesh's virtual/view-based
-  environments were explicitly not adopted — they'd reopen the per-env-
-  database decision in #30.)
+  environments were explicitly not adopted — they'd reopen t4t's
+  per-environment-database separation model.)
 
 ## Design decisions (settled, not proposed)
 
@@ -107,9 +108,10 @@ The final step is always: run the acceptance-criteria E2E test.
 A **concrete end-to-end test**, spelled out here (pseudocode is fine),
 that exercises the real CLI/command path and checks real physical output —
 not mocked internals. This is the single highest-leverage item in this
-template: every review round of the naming saga this template is named
-after had passing component tests and a completely inert feature, because
-nothing ran the actual command and checked where the result landed.
+template: a feature can have passing component tests and be completely
+inert in the real command if nothing runs the actual command and checks
+where the result landed — this happened repeatedly, at real cost, before
+this requirement existed.
 
 Before finalizing: could this test pass in a broken state? (E.g. an
 assertion on "did the command exit 0" is worthless if the command has a

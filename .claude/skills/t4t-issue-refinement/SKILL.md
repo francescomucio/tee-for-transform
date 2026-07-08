@@ -11,11 +11,11 @@ ready to hand to an implementing agent.
 
 ## Why this exists
 
-Six PR rounds (#71-#75, 2026-07) shipped a feature that was completely
-inert every time, despite green component tests, because the issue that
-spawned it was never refined against real code before implementation
-started. The fixes were found later, in review, at far higher cost than
-finding them in the issue text would have been.
+Six PR rounds (2026-07) shipped a feature that was completely inert every
+time, despite green component tests, because the issue that spawned it
+was never refined against real code before implementation started. The
+fixes were found later, in review, at far higher cost than finding them
+in the issue text would have been.
 
 ## Procedure
 
