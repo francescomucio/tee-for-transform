@@ -8,6 +8,12 @@ where judgment is required.
 
 These guidelines are written to work for human and LLM reviewers alike.
 
+**This document reviews diffs.** For refining a `needs-design` issue
+*before* implementation starts, use `.github/ISSUE_TEMPLATE/needs-design.md`
+and the `t4t-issue-refinement` skill instead — cheaper to catch a design gap
+in an issue than after several PR rounds against inert code (see #13/#14/#30
+and the PR #71-#75 history for why this distinction earned its own doc).
+
 ## Before review: let the tools run
 
 ```bash
