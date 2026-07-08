@@ -58,10 +58,14 @@ in the issue text would have been.
    nobody traced when substitution actually runs) get shipped.
 
 6. **Settle every "what happens when X" explicitly.** Missing state,
-   partial failure, combination with existing flags/selectors, explicit
-   non-goals — write the answer into the issue, don't leave it for the
-   implementer's judgment. If you're not sure, that uncertainty itself is
-   a finding to report, not something to paper over with vague language.
+   partial failure, combination with existing flags/selectors — write the
+   answer into the issue, don't leave it for the implementer's judgment.
+   If you're not sure, that uncertainty itself is a finding to report, not
+   something to paper over with vague language. This is also where you
+   populate the template's **dedicated Non-goals section** (its last
+   section, not a line buried inside other prose) — every "we decided not
+   to do X here" belongs there, listed explicitly, so a reader doesn't
+   have to infer scope boundaries from what's merely absent.
 
 7. **Write the acceptance criteria as a real end-to-end test**, exercising
    the actual CLI/command path against real (or fixture) state, not mocked
@@ -89,7 +93,11 @@ in the issue text would have been.
 10. **If refining an already-open issue**, edit the issue body directly
     (don't just comment) so a reader gets the complete, current design in
     one place — but note what changed and why, either in the edit itself
-    or a short comment, so the history stays legible.
+    or a short comment, so the history stays legible. This requires
+    write/collaborator access to the repo; if you don't have it (e.g. an
+    external contributor), post the full refined body as a comment
+    instead, clearly marked as a proposed replacement for the issue body,
+    so a maintainer can apply it.
 
 ## Output
 
