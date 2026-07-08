@@ -23,6 +23,26 @@ leave the section headers.
 
 What problem does this solve, and why now.
 
+## Usage example — show it, get feedback, before designing further
+
+Before writing the detailed design, draft a **concrete, realistic transcript**
+of a developer using this feature: actual CLI invocations, actual config
+snippets, actual (illustrative, hand-written — the feature doesn't exist yet)
+output. Mark it clearly as proposed, not real output.
+
+**Show this to the user directly and ask for usability feedback before
+proceeding to Design decisions below.** This is a required conversation
+checkpoint, not just documentation — it's far cheaper to change a command
+name or an output format while it's three lines of prose than after
+implementation, and the person who has to live with the UX daily is the
+one who should react to it first.
+
+If this issue is a foundational/library piece with no direct developer-
+facing surface (e.g. #13's fingerprint computation, which is only exposed
+indirectly through #14's selector), say so explicitly and point to which
+downstream issue's usage example will demonstrate it end-to-end — don't
+force an artificial CLI example onto a piece that doesn't have one.
+
 ## Existing-state audit
 
 Grep the codebase for anything that already implements or overlaps this
@@ -67,6 +87,20 @@ what catches gaps that only exist in the real codebase, not in how the
 feature sounds when described (e.g. a fingerprinting feature that hashes
 already-variable-substituted SQL, found only by tracing the actual
 substitution call site and its timing relative to parsing).
+
+## Implementation steps — an ordered path, not a task pile
+
+A **numbered sequence**, not an unordered checklist. Each step names the
+file(s) it touches, what it accomplishes, and how to verify *that step
+alone* before moving to the next — infrastructure before logic, logic
+before composition, composition before wiring, wiring before the final
+E2E proof. The point is to make each step independently checkable, so an
+implementing agent (or reviewer) can tell exactly where things went wrong
+instead of discovering at the end that "everything's done" but the
+feature doesn't work — the same failure mode the acceptance-criteria
+section below exists to catch at the finish line, applied throughout.
+
+The final step is always: run the acceptance-criteria E2E test.
 
 ## Acceptance criteria — the merge gate
 
