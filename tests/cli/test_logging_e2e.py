@@ -17,6 +17,7 @@ run.py/build.py/test.py argument wiring.
 """
 
 import json
+import re
 import sqlite3
 import subprocess
 import sys
@@ -209,6 +210,90 @@ class TestRedaction:
         redacted = [line for line in lines if "connection_config" in line]
         assert redacted, "expected the connection_config diagnostic line to be present"
         assert redacted[0]["connection_config"]["password"] == "****"
+
+
+#: t4t/cli/utils.py:setup_logging()'s logging.basicConfig(format=...) --
+#: the pre-existing (predates this issue) stderr handler's exact line shape.
+_LEGACY_STDERR_LINE_RE = re.compile(r"^[A-Z]+ - ([\w.]+) - (.*)$", re.DOTALL)
+
+
+def _parse_legacy_stderr_lines(stderr: str) -> list[tuple[str, str]]:
+    """Return (logger_name, msg) for every stderr line matching the
+    pre-existing basicConfig "LEVEL - name - msg" format."""
+    parsed = []
+    for line in stderr.splitlines():
+        m = _LEGACY_STDERR_LINE_RE.match(line)
+        if m:
+            parsed.append((m.group(1), m.group(2)))
+    return parsed
+
+
+class TestStderrNotDuplicated:
+    """Regression test: t4t/cli/utils.py's pre-existing
+    `logging.basicConfig()` handler (predates this issue, still installed by
+    `CommandContext.__init__` via `setup_logging()`) must not *also* print
+    t4t's curated stdout content a second time, formatted as
+    "LEVEL - logger.name - msg" on stderr.
+
+    Deliberately scoped to *t4t's own curated loggers* re-appearing on
+    stderr (the actual failure mode this guards against: our new handler's
+    records leaking through the old one too), not "any text that looks
+    similar between the two streams" -- unrelated code paths coincidentally
+    using similar wording (e.g. `t4t/engine/executor.py`'s separate
+    "ModelExecutor"-named logger, which pre-dates this issue and has always
+    logged its own "Successfully executed tables:" independently of
+    `t4t/executor.py`'s curated one) is not a regression this issue caused
+    and must not fail this test.
+    """
+
+    def test_cli_output_logger_names_never_appear_on_stderr(self, project: Path):
+        """CLI_OUTPUT_LOGGER_NAMES loggers (t4t.executor, t4t.cli.commands.*)
+        are detached from root (propagate=False) precisely so their curated
+        content can never reach the legacy stderr handler -- verify none of
+        their names show up there at all."""
+        from t4t.observability.logging_setup import CLI_OUTPUT_LOGGER_NAMES
+
+        result = _run_t4t(["run", str(project)])
+        assert result.returncode == 0, result.stdout + result.stderr
+
+        legacy_names = {name for name, _ in _parse_legacy_stderr_lines(result.stderr)}
+        leaked = legacy_names & CLI_OUTPUT_LOGGER_NAMES
+        assert not leaked, f"curated logger(s) leaked onto stderr: {leaked!r}"
+
+    def test_gated_logger_curated_messages_do_not_duplicate_onto_stderr(self, project: Path):
+        """GATED_LOGGER_NAMES loggers keep propagating to root (they mix
+        curated + genuine diagnostic content on one logger name), so the fix
+        for them is an exclusion filter on the legacy handler instead --
+        verify their *curated* (cli_output/type-marked) messages don't slip
+        through it and duplicate what our own handler already printed to
+        stdout."""
+        from t4t.observability.logging_setup import GATED_LOGGER_NAMES
+
+        result = _run_t4t(["run", str(project)])
+        assert result.returncode == 0, result.stdout + result.stderr
+
+        stdout_lines = {line.strip() for line in result.stdout.splitlines() if line.strip()}
+        gated_on_stderr = [
+            (name, msg)
+            for name, msg in _parse_legacy_stderr_lines(result.stderr)
+            if name in GATED_LOGGER_NAMES
+        ]
+        duplicates = [(name, msg) for name, msg in gated_on_stderr if msg.strip() in stdout_lines]
+        assert not duplicates, (
+            f"gated logger curated content duplicated onto stderr: {duplicates!r}"
+        )
+
+    def test_stderr_line_count_is_stable_across_runs(self, project: Path):
+        """Cheap sanity check alongside the content-based tests above: two
+        runs against the same fixture produce the same stderr line count --
+        catches accidental handler stacking (e.g. a handler attached twice
+        across repeated `configure_logging()` calls in one process)."""
+        r1 = _run_t4t(["run", str(project)])
+        assert r1.returncode == 0, r1.stdout + r1.stderr
+        (project / "data" / "e2e.duckdb").unlink(missing_ok=True)
+        r2 = _run_t4t(["run", str(project)])
+        assert r2.returncode == 0, r2.stdout + r2.stderr
+        assert len(r1.stderr.splitlines()) == len(r2.stderr.splitlines())
 
 
 class TestTextModeNoDebugLeak:

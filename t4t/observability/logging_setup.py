@@ -231,12 +231,46 @@ class _CliOutputFilter(logging.Filter):
     """
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if record.name in CLI_OUTPUT_LOGGER_NAMES:
-            return True
-        if record.name in GATED_LOGGER_NAMES:
-            extra = _extra_fields(record)
-            return "type" in extra or extra.get("cli_output") is True
-        return False
+        return _is_curated_record(record)
+
+
+def _is_curated_record(record: logging.LogRecord) -> bool:
+    """True for a record this module's own handler would print.
+
+    Used by :class:`_ExcludeCuratedFilter` to keep a *different*,
+    pre-existing handler on the root logger (e.g. the
+    ``logging.basicConfig``-installed one from ``t4t/cli/utils.py:
+    setup_logging()``, which predates this module and formats every record
+    it sees as ``LEVEL - name - msg`` to stderr) from also printing the same
+    content a second time.
+    """
+    if record.name in CLI_OUTPUT_LOGGER_NAMES:
+        return True
+    if record.name in GATED_LOGGER_NAMES:
+        extra = _extra_fields(record)
+        return "type" in extra or extra.get("cli_output") is True
+    return False
+
+
+class _ExcludeCuratedFilter(logging.Filter):
+    """Attached to any *other* handler already on the root logger so it does
+    not also print t4t's curated stdout content a second time.
+
+    Only :data:`GATED_LOGGER_NAMES` loggers need this: :data:`CLI_OUTPUT_LOGGER_NAMES`
+    loggers are detached from root entirely (``propagate=False``, see
+    :func:`configure_logging`) since their whole surface is curated content
+    with nothing else that needs to keep reaching other handlers. GATED_LOGGER_NAMES
+    loggers mix curated content with genuine, pre-existing diagnostic-only
+    logging on the *same* logger name, so they can't be blanket-detached
+    without also silencing that diagnostic content on its pre-existing
+    (e.g. stderr) destination -- this filter is the surgical alternative:
+    let everything from those loggers keep propagating and reaching other
+    handlers as before, just not the specific records our own handler
+    already printed.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not _is_curated_record(record)
 
 
 def resolve_log_format(value: str | None) -> str:
@@ -247,6 +281,38 @@ def resolve_log_format(value: str | None) -> str:
     return normalized if normalized in FORMATTERS else DEFAULT_LOG_FORMAT
 
 
+def _remove_previously_installed_handlers() -> None:
+    """Remove any handler this module previously attached, wherever it put it."""
+    for logger_obj in [
+        logging.getLogger(),
+        *(logging.getLogger(n) for n in CLI_OUTPUT_LOGGER_NAMES),
+    ]:
+        for existing in list(logger_obj.handlers):
+            if getattr(existing, _HANDLER_MARKER, False):
+                logger_obj.removeHandler(existing)
+
+
+def _exclude_curated_records_from_other_root_handlers(handler: logging.Handler) -> None:
+    """Stop pre-existing (non-t4t) root handlers from also printing curated records.
+
+    ``t4t/cli/utils.py:setup_logging()`` calls ``logging.basicConfig(...)``,
+    which -- if nothing has installed a root handler yet -- attaches its own
+    plain ``StreamHandler`` (stderr, ``"LEVEL - name - msg"`` format) to the
+    root logger. GATED_LOGGER_NAMES loggers still propagate to root (see
+    :func:`configure_logging`), so without this, every curated record from
+    those modules would print twice: once via *this* module's handler
+    (correctly, once, to stdout) and once via that older handler (a raw,
+    unfiltered duplicate on stderr) -- doubling stderr output for a
+    successful run and falsifying "text output unchanged".
+    """
+    for other in logging.getLogger().handlers:
+        if other is handler:
+            continue
+        if any(isinstance(f, _ExcludeCuratedFilter) for f in other.filters):
+            continue
+        other.addFilter(_ExcludeCuratedFilter())
+
+
 def configure_logging(log_format: str = DEFAULT_LOG_FORMAT, verbose: bool = False) -> None:
     """Install the single stdout handler that renders t4t's run/build/test output.
 
@@ -254,17 +320,30 @@ def configure_logging(log_format: str = DEFAULT_LOG_FORMAT, verbose: bool = Fals
     repeatedly across a test session) -- a previous handler installed by
     this function is removed first so records are never emitted twice.
 
+    Two different attachment strategies, by design (see
+    :data:`CLI_OUTPUT_LOGGER_NAMES` / :data:`GATED_LOGGER_NAMES` docstrings):
+
+    * :data:`CLI_OUTPUT_LOGGER_NAMES` loggers get the handler attached
+      *directly* and stop propagating to root (``propagate=False``) --
+      their entire surface is curated content, so there is nothing else on
+      those loggers that needs to keep reaching other handlers.
+    * :data:`GATED_LOGGER_NAMES` loggers keep propagating to root as before
+      (they mix curated content with genuine, pre-existing diagnostic
+      logging that must keep reaching wherever it went before this issue);
+      the handler is attached to root to catch their curated records, and
+      any *other* pre-existing root handler gets an
+      :class:`_ExcludeCuratedFilter` so it does not also print those same
+      curated records a second time.
+
     This does not touch any other handler already attached to the root
-    logger (e.g. anything a host application configured); it only adds/
-    replaces the one handler this module owns.
+    logger beyond adding that filter -- e.g. the
+    ``logging.basicConfig``-installed handler from
+    ``t4t/cli/utils.py:setup_logging()`` keeps working exactly as before for
+    every record that isn't part of t4t's curated stdout stream.
     """
     formatter_cls = FORMATTERS.get(resolve_log_format(log_format), TextFormatter)
 
-    root_logger = logging.getLogger()
-
-    for existing in list(root_logger.handlers):
-        if getattr(existing, _HANDLER_MARKER, False):
-            root_logger.removeHandler(existing)
+    _remove_previously_installed_handlers()
 
     handler = _DynamicStdoutHandler(stream=sys.stdout)
     handler.setFormatter(formatter_cls())
@@ -272,7 +351,10 @@ def configure_logging(log_format: str = DEFAULT_LOG_FORMAT, verbose: bool = Fals
     handler.setLevel(logging.DEBUG if verbose else logging.INFO)
     setattr(handler, _HANDLER_MARKER, True)
 
+    root_logger = logging.getLogger()
     root_logger.addHandler(handler)
+    _exclude_curated_records_from_other_root_handlers(handler)
+
     # The root logger's own level must not gate the allowlisted loggers'
     # records before they even reach the handler above; each allowlisted
     # logger is set explicitly so verbosity is controlled by the handler,
@@ -280,3 +362,13 @@ def configure_logging(log_format: str = DEFAULT_LOG_FORMAT, verbose: bool = Fals
     # raise the effective level of every other logger in the hierarchy).
     for name in CLI_OUTPUT_LOGGER_NAMES | GATED_LOGGER_NAMES:
         logging.getLogger(name).setLevel(logging.DEBUG if verbose else logging.INFO)
+
+    # CLI_OUTPUT_LOGGER_NAMES: attach the same handler directly and stop
+    # propagating to root -- avoids the doubled-stderr-output bug for the
+    # modules whose whole logging surface is curated content, without
+    # needing a filter (nothing else on these loggers should ever print).
+    for name in CLI_OUTPUT_LOGGER_NAMES:
+        logger_obj = logging.getLogger(name)
+        if handler not in logger_obj.handlers:
+            logger_obj.addHandler(handler)
+        logger_obj.propagate = False
