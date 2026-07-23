@@ -1,6 +1,7 @@
 """Model execution logic."""
 
 import logging
+import time
 from typing import Any
 
 from t4t.adapters.base.core import DatabaseAdapter
@@ -10,6 +11,42 @@ from ..metadata.metadata_extractor import MetadataExtractor
 from ..state.state_checker import StateChecker
 
 logger = logging.getLogger(__name__)
+
+
+def _emit_model_finished(
+    table_name: str,
+    run_id: str | None,
+    start_time: float,
+    status: str,
+    *,
+    row_count: int | None = None,
+    materialization: str | None = None,
+    error: str | None = None,
+) -> None:
+    """Emit the model_finished lifecycle event for one model.
+
+    Module-level (not a closure inside `execute()`'s loop) so every argument
+    is explicit rather than captured from an enclosing scope that changes
+    each iteration.
+    """
+    duration_ms = int((time.monotonic() - start_time) * 1000)
+    if status == "success":
+        msg = f"  ✅ {table_name} ({duration_ms / 1000:.1f}s, {row_count:,} rows)"
+    else:
+        msg = f"  ❌ {table_name} failed ({duration_ms / 1000:.1f}s): {error}"
+    logger.info(
+        msg,
+        extra={
+            "type": "model_finished",
+            "run_id": run_id,
+            "model": table_name,
+            "status": status,
+            "duration_ms": duration_ms,
+            "row_count": row_count,
+            "materialization": materialization,
+            "error": error,
+        },
+    )
 
 
 class ModelExecutor:
@@ -24,6 +61,7 @@ class ModelExecutor:
         metadata_extractor: MetadataExtractor,
         state_checker: StateChecker,
         config: Any | None = None,
+        run_id: str | None = None,
     ) -> None:
         """
         Initialize the model executor.
@@ -36,6 +74,9 @@ class ModelExecutor:
             metadata_extractor: Metadata extractor instance
             state_checker: State checker instance
             config: Optional adapter config
+            run_id: Identity of the run this execution belongs to, stamped
+                on the model_started/model_finished events emitted from the
+                loop in `execute()` below.
         """
         self.adapter = adapter
         self.project_folder = project_folder
@@ -44,6 +85,7 @@ class ModelExecutor:
         self.metadata_extractor = metadata_extractor
         self.state_checker = state_checker
         self.config = config
+        self.run_id = run_id
         # Track schemas that have been processed for tag attachment
         self._processed_schemas: dict[str, dict[str, Any]] = {}
 
@@ -93,6 +135,16 @@ class ModelExecutor:
                 logger.debug(f"Skipping test node: {table_name}")
                 continue
 
+            # model_started: the one hook point for live per-model progress --
+            # there is no other place in the codebase that emits per-model
+            # events as they happen, everything else only sees the fully
+            # completed results dict.
+            logger.info(
+                f"  ▶ {table_name}",
+                extra={"type": "model_started", "run_id": self.run_id, "model": table_name},
+            )
+            model_start_time = time.monotonic()
+
             try:
                 logger.debug(f"Executing model: {table_name}")
 
@@ -100,6 +152,13 @@ class ModelExecutor:
                     logger.warning(f"Model {table_name} not found in parsed models")
                     results["failed_tables"].append(
                         {"table": table_name, "error": "Model not found in parsed models"}
+                    )
+                    _emit_model_finished(
+                        table_name,
+                        self.run_id,
+                        model_start_time,
+                        "failed",
+                        error="Model not found in parsed models",
                     )
                     continue
 
@@ -113,6 +172,13 @@ class ModelExecutor:
                 if not sql_query:
                     results["failed_tables"].append(
                         {"table": table_name, "error": "No SQL query found"}
+                    )
+                    _emit_model_finished(
+                        table_name,
+                        self.run_id,
+                        model_start_time,
+                        "failed",
+                        error="No SQL query found",
                     )
                     continue
 
@@ -179,11 +245,22 @@ class ModelExecutor:
                 logger.debug(
                     f"Successfully executed {table_name} (mapped to {mapped_name}) with {table_info['row_count']} rows"
                 )
+                _emit_model_finished(
+                    table_name,
+                    self.run_id,
+                    model_start_time,
+                    "success",
+                    row_count=table_info["row_count"],
+                    materialization=materialization,
+                )
 
             except Exception as e:
                 error_msg = f"Error executing {table_name}: {str(e)}"
                 logger.error(error_msg)
                 results["failed_tables"].append({"table": table_name, "error": str(e)})
+                _emit_model_finished(
+                    table_name, self.run_id, model_start_time, "failed", error=str(e)
+                )
                 results["execution_log"].append(
                     {"table": table_name, "status": "failed", "error": str(e)}
                 )

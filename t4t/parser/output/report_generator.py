@@ -119,9 +119,11 @@ Open `output/docs/index.html` (or your `--output-dir`) in a browser.
             with open(output_file, "w", encoding="utf-8") as f:
                 f.write(markdown_content)
 
-            logger.info(f"Markdown report saved to {output_file}")
-            print(f"Markdown report saved to {output_file}")
-            print("Includes detailed analysis (use `t4t docs` for interactive graph)")
+            logger.info(f"Markdown report saved to {output_file}", extra={"cli_output": True})
+            logger.info(
+                "Includes detailed analysis (use `t4t docs` for interactive graph)",
+                extra={"cli_output": True},
+            )
 
             return output_file
 

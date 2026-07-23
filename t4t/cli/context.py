@@ -6,6 +6,8 @@ from pathlib import Path
 
 import typer
 
+from t4t.observability import configure_logging
+
 from .utils import load_project_config, parse_vars, setup_logging
 
 
@@ -25,6 +27,7 @@ class CommandContext:
         select: list[str] | None = None,
         exclude: list[str] | None = None,
         env: str | None = None,
+        log_format: str = "text",
     ) -> None:
         """
         Initialize command context from parameters.
@@ -38,6 +41,8 @@ class CommandContext:
             env: Environment name (e.g. "dev", "prod") — if provided, the
                  connection config for that environment is loaded into
                  ``config["connection"]``. Defaults to "dev" if not specified.
+            log_format: "text" (default) or "json" — see
+                 ``t4t.observability.logging_setup`` for the format registry.
         """
         # Parse variables if provided
         self.vars = parse_vars(vars)
@@ -63,9 +68,13 @@ class CommandContext:
         # Check if the resolved environment is protected
         self._check_protected_env(project_folder, resolved_env, env)
 
-        # Set up logging
+        # Set up logging: the pre-existing basicConfig-based stderr diagnostic
+        # stream (unchanged), plus the new stdout text/json CLI output stream
+        # (t4t.observability) filtered to the run/build/test call sites.
         self.verbose = verbose
+        self.log_format = log_format
         setup_logging(self.verbose)
+        configure_logging(log_format, self.verbose)
 
         # Resolve project folder to absolute path
         self.project_path = Path(project_folder).resolve()

@@ -5,6 +5,7 @@ Handles execution of tests for models (tables/views).
 """
 
 import logging
+import time
 from typing import Any
 
 from t4t.adapters.base import DatabaseAdapter
@@ -23,6 +24,7 @@ class ModelTestExecutor:
         self,
         adapter: DatabaseAdapter,
         parsed_models: dict[str, Any] | None = None,
+        run_id: str | None = None,
     ):
         """
         Initialize model test executor.
@@ -31,10 +33,16 @@ class ModelTestExecutor:
             adapter: Database adapter for executing test queries
             parsed_models: Optional full parsed-models map so default-test injection can use
                 the same auto-built dimension registry as the parser/docs.
+            run_id: Identity of the run this test execution belongs to,
+                stamped on the test_started/test_finished events emitted
+                from `execute_tests_for_model` below. This is the common
+                hook point for both `t4t test` (via the batch test executor)
+                and `t4t build` (interleaved, per model).
         """
         self.adapter = adapter
         self.parsed_models = parsed_models
         self.logger = logger
+        self.run_id = run_id
         self._used_test_names: set[str] = set()
 
     def execute_tests_for_model(
@@ -66,6 +74,12 @@ class ModelTestExecutor:
         severity_overrides = severity_overrides or {}
 
         models_for_injection = parsed_models if parsed_models is not None else self.parsed_models
+
+        self.logger.info(
+            f"  🧪 {table_name}",
+            extra={"type": "test_started", "run_id": self.run_id, "model": table_name},
+        )
+        start_time = time.monotonic()
 
         # Inject default semantic tests (if enabled) and return WARNING results for any injection warnings.
         metadata_copy, warnings = inject_default_tests(
@@ -99,6 +113,23 @@ class ModelTestExecutor:
             results.extend(
                 self._execute_model_level_tests(table_name, metadata["tests"], severity_overrides)
             )
+
+        duration_ms = int((time.monotonic() - start_time) * 1000)
+        passed = sum(1 for r in results if r.passed)
+        failed = sum(1 for r in results if not r.passed and r.severity == TestSeverity.ERROR)
+        self.logger.info(
+            f"  🧪 {table_name}: {passed} passed, {failed} failed ({duration_ms / 1000:.1f}s)",
+            extra={
+                "type": "test_finished",
+                "run_id": self.run_id,
+                "model": table_name,
+                "status": "failed" if failed else "success",
+                "duration_ms": duration_ms,
+                "total": len(results),
+                "passed": passed,
+                "failed": failed,
+            },
+        )
 
         return results
 

@@ -21,22 +21,31 @@ class TestExecutor:
 
     __test__ = False  # Tell pytest this is not a test class
 
-    def __init__(self, adapter: DatabaseAdapter, project_folder: str | None = None):
+    def __init__(
+        self,
+        adapter: DatabaseAdapter,
+        project_folder: str | None = None,
+        run_id: str | None = None,
+    ):
         """
         Initialize test executor.
 
         Args:
             adapter: Database adapter for executing test queries
             project_folder: Optional project folder path for discovering SQL tests
+            run_id: Identity of the run this test execution belongs to,
+                threaded into the model/function test executors so
+                test_started/test_finished events carry it.
         """
         self.adapter = adapter
         self.project_folder = Path(project_folder) if project_folder else None
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.run_id = run_id
         self._test_discovery: TestDiscovery | None = None
 
         # Initialize executors
-        self.function_executor = FunctionTestExecutor(adapter)
-        self.model_executor = ModelTestExecutor(adapter, parsed_models=None)
+        self.function_executor = FunctionTestExecutor(adapter, run_id=run_id)
+        self.model_executor = ModelTestExecutor(adapter, parsed_models=None, run_id=run_id)
 
         # Discover and register SQL tests from tests/ folder
         if self.project_folder:

@@ -123,8 +123,20 @@ def results_to_manifest(
     function_names: set[str] | None = None,
     environment: str | None = None,
     protected: bool = False,
+    run_id: str | None = None,
 ) -> RunManifest:
-    """Normalize execute_models or build_models result dicts into a RunManifest."""
+    """Normalize execute_models or build_models result dicts into a RunManifest.
+
+    Args:
+        run_id: Identity of the run, generated at the start of the CLI
+            command (`run.py`/`build.py`) and threaded through so the same
+            id correlates the JSON event stream with the persisted manifest.
+            Falls back to a freshly generated uuid if not provided, for
+            direct/programmatic callers that don't care about correlation
+            (e.g. existing unit tests) -- production call sites always pass
+            one explicitly and this function no longer mints the run's
+            "real" id itself.
+    """
     analysis = results.get("analysis") or {}
     execution_order: list[str] = list(analysis.get("execution_order") or [])
     graph = analysis.get("dependency_graph") or {}
@@ -226,7 +238,7 @@ def results_to_manifest(
     return RunManifest(
         schema_version=SCHEMA_VERSION,
         t4t_version=_t4t_version(),
-        run_id=str(uuid.uuid4()),
+        run_id=run_id or str(uuid.uuid4()),
         command=command,
         started_at=started_at,
         finished_at=finished_at,

@@ -3,6 +3,8 @@ Test command implementation.
 """
 
 import contextlib
+import logging
+import uuid
 from pathlib import Path
 
 import typer
@@ -13,6 +15,8 @@ from t4t.engine.execution_engine import ExecutionEngine
 from t4t.parser import ProjectParser
 from t4t.testing import TestExecutor
 
+logger = logging.getLogger(__name__)
+
 
 def cmd_test(
     project_folder: str,
@@ -20,25 +24,37 @@ def cmd_test(
     verbose: bool = False,
     select: list[str] | None = None,
     exclude: list[str] | None = None,
+    log_format: str = "text",
 ) -> None:
     """Execute the test command."""
+    run_id = str(uuid.uuid4())
+
     ctx = CommandContext(
         project_folder=project_folder,
         vars=vars,
         verbose=verbose,
         select=select,
         exclude=exclude,
+        log_format=log_format,
     )
 
     try:
-        typer.echo(f"Running tests for project: {project_folder}")
+        logger.info(
+            f"Running tests for project: {project_folder}",
+            extra={
+                "type": "run_started",
+                "run_id": run_id,
+                "env": ctx.env_name,
+                "selection": ctx.select_patterns,
+            },
+        )
         ctx.print_variables_info()
         ctx.print_selection_info()
 
         # Step 1: Compile project to OTS modules
-        typer.echo("\n" + "=" * 50)
-        typer.echo("t4t: COMPILING PROJECT TO OTS MODULES")
-        typer.echo("=" * 50)
+        logger.info("\n" + "=" * 50)
+        logger.info("t4t: COMPILING PROJECT TO OTS MODULES")
+        logger.info("=" * 50)
         try:
             from t4t.compiler import compile_project
 
@@ -48,7 +64,7 @@ def cmd_test(
                 variables=ctx.vars,
                 project_config=ctx.config,
             )
-            typer.echo(
+            logger.info(
                 f"✅ Compilation complete: {compile_results['ots_modules_count']} OTS module(s)"
             )
 
@@ -60,11 +76,11 @@ def cmd_test(
             if not graph or not execution_order:
                 raise RuntimeError("Compilation did not return dependency graph or execution order")
 
-            typer.echo(f"✅ Using dependency graph from compilation: {len(graph['nodes'])} nodes")
-            typer.echo(f"   Execution order: {' -> '.join(execution_order)}")
+            logger.info(f"✅ Using dependency graph from compilation: {len(graph['nodes'])} nodes")
+            logger.info(f"   Execution order: {' -> '.join(execution_order)}")
 
         except Exception as e:
-            typer.echo(f"❌ Compilation failed: {e}", err=True)
+            logger.error(f"❌ Compilation failed: {e}")
             raise
 
         # Step 2: Create parser instance for test execution
@@ -81,7 +97,7 @@ def cmd_test(
             )
 
             parsed_models, execution_order = selector.filter_models(parsed_models, execution_order)
-            typer.echo(f"Filtered to {len(parsed_models)} models")
+            logger.info(f"Filtered to {len(parsed_models)} models")
 
         # Create model executor and initialize execution engine to get adapter
         # Resolve relative paths in connection config relative to project folder
@@ -101,12 +117,12 @@ def cmd_test(
 
             # Create test executor (discover SQL tests from tests/ folder)
             test_executor = TestExecutor(
-                execution_engine.adapter, project_folder=str(ctx.project_path)
+                execution_engine.adapter, project_folder=str(ctx.project_path), run_id=run_id
             )
 
-            typer.echo("\n" + "=" * 50)
-            typer.echo("EXECUTING TESTS")
-            typer.echo("=" * 50)
+            logger.info("\n" + "=" * 50)
+            logger.info("EXECUTING TESTS")
+            logger.info("=" * 50)
 
             # Get parsed functions if available; functions may not be
             # available, in which case continue with model tests only
@@ -122,35 +138,45 @@ def cmd_test(
             )
 
             # Print test results
-            typer.echo("\nTest Results:")
-            typer.echo(f"  Total tests: {test_results['total']}")
-            typer.echo(f"  ✅ Passed: {test_results['passed']}")
-            typer.echo(f"  ❌ Failed: {test_results['failed']}")
+            logger.info("\nTest Results:")
+            logger.info(f"  Total tests: {test_results['total']}")
+            logger.info(f"  ✅ Passed: {test_results['passed']}")
+            logger.info(f"  ❌ Failed: {test_results['failed']}")
 
             if test_results["warnings"]:
-                typer.echo(f"\n  ⚠️  Warnings ({len(test_results['warnings'])}):")
+                logger.warning(f"\n  ⚠️  Warnings ({len(test_results['warnings'])}):")
                 for warning in test_results["warnings"]:
-                    typer.echo(f"    - {warning}")
+                    logger.warning(f"    - {warning}")
 
             if test_results["errors"]:
-                typer.echo(f"\n  ❌ Errors ({len(test_results['errors'])}):")
+                logger.error(f"\n  ❌ Errors ({len(test_results['errors'])}):")
                 for error in test_results["errors"]:
-                    typer.echo(f"    - {error}")
+                    logger.error(f"    - {error}")
 
             # Show individual test results if verbose
             if ctx.verbose and test_results["test_results"]:
-                typer.echo("\nDetailed Results:")
+                logger.info("\nDetailed Results:")
                 for result in test_results["test_results"]:
-                    typer.echo(f"  {result}")
+                    logger.info(f"  {result}")
 
-            # Exit with error code if there are test errors
+            # Exit with error code if there are test errors -- the final
+            # message on each branch also carries the run_finished event.
             if test_results["errors"]:
-                typer.echo("\n❌ Test execution failed with errors", err=True)
+                logger.error(
+                    "\n❌ Test execution failed with errors",
+                    extra={"type": "run_finished", "run_id": run_id, "status": "failed"},
+                )
                 raise typer.Exit(1)
             elif test_results["warnings"]:
-                typer.echo("\n⚠️  Test execution completed with warnings")
+                logger.warning(
+                    "\n⚠️  Test execution completed with warnings",
+                    extra={"type": "run_finished", "run_id": run_id, "status": "warning"},
+                )
             else:
-                typer.echo("\n✅ All tests passed!")
+                logger.info(
+                    "\n✅ All tests passed!",
+                    extra={"type": "run_finished", "run_id": run_id, "status": "success"},
+                )
 
         finally:
             if execution_engine:

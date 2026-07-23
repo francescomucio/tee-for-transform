@@ -4,6 +4,11 @@ Build command implementation.
 Builds models with interleaved test execution, stopping on test failures.
 """
 
+import logging
+import time
+import uuid
+from importlib.metadata import PackageNotFoundError, version
+
 import typer
 
 from t4t.cli.context import CommandContext
@@ -12,6 +17,15 @@ from t4t.engine.connection_manager import ConnectionManager
 from t4t.executor import build_models
 from t4t.parser.output.lookup_generator import generate_lookups
 from t4t.state import prepare_retry_select_patterns
+
+logger = logging.getLogger(__name__)
+
+
+def _t4t_version() -> str:
+    try:
+        return version("t4t")
+    except PackageNotFoundError:
+        return "0.0.0"
 
 
 def _pluralize(count: int, singular: str, plural: str | None = None) -> str:
@@ -40,8 +54,15 @@ def cmd_build(
     retry: bool = False,
     auto_resolve_level_conflicts: bool = True,
     env: str | None = None,
+    log_format: str = "text",
 ) -> None:
     """Execute the build command."""
+    # run_id is generated here, at the very start, so it can be threaded
+    # through build_models()/ModelExecutor and stamped on every event this
+    # invocation emits, including the very first one (run_started).
+    run_id = str(uuid.uuid4())
+    run_start_time = time.monotonic()
+
     try:
         ctx = CommandContext(
             project_folder=project_folder,
@@ -50,6 +71,7 @@ def cmd_build(
             select=select,
             exclude=exclude,
             env=env,
+            log_format=log_format,
         )
     except ValueError as e:
         typer.echo(
@@ -58,18 +80,27 @@ def cmd_build(
         )
         raise typer.Exit(1) from None
     connection_manager = None
+    run_finished_emitted = False
 
     try:
         if ctx.is_protected_env():
-            typer.echo(
-                typer.style("⚠️  PROTECTED ENVIRONMENT", fg=typer.colors.YELLOW, bold=True)
-                + f": {ctx.env_name}"
-            )
-        typer.echo(f"Building project: {project_folder}")
+            logger.info(f"⚠️  PROTECTED ENVIRONMENT: {ctx.env_name}")
+        # This is also the run_started lifecycle event: run_id must be the
+        # first thing t4t emits about this invocation.
+        logger.info(
+            f"Building project: {project_folder}",
+            extra={
+                "type": "run_started",
+                "run_id": run_id,
+                "env": ctx.env_name,
+                "t4t_version": _t4t_version(),
+                "selection": ctx.select_patterns,
+            },
+        )
         ctx.print_variables_info()
         ctx.print_selection_info()
 
-        typer.echo("Refreshing generated lookup models...")
+        logger.info("Refreshing generated lookup models...")
         generate_lookups(
             project_path=ctx.project_path,
             vars_dict=ctx.vars,
@@ -122,6 +153,7 @@ def cmd_build(
             exclude_patterns=ctx.exclude_patterns,
             project_config=ctx.config,
             env_name=ctx.env_name,
+            run_id=run_id,
         )
 
         # Calculate statistics
@@ -144,49 +176,64 @@ def cmd_build(
                 f"{len(executed_functions)} {_pluralize(len(executed_functions), 'function')}"
             )
 
+        status = "success" if failed_count == 0 and failed_tests == 0 else "failed"
+        duration_ms = int((time.monotonic() - run_start_time) * 1000)
+        completion_extra = {
+            "type": "run_finished",
+            "run_id": run_id,
+            "status": status,
+            "duration_ms": duration_ms,
+            "executed_tables": successful_count,
+            "failed_tables": failed_count,
+        }
+
+        # This is also the run_finished lifecycle event -- the run's last line.
         if parts:
-            typer.echo(f"\nCompleted! Successfully executed: {', '.join(parts)}")
+            logger.info(
+                f"\nCompleted! Successfully executed: {', '.join(parts)}", extra=completion_extra
+            )
         else:
-            typer.echo("\nCompleted!")
+            logger.info("\nCompleted!", extra=completion_extra)
+        run_finished_emitted = True
 
         if total_functions > 0:
-            typer.echo(
+            logger.info(
                 f"  ✅ Successful: {successful_count} {_pluralize(successful_count, 'table')}, {len(executed_functions)} {_pluralize(len(executed_functions), 'function')}"
             )
         else:
-            typer.echo(
+            logger.info(
                 f"  ✅ Successful: {successful_count} {_pluralize(successful_count, 'table')}"
             )
 
         if failed_count > 0:
-            typer.echo(f"  ❌ Failed: {failed_count} {_pluralize(failed_count, 'table')}")
+            logger.warning(f"  ❌ Failed: {failed_count} {_pluralize(failed_count, 'table')}")
         if failed_functions:
-            typer.echo(
+            logger.warning(
                 f"  ❌ Failed: {len(failed_functions)} {_pluralize(len(failed_functions), 'function')}"
             )
 
-        typer.echo(
+        logger.info(
             f"Tests: {passed_tests} passed, {failed_tests} failed out of {total_tests} total"
         )
 
         if failed_count > 0 or failed_tests > 0:
             if failed_count > 0:
-                typer.echo(f"  ❌ Failed models: {failed_count}")
+                logger.warning(f"  ❌ Failed models: {failed_count}")
             if failed_tests > 0:
-                typer.echo(f"  ❌ Failed tests: {failed_tests}")
+                logger.warning(f"  ❌ Failed tests: {failed_tests}")
             raise typer.Exit(1)
         else:
-            typer.echo(
+            logger.info(
                 f"  ✅ All {successful_count} {_pluralize(successful_count, 'table')} executed successfully!"
             )
             if executed_functions:
-                typer.echo(
+                logger.info(
                     f"  ✅ All {len(executed_functions)} {_pluralize(len(executed_functions), 'function')} deployed successfully!"
                 )
-            typer.echo(f"  ✅ All {total_tests} tests passed!")
+            logger.info(f"  ✅ All {total_tests} tests passed!")
 
         if ctx.verbose:
-            typer.echo(f"Analysis info: {results.get('analysis', {})}")
+            logger.info(f"Analysis info: {results.get('analysis', {})}")
 
     except KeyboardInterrupt:
         typer.echo("\n\n⚠️  Build interrupted by user")
@@ -194,6 +241,17 @@ def cmd_build(
     except Exception as e:
         ctx.handle_error(e)
     finally:
+        if not run_finished_emitted:
+            duration_ms = int((time.monotonic() - run_start_time) * 1000)
+            logger.info(
+                "Run failed",
+                extra={
+                    "type": "run_finished",
+                    "run_id": run_id,
+                    "status": "error",
+                    "duration_ms": duration_ms,
+                },
+            )
         # Cleanup
         if connection_manager:
             connection_manager.cleanup()
