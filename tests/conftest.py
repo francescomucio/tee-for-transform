@@ -11,6 +11,25 @@ import pytest
 
 from t4t.adapters.duckdb.adapter import DuckDBAdapter
 from t4t.engine.model_state import ModelStateManager
+from t4t.observability import configure_logging
+
+
+@pytest.fixture(autouse=True)
+def _configure_t4t_logging():
+    """Wire up t4t's stdout logging handler for every test.
+
+    Mirrors what `CommandContext.__init__` does for a real CLI invocation.
+    Tests that call `cmd_run`/`cmd_build`/`cmd_test` directly typically mock
+    `CommandContext` itself (to avoid real config loading), which means the
+    real handler-install side effect never runs -- this fixture ensures a
+    handler is always present, in default text mode, so `print()`-like
+    assertions against captured stdout keep working. Tests that want JSON
+    mode or verbose call `configure_logging(...)` again themselves; each
+    call safely replaces the previously-installed handler (see
+    `t4t.observability.logging_setup.configure_logging`).
+    """
+    configure_logging("text", verbose=False)
+    yield
 
 
 @pytest.fixture

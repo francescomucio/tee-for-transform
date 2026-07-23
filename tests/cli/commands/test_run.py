@@ -82,17 +82,23 @@ class TestRunCommand:
         assert "Completed!" in output
         assert "All 2 tables executed successfully!" in output
 
-        # Verify execute_models was called correctly
-        mock_execute_models.assert_called_once_with(
-            project_folder=str(mock_ctx.project_path),
-            connection_config=mock_ctx.config["connection"],
-            save_analysis=True,
-            variables={},
-            select_patterns=None,
-            exclude_patterns=None,
-            project_config=mock_ctx.config,
-            env_name="dev",
-        )
+        # Verify execute_models was called correctly. run_id is generated
+        # fresh per invocation (see cmd_run) so only its presence/type is
+        # checked, not an exact value.
+        mock_execute_models.assert_called_once()
+        call_kwargs = mock_execute_models.call_args.kwargs
+        run_id = call_kwargs.pop("run_id", None)
+        assert isinstance(run_id, str) and run_id
+        assert call_kwargs == {
+            "project_folder": str(mock_ctx.project_path),
+            "connection_config": mock_ctx.config["connection"],
+            "save_analysis": True,
+            "variables": {},
+            "select_patterns": None,
+            "exclude_patterns": None,
+            "project_config": mock_ctx.config,
+            "env_name": "dev",
+        }
 
     @patch("t4t.cli.commands.run.execute_models")
     @patch("t4t.cli.commands.run.ConnectionManager")
