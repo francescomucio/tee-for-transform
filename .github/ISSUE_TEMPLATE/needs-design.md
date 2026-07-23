@@ -89,6 +89,17 @@ feature sounds when described (e.g. a fingerprinting feature that hashes
 already-variable-substituted SQL, found only by tracing the actual
 substitution call site and its timing relative to parsing).
 
+For any claim about **third-party system behavior** — a database's SQL
+dialect support, a library's normalization rules — test it directly
+against a real instance when one is available, don't state it from
+memory or documentation alone, however standard it seems. A precisely
+stated claim can still be false (a widely-used embedded database turned
+out not to support the same `IDENTITY` column syntax a large RDBMS uses —
+found only by running the actual query). Where you genuinely can't test
+something (no live credentials for a cloud service), say so explicitly
+and mark it as asserted-not-verified, so a reader knows what to
+double-check first.
+
 ## Implementation steps — an ordered path, not a task pile
 
 A **numbered sequence**, not an unordered checklist. Each step names the
