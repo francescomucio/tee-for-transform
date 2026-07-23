@@ -165,13 +165,11 @@ def cmd_run(
         )
 
         # Calculate statistics
-        len(results["executed_tables"]) + len(results["failed_tables"])
         successful_tables = len(results["executed_tables"])
         failed_tables = len(results["failed_tables"])
 
         executed_functions = results.get("executed_functions", [])
         failed_functions = results.get("failed_functions", [])
-        len(executed_functions) + len(failed_functions)
         successful_functions = len(executed_functions)
         failed_functions_count = len(failed_functions)
 
@@ -234,6 +232,9 @@ def cmd_run(
         if ctx.verbose:
             logger.info(f"Analysis info: {results.get('analysis', {})}")
 
+    except KeyboardInterrupt:
+        typer.echo("\n\n⚠️  Run interrupted by user")
+        raise typer.Exit(130) from None
     except Exception as e:
         ctx.handle_error(e)
     finally:

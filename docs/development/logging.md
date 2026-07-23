@@ -107,6 +107,24 @@ Same shape as `model_started`/`model_finished`, keyed by `model` (or
 | `duration_ms` | int | `run`/`build` only. |
 | `executed_tables` / `failed_tables` | int | `run`/`build` only, present on the normal-completion path. |
 
+## Tracebacks on crash
+
+When a log record carries `exc_info` (i.e. was logged from an `except`
+block via `logger.exception(...)`/`logger.error(..., exc_info=True)`), the
+two formatters render it differently, consistent with how each mode treats
+everything else:
+
+- **Text mode**: the formatted traceback is inlined into the same line's
+  message text (`msg\n<traceback>`), matching historical
+  `print()`/`traceback.print_exc()` output.
+- **JSON mode**: the formatted traceback is emitted as its own top-level
+  `exc_info` string field on that line's JSON object, keeping `msg` itself
+  free of embedded newlines/traceback text — the payload stays one valid
+  JSON object per line either way.
+
+See `TextFormatter.format()` / `JSONFormatter.format()` in
+`t4t/observability/logging_setup.py`.
+
 ## Redaction
 
 `--log-format json` redacts secret values (currently: any dict-valued

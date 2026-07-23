@@ -8,7 +8,7 @@ import typer
 
 from t4t.observability import configure_logging
 
-from .utils import load_project_config, parse_vars, setup_logging
+from .utils import load_project_config, parse_vars
 
 
 class CommandContext:
@@ -68,12 +68,15 @@ class CommandContext:
         # Check if the resolved environment is protected
         self._check_protected_env(project_folder, resolved_env, env)
 
-        # Set up logging: the pre-existing basicConfig-based stderr diagnostic
-        # stream (unchanged), plus the new stdout text/json CLI output stream
-        # (t4t.observability) filtered to the run/build/test call sites.
+        # Set up logging: a single call. configure_logging() installs both
+        # the legacy basicConfig-based stderr diagnostic handler (as its own
+        # first step, via _install_legacy_root_handler) and the new stdout
+        # text/json CLI output stream (t4t.observability), in that order,
+        # so the stderr-deduplication filter always has a handler to attach
+        # to -- no cross-function call-order dependency for a caller to get
+        # wrong. See t4t.observability.logging_setup.configure_logging.
         self.verbose = verbose
         self.log_format = log_format
-        setup_logging(self.verbose)
         configure_logging(log_format, self.verbose)
 
         # Resolve project folder to absolute path

@@ -214,7 +214,21 @@ class _DynamicStdoutHandler(logging.StreamHandler):
     """
 
     def emit(self, record: logging.LogRecord) -> None:
-        self.stream = sys.stdout
+        stream = sys.stdout
+        if stream is None:
+            # sys.stdout can legitimately be None (e.g. pythonw.exe, or any
+            # environment that detaches/closes standard streams) -- without
+            # this guard, StreamHandler.emit() would try to write to a None
+            # stream and rely on its own except-Exception/handleError()
+            # fallback to avoid crashing, which prints a warning of its own
+            # and can itself raise if handleError() tries to write to
+            # sys.stderr (also unavailable here). Fall back to stderr, and
+            # if that is unavailable too, drop the record silently rather
+            # than raising -- there's nowhere sane left to put it.
+            stream = sys.stderr
+            if stream is None:
+                return
+        self.stream = stream
         super().emit(record)
 
 
@@ -273,12 +287,68 @@ class _ExcludeCuratedFilter(logging.Filter):
         return not _is_curated_record(record)
 
 
-def resolve_log_format(value: str | None) -> str:
-    """Normalize a requested format, falling back to the default for unknown values."""
-    if value is None:
-        return DEFAULT_LOG_FORMAT
-    normalized = value.strip().lower()
-    return normalized if normalized in FORMATTERS else DEFAULT_LOG_FORMAT
+def resolve_log_format(value: str | None, *, strict: bool = False) -> str:
+    """Normalize a requested log format string -- the single source of
+    truth for log-format normalization, used both by internal callers (e.g.
+    :func:`configure_logging`) and by the CLI's ``--log-format`` callback
+    (:func:`t4t.cli.main.validate_log_format`), so the two never drift into
+    subtly different normalization rules again (they used to: the CLI
+    callback only lowercased, this function also stripped whitespace, so
+    e.g. a stray-whitespace ``T4T_LOG_FORMAT=" json"`` env var would pass
+    here but fail CLI validation).
+
+    Args:
+        value: Raw format string (e.g. from ``--log-format``/
+            ``T4T_LOG_FORMAT``), or None.
+        strict: If True, raise :class:`ValueError` for a value that does not
+            normalize to a recognized format, instead of silently falling
+            back to :data:`DEFAULT_LOG_FORMAT`. Internal callers (e.g.
+            :func:`configure_logging`) must use the default, permissive
+            ``strict=False`` -- they run *after* CLI validation has already
+            had its chance to reject bad input, and must never raise on
+            their own. The CLI callback opts into ``strict=True`` so bad
+            user input is still rejected outright, as before.
+
+    Returns:
+        A key from :data:`FORMATTERS`.
+
+    Raises:
+        ValueError: If ``strict`` is True and ``value`` does not normalize
+            to a recognized format.
+    """
+    normalized = value.strip().lower() if value is not None else None
+    if normalized in FORMATTERS:
+        return normalized
+    if strict:
+        raise ValueError(
+            f"Invalid log format {value!r}. Must be one of: {', '.join(sorted(FORMATTERS))}."
+        )
+    return DEFAULT_LOG_FORMAT
+
+
+def _install_legacy_root_handler(verbose: bool) -> None:
+    """Ensure the pre-existing (predates this module), basicConfig-based
+    root handler exists, before anything else in :func:`configure_logging`
+    runs -- so :func:`_exclude_curated_records_from_other_root_handlers`
+    always has a handler to patch, regardless of call order.
+
+    This logic used to live only in ``t4t/cli/utils.py:setup_logging()``,
+    called *separately* by ``CommandContext.__init__`` and required to run
+    strictly before :func:`configure_logging` -- an implicit, unenforced
+    ordering dependency that, if a future edit ever swapped the two calls,
+    would silently reintroduce the duplicate-stderr-output bug (the
+    exclusion filter would have nothing to attach to, since
+    ``logging.basicConfig()`` is a no-op once *our* handler already exists
+    on root). Owning it here, as this function's first step, removes that
+    footgun by construction: there is exactly one function
+    (:func:`configure_logging`) callers need to invoke, and its own
+    internal ordering can't be violated from outside it.
+    ``t4t/cli/utils.py:setup_logging()`` is now a thin wrapper around this
+    same function, kept for backward compatibility with any external caller
+    of that public name.
+    """
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(level=level, format="%(levelname)s - %(name)s - %(message)s")
 
 
 def _remove_previously_installed_handlers() -> None:
@@ -336,11 +406,19 @@ def configure_logging(log_format: str = DEFAULT_LOG_FORMAT, verbose: bool = Fals
       curated records a second time.
 
     This does not touch any other handler already attached to the root
-    logger beyond adding that filter -- e.g. the
-    ``logging.basicConfig``-installed handler from
-    ``t4t/cli/utils.py:setup_logging()`` keeps working exactly as before for
-    every record that isn't part of t4t's curated stdout stream.
+    logger beyond adding that filter -- e.g. the legacy
+    ``logging.basicConfig``-installed handler (installed by this function
+    itself, first -- see :func:`_install_legacy_root_handler`) keeps
+    working exactly as before for every record that isn't part of t4t's
+    curated stdout stream.
     """
+    # Must run before anything else below: _exclude_curated_records_from_
+    # other_root_handlers() needs the legacy handler to already exist.
+    # Owning this call here (rather than requiring some other function to
+    # run first) is what makes that guarantee unconditional -- see the
+    # docstring on _install_legacy_root_handler for the bug this replaced.
+    _install_legacy_root_handler(verbose)
+
     formatter_cls = FORMATTERS.get(resolve_log_format(log_format), TextFormatter)
 
     _remove_previously_installed_handlers()

@@ -4,6 +4,7 @@ Test command implementation.
 
 import contextlib
 import logging
+import time
 import uuid
 from pathlib import Path
 
@@ -28,6 +29,8 @@ def cmd_test(
 ) -> None:
     """Execute the test command."""
     run_id = str(uuid.uuid4())
+    run_start_time = time.monotonic()
+    run_finished_emitted = False
 
     ctx = CommandContext(
         project_folder=project_folder,
@@ -166,17 +169,20 @@ def cmd_test(
                     "\n❌ Test execution failed with errors",
                     extra={"type": "run_finished", "run_id": run_id, "status": "failed"},
                 )
+                run_finished_emitted = True
                 raise typer.Exit(1)
             elif test_results["warnings"]:
                 logger.warning(
                     "\n⚠️  Test execution completed with warnings",
                     extra={"type": "run_finished", "run_id": run_id, "status": "warning"},
                 )
+                run_finished_emitted = True
             else:
                 logger.info(
                     "\n✅ All tests passed!",
                     extra={"type": "run_finished", "run_id": run_id, "status": "success"},
                 )
+                run_finished_emitted = True
 
         finally:
             if execution_engine:
@@ -184,3 +190,19 @@ def cmd_test(
 
     except Exception as e:
         ctx.handle_error(e)
+    finally:
+        # Guarantees run_finished fires even if an exception happened before
+        # reaching one of the three normal-completion branches above (e.g.
+        # compile_project() failing) -- same run_finished_emitted + finally
+        # pattern as run.py/build.py.
+        if not run_finished_emitted:
+            duration_ms = int((time.monotonic() - run_start_time) * 1000)
+            logger.info(
+                "Run failed",
+                extra={
+                    "type": "run_finished",
+                    "run_id": run_id,
+                    "status": "error",
+                    "duration_ms": duration_ms,
+                },
+            )

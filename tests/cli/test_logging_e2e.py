@@ -189,6 +189,75 @@ class TestSixNamedLifecycleEvents:
         assert types_in_order[-1] == "run_finished"
 
 
+class TestRunFinishedReliability:
+    """run_finished must fire even when the invocation crashes before
+    reaching a normal-completion branch -- run.py/build.py/test.py all use
+    a run_finished_emitted flag + `finally` block for exactly this.
+
+    Uses a project with an unsupported adapter `type` in project.toml: this
+    reliably raises deep inside each command's real work (ExecutionEngine
+    construction failing while executing/connecting), well after
+    run_started has already fired and well before any normal-completion
+    branch -- the actual early-crash path this guards against. (Deliberately
+    not "CommandContext construction fails", which happens *before*
+    run_started is ever emitted on any command -- no run_finished is
+    expected there either, on any command, since no run meaningfully
+    started; that's not the gap this test targets.)
+    """
+
+    def _write_project_with_unsupported_adapter(self, root: Path) -> Path:
+        (root / "models" / "t").mkdir(parents=True)
+        (root / "data").mkdir(parents=True)
+        db_path = root / "data" / "crash.duckdb"
+        (root / "project.toml").write_text(
+            f"""project_folder = "crash"
+[environments.dev.connection]
+type = "nonexistent_adapter_xyz"
+path = "{db_path.as_posix()}"
+""",
+            encoding="utf-8",
+        )
+        (root / "models" / "t" / "a.sql").write_text("SELECT 1 AS id\n", encoding="utf-8")
+        return root.resolve()
+
+    def _assert_single_run_finished_with_error(self, result: subprocess.CompletedProcess) -> None:
+        assert result.returncode != 0
+
+        lines = _json_lines(result.stdout)
+        typed = [line for line in lines if "type" in line]
+        types_in_order = [line["type"] for line in typed]
+
+        assert types_in_order[0] == "run_started"
+        assert types_in_order[-1] == "run_finished"
+        assert types_in_order.count("run_finished") == 1
+
+        run_finished = next(line for line in typed if line["type"] == "run_finished")
+        assert run_finished["status"] == "error"
+        run_started = next(line for line in typed if line["type"] == "run_started")
+        assert run_finished["run_id"] == run_started["run_id"]
+
+    def test_test_command_early_crash_still_emits_run_finished(self, tmp_path: Path):
+        """The gap this was filed for: t4t/cli/commands/test.py did not
+        have the run_finished_emitted + finally pattern before this fix."""
+        project = self._write_project_with_unsupported_adapter(tmp_path / "crash_proj_test")
+        result = _run_t4t(["test", str(project), "--log-format", "json"])
+        self._assert_single_run_finished_with_error(result)
+
+    def test_run_command_early_crash_still_emits_run_finished(self, tmp_path: Path):
+        """Same crash path via `t4t run` -- covers run.py's identical
+        run_finished_emitted + finally pattern."""
+        project = self._write_project_with_unsupported_adapter(tmp_path / "crash_proj_run")
+        result = _run_t4t(["run", str(project), "--log-format", "json"])
+        self._assert_single_run_finished_with_error(result)
+
+    def test_build_command_early_crash_still_emits_run_finished(self, tmp_path: Path):
+        """Same crash path via `t4t build` -- covers build.py's identical
+        run_finished_emitted + finally pattern."""
+        project = self._write_project_with_unsupported_adapter(tmp_path / "crash_proj_build")
+        result = _run_t4t(["build", str(project), "--log-format", "json"])
+        self._assert_single_run_finished_with_error(result)
+
+
 class TestRedaction:
     """Design decision 5: a fake secret in connection config must never
     appear in captured JSON log output -- proven, not assumed."""
@@ -212,8 +281,9 @@ class TestRedaction:
         assert redacted[0]["connection_config"]["password"] == "****"
 
 
-#: t4t/cli/utils.py:setup_logging()'s logging.basicConfig(format=...) --
-#: the pre-existing (predates this issue) stderr handler's exact line shape.
+#: t4t.observability.logging_setup._install_legacy_root_handler()'s
+#: logging.basicConfig(format=...) -- the pre-existing (predates this issue)
+#: stderr handler's exact line shape.
 _LEGACY_STDERR_LINE_RE = re.compile(r"^[A-Z]+ - ([\w.]+) - (.*)$", re.DOTALL)
 
 
@@ -229,10 +299,11 @@ def _parse_legacy_stderr_lines(stderr: str) -> list[tuple[str, str]]:
 
 
 class TestStderrNotDuplicated:
-    """Regression test: t4t/cli/utils.py's pre-existing
-    `logging.basicConfig()` handler (predates this issue, still installed by
-    `CommandContext.__init__` via `setup_logging()`) must not *also* print
-    t4t's curated stdout content a second time, formatted as
+    """Regression test: the pre-existing `logging.basicConfig()` handler
+    (predates this issue; installed by `configure_logging()` itself, as its
+    own first step via `_install_legacy_root_handler()`, so there is no
+    cross-function call-order dependency for a caller to get wrong) must not
+    *also* print t4t's curated stdout content a second time, formatted as
     "LEVEL - logger.name - msg" on stderr.
 
     Deliberately scoped to *t4t's own curated loggers* re-appearing on

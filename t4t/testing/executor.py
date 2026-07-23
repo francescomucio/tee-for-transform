@@ -39,7 +39,7 @@ class TestExecutor:
         """
         self.adapter = adapter
         self.project_folder = Path(project_folder) if project_folder else None
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = logging.getLogger(__name__)
         self.run_id = run_id
         self._test_discovery: TestDiscovery | None = None
 

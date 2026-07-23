@@ -47,16 +47,22 @@ def validate_format(value: str) -> OutputFormat:
 
 
 def validate_log_format(value: str) -> str:
-    """Validate --log-format option (text or json)."""
-    from t4t.observability.logging_setup import FORMATTERS
+    """Validate --log-format option (text or json).
 
-    normalized = value.lower()
-    if normalized not in FORMATTERS:
+    Normalization/validation logic lives entirely in
+    ``t4t.observability.logging_setup.resolve_log_format`` (called here with
+    ``strict=True``) -- this callback only adapts that function's
+    ``ValueError`` into the ``typer.BadParameter`` Typer expects, so there
+    is exactly one place that decides what counts as a valid log format.
+    """
+    from t4t.observability.logging_setup import resolve_log_format
+
+    try:
+        return resolve_log_format(value, strict=True)
+    except ValueError as e:
         raise typer.BadParameter(
-            typer.style("Error: ", fg=typer.colors.RED, bold=True)
-            + f"Invalid log format '{value}'. Must be one of: {', '.join(sorted(FORMATTERS))}."
-        )
-    return normalized
+            typer.style("Error: ", fg=typer.colors.RED, bold=True) + str(e)
+        ) from e
 
 
 def validate_database_type(value: str) -> DatabaseType:

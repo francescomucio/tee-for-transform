@@ -157,7 +157,6 @@ def cmd_build(
         )
 
         # Calculate statistics
-        len(results["executed_tables"]) + len(results["failed_tables"])
         successful_count = len(results["executed_tables"])
         failed_count = len(results["failed_tables"])
         executed_functions = results.get("executed_functions", [])
