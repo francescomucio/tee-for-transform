@@ -83,6 +83,15 @@ quickstart end-to-end" are different levels of evidence.
 - **Python version policy**: t4t tracks the newest stable Python (currently
   3.14). Flag compatibility shims, version checks, and `from __future__`
   imports — they are dead weight under this policy.
+- **Raw `print()`/`typer.echo()` instead of `logging`**: all run/CLI output
+  goes through `logging.getLogger(__name__)` (see `CLAUDE.md` and
+  `contributing.md`'s Code Style section) — flag new `print()`/`typer.echo()`
+  call sites outside the one-off CLI-argument-validation exception. Also flag
+  secrets (passwords, tokens) interpolated directly into a log message
+  string via f-string/`%s` — redaction (`redact_secrets()` in
+  `JSONFormatter`) only ever sees structured fields passed via `extra={...}`,
+  never the rendered message text, so a secret baked into the string bypasses
+  it entirely and will leak in `--log-format json` output.
 
 ## 4. Tests as evidence, not as presence
 
