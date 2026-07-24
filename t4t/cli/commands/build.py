@@ -12,13 +12,15 @@ from importlib.metadata import PackageNotFoundError, version
 import typer
 
 from t4t.cli.context import CommandContext
-from t4t.compiler import CompilationError
 from t4t.engine.connection_manager import ConnectionManager
 from t4t.executor import build_models
 from t4t.parser.output.lookup_generator import generate_lookups
-from t4t.state import prepare_retry_select_patterns
 
 logger = logging.getLogger(__name__)
+
+# #14: --retry is sugar for --select run:failed+ -- see t4t/cli/run.py's
+# identical constant for the full rationale.
+_RETRY_SELECT_PATTERN = "run:failed+"
 
 
 def _t4t_version() -> str:
@@ -126,22 +128,7 @@ def cmd_build(
 
         select_patterns = ctx.select_patterns
         if retry:
-            try:
-                select_patterns = prepare_retry_select_patterns(
-                    str(ctx.project_path),
-                    ctx.config["connection"],
-                    ctx.vars,
-                    ctx.config,
-                    env_name=ctx.env_name,
-                )
-            except ValueError as e:
-                typer.echo(
-                    typer.style("Error: ", fg=typer.colors.RED, bold=True) + str(e),
-                    err=True,
-                )
-                raise typer.Exit(1) from None
-            except CompilationError as e:
-                ctx.handle_error(e)
+            select_patterns = [_RETRY_SELECT_PATTERN]
 
         # Build models with interleaved tests
         results = build_models(

@@ -38,6 +38,8 @@ Atomic conditions (interchangeable inside any AND-group):
 clear error rather than being silently treated as a name pattern.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from fnmatch import fnmatch
@@ -121,9 +123,7 @@ def _name_matches(model_name: str, pattern: str) -> bool:
         fnmatch(parts[-1], pattern) or fnmatch(parts[-1].lower(), pattern.lower())
     ):
         return True
-    if model_name == pattern or model_name.lower() == pattern.lower():
-        return True
-    return False
+    return model_name == pattern or model_name.lower() == pattern.lower()
 
 
 def _has_tag(model_data: dict[str, Any], tag: str) -> bool:
@@ -145,7 +145,7 @@ class NameCondition:
     pattern: str
 
     def matches(
-        self, model_name: str, model_data: dict[str, Any], ctx: _SelectionContext | None
+        self, model_name: str, _model_data: dict[str, Any], _ctx: _SelectionContext | None
     ) -> bool:
         return _name_matches(model_name, self.pattern)
 
@@ -157,7 +157,7 @@ class TagCondition:
     tag: str
 
     def matches(
-        self, model_name: str, model_data: dict[str, Any], ctx: _SelectionContext | None
+        self, _model_name: str, model_data: dict[str, Any], _ctx: _SelectionContext | None
     ) -> bool:
         return _has_tag(model_data, self.tag)
 
@@ -167,7 +167,7 @@ class DefinitionChangedCondition:
     """`definition:changed` atomic condition (#13 fingerprint diff vs baseline)."""
 
     def matches(
-        self, model_name: str, model_data: dict[str, Any], ctx: _SelectionContext | None
+        self, model_name: str, _model_data: dict[str, Any], ctx: _SelectionContext | None
     ) -> bool:
         if ctx is None or ctx.changed_set is None:
             raise SelectionContextError(
@@ -182,7 +182,7 @@ class RunFailedCondition:
     """`run:failed` atomic condition (#18 last persisted run manifest)."""
 
     def matches(
-        self, model_name: str, model_data: dict[str, Any], ctx: _SelectionContext | None
+        self, model_name: str, _model_data: dict[str, Any], ctx: _SelectionContext | None
     ) -> bool:
         if ctx is None or ctx.failed_set is None:
             raise SelectionContextError(
@@ -275,7 +275,7 @@ class ModelSelector:
         select_patterns: list[str] | None = None,
         exclude_patterns: list[str] | None = None,
         *,
-        state_backend: "StateBackend | None" = None,
+        state_backend: StateBackend | None = None,
         env_name: str | None = None,
     ) -> None:
         """
@@ -314,7 +314,7 @@ class ModelSelector:
         self,
         parsed_models: dict[str, Any],
         graph: dict[str, Any] | None = None,
-        state_backend: "StateBackend | None" = None,
+        state_backend: StateBackend | None = None,
     ) -> None:
         """Resolve data-backed conditions (`definition:changed`, `run:failed`)
         and graph modifiers (`+`) against a concrete project.
@@ -328,9 +328,7 @@ class ModelSelector:
         backend = state_backend if state_backend is not None else self.state_backend
         needs_changed = self._uses_condition(DefinitionChangedCondition)
         needs_failed = self._uses_condition(RunFailedCondition)
-        needs_graph = any(
-            g.has_modifier for g in (*self.select_groups, *self.exclude_groups)
-        )
+        needs_graph = any(g.has_modifier for g in (*self.select_groups, *self.exclude_groups))
 
         changed_set: set[str] | None = None
         failed_set: set[str] | None = None
@@ -394,7 +392,9 @@ class ModelSelector:
 
     # -- matching ----------------------------------------------------------
 
-    def _group_matches(self, group: SelectGroup, model_name: str, model_data: dict[str, Any]) -> bool:
+    def _group_matches(
+        self, group: SelectGroup, model_name: str, model_data: dict[str, Any]
+    ) -> bool:
         if group.has_modifier:
             expanded = self._expanded.get(id(group))
             if expanded is None:
@@ -436,12 +436,10 @@ class ModelSelector:
         if not selected:
             return False
 
-        if self.exclude_patterns and self._matches_any_group(
-            self.exclude_groups, model_name, model_data
-        ):
-            return False
-
-        return True
+        return not (
+            self.exclude_patterns
+            and self._matches_any_group(self.exclude_groups, model_name, model_data)
+        )
 
     def filter_models(
         self,
@@ -449,7 +447,7 @@ class ModelSelector:
         execution_order: list[str] | None = None,
         *,
         graph: dict[str, Any] | None = None,
-        state_backend: "StateBackend | None" = None,
+        state_backend: StateBackend | None = None,
     ) -> tuple[dict[str, Any], list[str]]:
         """
         Filter parsed models and execution order based on selection criteria.
