@@ -83,6 +83,7 @@ nav:
     - user-guide/seeds.md
     - user-guide/data-quality-tests.md
     - user-guide/incremental-materialization.md
+    - user-guide/fingerprinting.md
     - user-guide/database-adapters.md
     - user-guide/tags-and-metadata.md
     - user-guide/sql-dialect-conversion.md
