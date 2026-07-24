@@ -17,6 +17,7 @@ from t4t.parser.processing import FileDiscovery, substitute_sql_variables, valid
 from t4t.parser.shared.dimension_registry import build_dimension_registry_from_models
 from t4t.parser.shared.exceptions import ParserError
 from t4t.parser.shared.function_utils import standardize_parsed_function
+from t4t.parser.shared.import_tracking import SharedImportTracker
 from t4t.parser.shared.registry import FunctionRegistry, ModelRegistry
 from t4t.parser.shared.types import (
     ConnectionConfig,
@@ -106,6 +107,11 @@ class ParserOrchestrator:
             # This ensures we start with a clean slate
             ModelRegistry.clear()
 
+            # #13 constraint 7: capture ONE fixed sys.modules baseline before any
+            # model in the project is parsed, so shared-import detection below
+            # (for Python models only) can diff each model's exec against it.
+            import_tracker = SharedImportTracker(self.project_folder)
+
             # Discover all files
             files = self.file_discovery.discover_all_files()
             logger.info(
@@ -139,7 +145,9 @@ class ParserOrchestrator:
 
                     # Parse with Python parser
                     parser = ParserFactory.create_parser(python_file)
-                    python_models = parser.parse(python_content, file_path=python_file)
+                    python_models = parser.parse(
+                        python_content, file_path=python_file, import_tracker=import_tracker
+                    )
 
                     # Add each model to the result with proper table naming
                     for table_name, model_data in python_models.items():

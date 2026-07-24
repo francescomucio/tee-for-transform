@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from t4t.compiler import CompilationError, compile_project
 from t4t.engine import ModelExecutor
 from t4t.engine.config import is_env_protected
+from t4t.engine.fingerprint import compute_project_fingerprints, store_project_fingerprints
 from t4t.executor_helpers import build_helpers, shared_helpers
 from t4t.parser import ProjectParser
 from t4t.parser.shared.exceptions import ParserError
@@ -35,8 +36,24 @@ def _try_persist_run_manifest(
     environment: str | None = None,
     protected: bool = False,
     run_id: str | None = None,
+    parsed_models: dict[str, Any] | None = None,
+    dependency_graph: dict[str, Any] | None = None,
 ) -> None:
-    """Write last_run.json and append to runs.sqlite; failures are logged only."""
+    """Write last_run.json and append to runs.sqlite; failures are logged only.
+
+    Also computes and stores each attempted model's fingerprint (#13 step 7):
+    after the manifest is persisted, sql_hash/config_hash/fingerprint are
+    written for every model that was *attempted* this run (status "success"
+    or "failed" in the manifest -- i.e. selected and execution attempted),
+    regardless of that model's own outcome. "skipped" nodes (never reached,
+    e.g. downstream of a failure or excluded by selection) are not written.
+
+    `parsed_models`/`dependency_graph` should be the project's full,
+    unfiltered set -- even when `--select` narrowed what actually ran, direct
+    upstream dependencies outside the selection still need their fingerprint
+    computed to feed the hash chain, they're just not persisted here unless
+    they were also attempted.
+    """
     logger = logging.getLogger(__name__)
     try:
         from pathlib import Path
@@ -58,6 +75,13 @@ def _try_persist_run_manifest(
         )
         backend = LocalStateBackend(Path(project_folder) / "output", env_name=environment)
         backend.append_run(manifest)
+
+        if parsed_models:
+            attempted = {n.name for n in manifest.nodes if n.status in ("success", "failed")}
+            if attempted:
+                graph = dependency_graph or {}
+                fingerprints = compute_project_fingerprints(parsed_models, graph)
+                store_project_fingerprints(backend, fingerprints, model_names=attempted)
     except Exception as e:
         logger.warning("Could not persist run manifest: %s", e)
 
@@ -172,6 +196,8 @@ def execute_models(
             environment=env_name,
             protected=is_env_protected(project_folder, env_name),
             run_id=run_id,
+            parsed_models=parsed_models,
+            dependency_graph=graph,
         )
         return empty
 
@@ -213,6 +239,8 @@ def execute_models(
                 environment=env_name,
                 protected=is_env_protected(project_folder, env_name),
                 run_id=run_id,
+                parsed_models=parsed_models,
+                dependency_graph=graph,
             )
             return empty
 
@@ -298,6 +326,8 @@ def execute_models(
             environment=env_name,
             protected=is_env_protected(project_folder, env_name),
             run_id=run_id,
+            parsed_models=parsed_models,
+            dependency_graph=graph,
         )
         return results
 
@@ -375,6 +405,13 @@ def build_models(
             compile_results
         )
         build_started_at = utc_now_iso()
+        # Full, unfiltered project models -- kept separately because
+        # setup_build_context_from_compile() below may reassign `parsed_models`
+        # to a `--select`-filtered subset. Fingerprint computation always
+        # needs the full set so direct dependencies outside the selection
+        # still get a fingerprint to feed the hash chain (see
+        # _try_persist_run_manifest's parsed_models/dependency_graph args).
+        full_parsed_models = parsed_models
 
     except (CompilationError, ParserError) as e:
         logger.error(f"Compilation failed: {e}")
@@ -438,6 +475,8 @@ def build_models(
             environment=env_name,
             protected=is_env_protected(project_folder, env_name),
             run_id=run_id,
+            parsed_models=full_parsed_models,
+            dependency_graph=graph,
         )
         return empty_results
 
@@ -523,6 +562,8 @@ def build_models(
             environment=env_name,
             protected=is_env_protected(project_folder, env_name),
             run_id=run_id,
+            parsed_models=full_parsed_models,
+            dependency_graph=graph,
         )
         return results
 

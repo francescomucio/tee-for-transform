@@ -15,6 +15,7 @@ def create_model_metadata(
     description: str | None = None,
     variables: list | None = None,
     metadata: ModelMetadata | None = None,
+    shared_import_files: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     Create standardized model metadata for both SQL and Python models.
@@ -26,6 +27,9 @@ def create_model_metadata(
         description: Description of the model
         variables: List of variables used in the model
         metadata: Additional metadata dictionary
+        shared_import_files: Project-local files this (Python) model imported
+            as a side effect of execution, detected by
+            `SharedImportTracker` (#13 constraint 7). Empty for SQL models.
 
     Returns:
         Standardized model metadata dictionary
@@ -41,6 +45,7 @@ def create_model_metadata(
         "description": final_description,
         "variables": variables or [],
         "metadata": metadata or {},
+        "shared_import_files": shared_import_files or [],
     }
 
     # Add file_path if provided
@@ -95,6 +100,7 @@ def standardize_parsed_model(
         description = original_metadata.get("description")
         variables = original_metadata.get("variables", [])
         metadata = original_metadata.get("metadata", {})
+        shared_import_files = original_metadata.get("shared_import_files", [])
 
         # Create standardized model_metadata
         model_metadata = create_model_metadata(
@@ -104,6 +110,7 @@ def standardize_parsed_model(
             description=description,
             variables=variables,
             metadata=metadata,
+            shared_import_files=shared_import_files,
         )
 
         # Keep code data (may be None for unexecuted Python models)

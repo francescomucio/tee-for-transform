@@ -1,6 +1,7 @@
 """Run state: manifests, persistence, retry selection."""
 
 from t4t.state.backend import LocalStateBackend, StateBackend
+from t4t.state.fingerprint import StoredFingerprint
 from t4t.state.manifest import (
     SCHEMA_VERSION,
     RunManifest,
@@ -15,6 +16,7 @@ __all__ = [
     "SCHEMA_VERSION",
     "LocalStateBackend",
     "StateBackend",
+    "StoredFingerprint",
     "RunManifest",
     "manifest_from_dict",
     "manifest_to_dict",
