@@ -26,7 +26,7 @@ from t4t.engine.fingerprint import (
     compute_config_hash,
     compute_model_sql_hash,
     compute_project_fingerprints,
-    compute_sql_hash_for_python_model,
+    compute_source_hash_for_python_model,
     compute_sql_hash_for_sql_model,
     read_valid_fingerprint,
     store_project_fingerprints,
@@ -94,7 +94,7 @@ class TestPythonSourceHash:
         f1.write_text("@model(table_name='x')\ndef x():\n    return 'SELECT 1'\n", encoding="utf-8")
         f2 = tmp_path / "m2.py"
         f2.write_text("@model(table_name='x')\ndef x():\n    return 'SELECT 2'\n", encoding="utf-8")
-        assert compute_sql_hash_for_python_model(f1) != compute_sql_hash_for_python_model(f2)
+        assert compute_source_hash_for_python_model(f1) != compute_source_hash_for_python_model(f2)
 
     def test_editing_unrelated_function_in_same_file_also_changes_hash(
         self, tmp_path: Path
@@ -116,7 +116,7 @@ class TestPythonSourceHash:
 
         # Both files hash differently -- proving the whole file (including x's
         # untouched definition) is part of the hash, not just y's body.
-        assert compute_sql_hash_for_python_model(f1) != compute_sql_hash_for_python_model(f2)
+        assert compute_source_hash_for_python_model(f1) != compute_source_hash_for_python_model(f2)
 
     def test_identical_content_same_hash(self, tmp_path: Path) -> None:
         content = "@model(table_name='x')\ndef x():\n    return 'SELECT 1'\n"
@@ -124,11 +124,11 @@ class TestPythonSourceHash:
         f1.write_text(content, encoding="utf-8")
         f2 = tmp_path / "b.py"
         f2.write_text(content, encoding="utf-8")
-        assert compute_sql_hash_for_python_model(f1) == compute_sql_hash_for_python_model(f2)
+        assert compute_source_hash_for_python_model(f1) == compute_source_hash_for_python_model(f2)
 
     def test_none_file_path_raises_clear_error(self) -> None:
         with pytest.raises(FingerprintError, match="no source file"):
-            compute_sql_hash_for_python_model(None, model_name="schema.some_model")
+            compute_source_hash_for_python_model(None, model_name="schema.some_model")
 
 
 class TestModelDispatch:
@@ -144,7 +144,7 @@ class TestModelDispatch:
         f = tmp_path / "a.py"
         f.write_text("@model(table_name='x')\ndef x():\n    return 'SELECT 1'\n", encoding="utf-8")
         model_data = {"model_metadata": {"file_path": str(f), "function_name": "x"}}
-        assert compute_model_sql_hash(model_data) == compute_sql_hash_for_python_model(f)
+        assert compute_model_sql_hash(model_data) == compute_source_hash_for_python_model(f)
 
 
 class TestConfigHash:

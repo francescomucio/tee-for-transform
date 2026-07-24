@@ -105,7 +105,7 @@ def compute_sql_hash_for_sql_model(file_path: str | Path | None, model_name: str
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def compute_sql_hash_for_python_model(file_path: str | Path | None, model_name: str = "") -> str:
+def compute_source_hash_for_python_model(file_path: str | Path | None, model_name: str = "") -> str:
     """Whole-file source hash of a Python model's own source, read from disk.
 
     v1 limitation, documented not fixed: this hashes the *entire* file, so
@@ -147,7 +147,7 @@ def compute_model_sql_hash(model_data: dict[str, Any], model_name: str = "") -> 
     metadata = model_data.get("model_metadata") or {}
     file_path = metadata.get("file_path")
     if _is_python_model(model_data):
-        return compute_sql_hash_for_python_model(file_path, model_name)
+        return compute_source_hash_for_python_model(file_path, model_name)
     return compute_sql_hash_for_sql_model(file_path, model_name)
 
 
