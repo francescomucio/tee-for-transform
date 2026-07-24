@@ -132,3 +132,41 @@ principle, also be over-attributed to a later Python model that doesn't
 actually import it. This errs toward occasionally over-including a model
 as "changed" rather than ever missing a real change -- the same safe
 direction the other limitations above take.
+
+### A skipped upstream dependency leaves a silent gap in the hash chain
+
+`compute_project_fingerprints` walks the project in topological
+(dependency) order and, for each model, folds in the *already-computed*
+fingerprints of its direct upstream dependencies. If a direct dependency
+was never hashed in that pass -- because it was skipped by selection, or
+because hashing it failed (see the `FingerprintError` handling above) --
+that dependency simply contributes nothing to the downstream model's hash
+chain. The downstream model still gets a valid `fingerprint`; it is just
+**incomplete**, missing that one dependency's contribution.
+
+This can happen, concretely, in two situations:
+
+- Running `t4t run` with a selector that excludes an upstream model, so it
+  is never attempted (and therefore never fingerprinted) in that
+  invocation.
+- An upstream model's own source becoming unreadable or unparseable for a
+  run (triggering `FingerprintError`), so it is skipped and logged with a
+  warning, but downstream models still get fingerprinted around the gap.
+
+The practical consequence for future consumers -- most notably #14's
+`definition:changed` selector -- is this: **a model's `fingerprint` may not
+change on some run even though an upstream dependency that was skipped in
+a *previous* run has, in the meantime, actually changed.** The chain only
+ever reflects dependencies that were actually hashed *in the same pass*
+that produced the stored fingerprint; a dependency's change can't
+propagate downstream until both it and everything between it and the
+downstream model are hashed together in the same run.
+
+This is a known, accepted v1 behavior, not a bug: fixing it properly would
+mean either always fingerprinting the full project graph regardless of
+selection (defeating the point of selective runs) or persisting and
+reusing prior fingerprints for un-attempted dependencies mid-computation
+(a real design change, not something to bolt on quietly). Like the other
+limitations in this section, it errs toward a merely incomplete signal
+rather than a wrong one -- the fingerprint that *is* produced is still a
+valid, stable hash of exactly what was actually hashed that run.
