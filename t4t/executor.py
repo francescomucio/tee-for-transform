@@ -80,9 +80,7 @@ def _try_persist_run_manifest(
             attempted = {n.name for n in manifest.nodes if n.status in ("success", "failed")}
             if attempted:
                 graph = dependency_graph or {}
-                fingerprints = compute_project_fingerprints(
-                    parsed_models, graph, project_folder=project_folder
-                )
+                fingerprints = compute_project_fingerprints(parsed_models, graph)
                 store_project_fingerprints(backend, fingerprints, model_names=attempted)
     except Exception as e:
         logger.warning("Could not persist run manifest: %s", e)

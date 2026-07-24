@@ -91,13 +91,9 @@ class TestPythonSourceHash:
 
     def test_editing_model_function_body_changes_hash(self, tmp_path: Path) -> None:
         f1 = tmp_path / "m.py"
-        f1.write_text(
-            "@model(table_name='x')\ndef x():\n    return 'SELECT 1'\n", encoding="utf-8"
-        )
+        f1.write_text("@model(table_name='x')\ndef x():\n    return 'SELECT 1'\n", encoding="utf-8")
         f2 = tmp_path / "m2.py"
-        f2.write_text(
-            "@model(table_name='x')\ndef x():\n    return 'SELECT 2'\n", encoding="utf-8"
-        )
+        f2.write_text("@model(table_name='x')\ndef x():\n    return 'SELECT 2'\n", encoding="utf-8")
         assert compute_sql_hash_for_python_model(f1) != compute_sql_hash_for_python_model(f2)
 
     def test_editing_unrelated_function_in_same_file_also_changes_hash(

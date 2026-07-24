@@ -199,7 +199,6 @@ def combine_fingerprint(
 def compute_project_fingerprints(
     parsed_models: dict[str, Any],
     graph: dict[str, Any],
-    project_folder: str | Path | None = None,
 ) -> dict[str, StoredFingerprint]:
     """Compute sql_hash/config_hash/fingerprint for every model in the project.
 

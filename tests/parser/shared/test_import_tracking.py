@@ -95,9 +95,7 @@ class TestSharedImportTracker:
         found = tracker.new_project_local_files(exclude=model_a)
         assert model_a.resolve() not in found
 
-    def test_fixed_baseline_attributes_cached_import_to_second_model(
-        self, tmp_path: Path
-    ) -> None:
+    def test_fixed_baseline_attributes_cached_import_to_second_model(self, tmp_path: Path) -> None:
         """The exact scenario in acceptance criterion 7: model B imports the
         same helper model A already imported (now cached) -- a fixed
         baseline must still attribute the helper to model B."""
