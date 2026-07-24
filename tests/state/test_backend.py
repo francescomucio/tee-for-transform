@@ -175,9 +175,7 @@ class TestSchemaVersionFailOpen:
         finally:
             conn.close()
 
-    def test_stale_schema_version_treated_as_no_baseline(
-        self, tmp_path: Path, caplog
-    ) -> None:
+    def test_stale_schema_version_treated_as_no_baseline(self, tmp_path: Path, caplog) -> None:
         # Sanity check: the fixture below really is stale relative to the
         # module's current constant.
         assert SCHEMA_USER_VERSION != 1
