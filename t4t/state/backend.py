@@ -18,9 +18,15 @@ logger = logging.getLogger(__name__)
 SQLITE_NAME = OUTPUT_FILES.get("runs_db", "runs.sqlite")
 JSON_NAME = OUTPUT_FILES.get("last_run", "last_run.json")
 
-# Bumped from 1 -> 2 when the `fingerprints` table was added (#13). Purely
-# informational (no gated migration reads it), but kept in step with real
-# schema changes.
+# Bumped from 1 -> 2 when the `fingerprints` table was added (#13).
+# LocalStateBackend's fingerprint read/write path checks this against the
+# on-disk `PRAGMA user_version` (see `_on_disk_schema_version` /
+# `read_fingerprint` below) and fails open -- same philosophy as a
+# `fingerprint_spec_version` mismatch in
+# `t4t/engine/fingerprint.py::read_valid_fingerprint`: a stale on-disk
+# schema is not a migration problem, there is nothing to migrate, so a
+# mismatch is treated as "no baseline" with a warning, never a crash and
+# never an in-place data migration.
 SCHEMA_USER_VERSION = 2
 
 
@@ -66,6 +72,39 @@ class LocalStateBackend:
             self._scoped_dir = self.output_dir
         self._json_path = self._scoped_dir / JSON_NAME
         self._db_path = self._scoped_dir / SQLITE_NAME
+
+    def _on_disk_schema_version(self, conn: sqlite3.Connection) -> int:
+        """Read the state DB's current `PRAGMA user_version`.
+
+        `0` is SQLite's default for a brand-new (or never-stamped) database
+        file, so it is treated as "no version recorded yet" rather than a
+        real mismatch by callers of this method.
+        """
+        cur = conn.execute("PRAGMA user_version")
+        row = cur.fetchone()
+        return int(row[0]) if row else 0
+
+    def _warn_if_schema_version_stale(self, conn: sqlite3.Connection) -> bool:
+        """Log a warning if the on-disk schema predates ours.
+
+        Returns True when the on-disk version is stale (nonzero and not
+        equal to `SCHEMA_USER_VERSION`), False otherwise. Fail-open, same
+        philosophy as `fingerprint_spec_version` mismatches: no in-place
+        migration is attempted, callers treat a stale version as "no
+        baseline".
+        """
+        on_disk_version = self._on_disk_schema_version(conn)
+        if on_disk_version != 0 and on_disk_version != SCHEMA_USER_VERSION:
+            logger.warning(
+                "State DB %s has schema user_version %s, current is %s; "
+                "treating stored fingerprints as no baseline (fail open, "
+                "no migration attempted).",
+                self._db_path,
+                on_disk_version,
+                SCHEMA_USER_VERSION,
+            )
+            return True
+        return False
 
     def _ensure_db(self, conn: sqlite3.Connection) -> None:
         conn.execute(f"PRAGMA user_version = {SCHEMA_USER_VERSION}")
@@ -162,6 +201,12 @@ class LocalStateBackend:
 
         conn = sqlite3.connect(self._db_path)
         try:
+            # Informational only here: a stale on-disk version doesn't block
+            # writing -- `_ensure_db` below re-stamps `PRAGMA user_version`
+            # to the current value regardless, establishing a fresh baseline
+            # going forward. Only the *read* path fails open (see
+            # `read_fingerprint`).
+            self._warn_if_schema_version_stale(conn)
             self._ensure_db(conn)
             conn.execute(
                 """
@@ -182,12 +227,21 @@ class LocalStateBackend:
             conn.close()
 
     def read_fingerprint(self, model_name: str) -> StoredFingerprint | None:
-        """Read a model's most recently persisted fingerprint record, if any."""
+        """Read a model's most recently persisted fingerprint record, if any.
+
+        Fails open on a stale `PRAGMA user_version`: a schema written by an
+        older t4t version (e.g. before the `fingerprints` table existed) is
+        not migrated in place -- there's nothing to migrate -- it's treated
+        the same as no stored baseline at all, with a warning logged. See
+        `SCHEMA_USER_VERSION` above.
+        """
         if not self._db_path.is_file():
             return None
 
         conn = sqlite3.connect(self._db_path)
         try:
+            if self._warn_if_schema_version_stale(conn):
+                return None
             cur = conn.execute(
                 """
                 SELECT model_name, sql_hash, config_hash, fingerprint,

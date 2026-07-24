@@ -1,9 +1,11 @@
 """LocalStateBackend persistence."""
 
 import json
+import logging
+import sqlite3
 from pathlib import Path
 
-from t4t.state.backend import LocalStateBackend
+from t4t.state.backend import SCHEMA_USER_VERSION, LocalStateBackend
 from t4t.state.manifest import NodeResult, RunManifest
 
 
@@ -131,3 +133,73 @@ class TestFingerprintStorage:
         b2 = b.read_fingerprint("schema.model_b")
         assert a.sql_hash == "sa"
         assert b2.sql_hash == "sb"
+
+
+class TestSchemaVersionFailOpen:
+    """PR #82 code review finding #3: `SCHEMA_USER_VERSION` now actually
+    guards the fingerprint read path instead of being purely informational.
+    A stale on-disk `PRAGMA user_version` is treated as no baseline (fail
+    open, same philosophy as a `fingerprint_spec_version` mismatch in
+    `t4t/engine/fingerprint.py`) -- never a crash, never an in-place data
+    migration."""
+
+    def _write_stale_db(self, db_path: Path, stale_version: int) -> None:
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(db_path)
+        try:
+            conn.execute(f"PRAGMA user_version = {stale_version}")
+            conn.execute(
+                """
+                CREATE TABLE fingerprints (
+                    model_name TEXT PRIMARY KEY,
+                    sql_hash TEXT NOT NULL,
+                    config_hash TEXT NOT NULL,
+                    fingerprint TEXT NOT NULL,
+                    fingerprint_spec_version INTEGER NOT NULL,
+                    updated_at TEXT NOT NULL
+                )
+                """
+            )
+            conn.execute(
+                "INSERT INTO fingerprints VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    "schema.model_a",
+                    "stale-sql",
+                    "stale-cfg",
+                    "stale-fp",
+                    1,
+                    "2026-01-01T00:00:00+00:00",
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def test_stale_schema_version_treated_as_no_baseline(
+        self, tmp_path: Path, caplog
+    ) -> None:
+        # Sanity check: the fixture below really is stale relative to the
+        # module's current constant.
+        assert SCHEMA_USER_VERSION != 1
+
+        out_dir = tmp_path / "output"
+        db_path = out_dir / "dev" / "runs.sqlite"
+        self._write_stale_db(db_path, stale_version=1)
+
+        b = LocalStateBackend(out_dir, env_name="dev")
+        caplog.set_level(logging.WARNING)
+        record = b.read_fingerprint("schema.model_a")
+
+        assert record is None
+        assert any("user_version" in r.getMessage() for r in caplog.records)
+
+    def test_fresh_db_has_no_stale_version_warning(self, tmp_path: Path, caplog) -> None:
+        b = LocalStateBackend(tmp_path / "output", env_name="dev")
+        b.save_fingerprint("schema.model_a", "s1", "c1", "f1", 1)
+
+        caplog.set_level(logging.WARNING)
+        record = b.read_fingerprint("schema.model_a")
+
+        assert record is not None
+        assert record.sql_hash == "s1"
+        assert not any("user_version" in r.getMessage() for r in caplog.records)
