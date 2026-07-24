@@ -243,6 +243,28 @@ class TestHashChain:
         assert before["s.a"].config_hash != after["s.a"].config_hash
         assert before["s.a"].fingerprint != after["s.a"].fingerprint
 
+    def test_unreadable_model_skipped_without_blocking_the_rest(self, tmp_path: Path) -> None:
+        """A model with no source file (or an unreadable one) must not
+        abort fingerprinting the rest of the project."""
+        broken = {
+            "model_metadata": {
+                "file_path": None,
+                "function_name": None,
+                "metadata": {},
+            }
+        }
+        models = {
+            "s.broken": broken,
+            "s.a": self._model(tmp_path / "a.sql", "SELECT 1\n"),
+        }
+        graph = {
+            "execution_order": ["s.broken", "s.a"],
+            "dependencies": {"s.broken": [], "s.a": []},
+        }
+        result = compute_project_fingerprints(models, graph)
+        assert "s.broken" not in result
+        assert "s.a" in result
+
     def test_unrelated_model_elsewhere_unaffected(self, tmp_path: Path) -> None:
         models = {
             "s.a": self._model(tmp_path / "a.sql", "SELECT 1\n"),

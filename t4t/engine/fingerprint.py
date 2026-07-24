@@ -224,7 +224,16 @@ def compute_project_fingerprints(
             continue
         model_data = parsed_models[name]
 
-        sql_hash = compute_model_sql_hash(model_data, model_name=name)
+        try:
+            sql_hash = compute_model_sql_hash(model_data, model_name=name)
+        except FingerprintError as e:
+            # One model's source being unreadable/unhashable must not block
+            # fingerprinting the rest of the project -- skip it (and, via the
+            # `d in fingerprints` filter below, anything downstream simply
+            # doesn't get a contribution from it) and keep going.
+            logger.warning("Skipping fingerprint for model %s: %s", name, e)
+            continue
+
         config_hash = compute_config_hash(model_config_dict(model_data))
 
         direct_deps = [d for d in dependencies.get(name, []) if d in fingerprints]
