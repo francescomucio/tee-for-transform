@@ -1,0 +1,5 @@
+project_folder = "definition_selection_e2e"
+
+[environments.dev.connection]
+type = "duckdb"
+path = "data/definition_selection_e2e.duckdb"
