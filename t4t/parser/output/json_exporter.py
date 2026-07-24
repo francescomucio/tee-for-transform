@@ -71,8 +71,8 @@ class JSONExporter:
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(parsed_models, f, indent=2, ensure_ascii=False)
 
-            print(f"Parsed models saved to {output_file}")
-            print(f"Found {len(parsed_models)} models")
+            logger.info(f"Parsed models saved to {output_file}", extra={"cli_output": True})
+            logger.info(f"Found {len(parsed_models)} models", extra={"cli_output": True})
 
             return output_file
 
@@ -111,9 +111,12 @@ class JSONExporter:
             logger.debug(f"Found {len(graph['nodes'])} tables")
             logger.debug(f"Execution order: {' -> '.join(graph['execution_order'])}")
             if graph["cycles"]:
-                print(f"Warning: Found {len(graph['cycles'])} circular dependencies!")
+                logger.warning(
+                    f"Warning: Found {len(graph['cycles'])} circular dependencies!",
+                    extra={"cli_output": True},
+                )
                 for cycle in graph["cycles"]:
-                    print(f"  Cycle: {' -> '.join(cycle)}")
+                    logger.warning(f"  Cycle: {' -> '.join(cycle)}", extra={"cli_output": True})
 
             return output_file
 

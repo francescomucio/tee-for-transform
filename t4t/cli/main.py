@@ -46,6 +46,25 @@ def validate_format(value: str) -> OutputFormat:
     return value  # type: ignore[return-value]
 
 
+def validate_log_format(value: str) -> str:
+    """Validate --log-format option (text or json).
+
+    Normalization/validation logic lives entirely in
+    ``t4t.observability.logging_setup.resolve_log_format`` (called here with
+    ``strict=True``) -- this callback only adapts that function's
+    ``ValueError`` into the ``typer.BadParameter`` Typer expects, so there
+    is exactly one place that decides what counts as a valid log format.
+    """
+    from t4t.observability.logging_setup import resolve_log_format
+
+    try:
+        return resolve_log_format(value, strict=True)
+    except ValueError as e:
+        raise typer.BadParameter(
+            typer.style("Error: ", fg=typer.colors.RED, bold=True) + str(e)
+        ) from e
+
+
 def validate_database_type(value: str) -> DatabaseType:
     """Validate database type option."""
     db_type = value.lower()
@@ -96,6 +115,13 @@ RETRY_OPTION = typer.Option(
     "--retry",
     help="Re-run models that failed or were skipped downstream in the last run (same as run:failed+).",
 )
+LOG_FORMAT_OPTION = typer.Option(
+    "text",
+    "--log-format",
+    envvar="T4T_LOG_FORMAT",
+    help="Output format: 'text' (default, human-readable) or 'json' (JSONL to stdout).",
+    callback=validate_log_format,
+)
 
 
 def _check_required_argument(ctx: typer.Context, _arg_name: str, arg_value: Any) -> None:
@@ -122,6 +148,7 @@ def run(
     env: str | None = typer.Option(
         None, "--env", help="Environment name (e.g. dev, prod). Defaults to 'dev'."
     ),
+    log_format: str = LOG_FORMAT_OPTION,
 ) -> None:
     """Parse and execute SQL models."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -134,6 +161,7 @@ def run(
         retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
         env=env,
+        log_format=log_format,
     )
 
 
@@ -161,6 +189,7 @@ def test(
     vars: str | None = VARS_OPTION,
     select: list[str] | None = SELECT_OPTION,
     exclude: list[str] | None = EXCLUDE_OPTION,
+    log_format: str = LOG_FORMAT_OPTION,
 ) -> None:
     """Run data quality tests on models."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -170,6 +199,7 @@ def test(
         verbose=verbose,
         select=select,
         exclude=exclude,
+        log_format=log_format,
     )
 
 
@@ -190,6 +220,7 @@ def build(
     env: str | None = typer.Option(
         None, "--env", help="Environment name (e.g. dev, prod). Defaults to 'dev'."
     ),
+    log_format: str = LOG_FORMAT_OPTION,
 ) -> None:
     """Build models with tests (stops on test failure)."""
     _check_required_argument(ctx, "project_folder", project_folder)
@@ -202,6 +233,7 @@ def build(
         retry=retry,
         auto_resolve_level_conflicts=auto_resolve_level_conflicts,
         env=env,
+        log_format=log_format,
     )
 
 

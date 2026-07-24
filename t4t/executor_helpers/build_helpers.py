@@ -5,6 +5,7 @@ This module contains helper functions used by the build_models function
 to keep the main executor.py focused on the public API.
 """
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -15,6 +16,15 @@ from t4t.testing import TestExecutor, TestSeverity
 
 if TYPE_CHECKING:
     from t4t.adapters import AdapterConfig
+
+logger = logging.getLogger(__name__)
+
+# A single reusable marker for former print() call sites -- see
+# t4t.observability.logging_setup.GATED_LOGGER_NAMES: this module also has
+# other, pre-existing logger.warning() calls (e.g. in
+# execute_functions_in_build's except block) that must stay off stdout by
+# default, so only records carrying this marker are let through.
+_CLI_OUTPUT = {"cli_output": True}
 
 # Constants
 TEST_NODE_PREFIX = "test:"
@@ -50,7 +60,9 @@ def setup_build_context_from_compile(
         filtered_parsed_models, filtered_execution_order = selector.filter_models(
             parsed_models, execution_order
         )
-        print(f"\nAfter filtering: {len(filtered_parsed_models)} models selected")
+        logger.info(
+            f"\nAfter filtering: {len(filtered_parsed_models)} models selected", extra=_CLI_OUTPUT
+        )
         return parser, filtered_parsed_models, graph, filtered_execution_order
 
     return parser, parsed_models, graph, execution_order
@@ -62,6 +74,7 @@ def initialize_build_executors(
     variables: dict[str, Any] | None,
     load_seeds: bool = True,
     env_name: str | None = None,
+    run_id: str | None = None,
 ) -> tuple[ModelExecutor, TestExecutor]:
     """
     Initialize model and test executors and connect to database.
@@ -72,16 +85,21 @@ def initialize_build_executors(
         variables: Optional variables for SQL substitution
         load_seeds: Whether to load seeds (default: True). Set to False if seeds were already loaded.
         env_name: Environment name for scoping state
+        run_id: Identity of the run, threaded into the model executor (for
+            model_started/finished events) and the test executor (for
+            test_started/finished events).
 
     Returns:
         Tuple of (model_executor, test_executor)
     """
-    model_executor = ModelExecutor(project_folder, connection_config, env_name=env_name)
+    model_executor = ModelExecutor(
+        project_folder, connection_config, env_name=env_name, run_id=run_id
+    )
 
     from t4t.engine.execution_engine import ExecutionEngine
 
     model_executor.execution_engine = ExecutionEngine(
-        model_executor.config, project_folder=project_folder, variables=variables
+        model_executor.config, project_folder=project_folder, variables=variables, run_id=run_id
     )
 
     model_executor.execution_engine.connect()
@@ -91,7 +109,7 @@ def initialize_build_executors(
         _load_seeds_for_build(model_executor, project_folder)
 
     test_executor = TestExecutor(
-        model_executor.execution_engine.adapter, project_folder=project_folder
+        model_executor.execution_engine.adapter, project_folder=project_folder, run_id=run_id
     )
 
     return model_executor, test_executor
@@ -113,7 +131,7 @@ def _load_seeds_for_build(model_executor: ModelExecutor, project_folder: str) ->
     if not seed_files:
         return {"loaded_tables": [], "failed_tables": [], "total_seeds": 0}
 
-    print(f"\nLoading {len(seed_files)} seed file(s)...")
+    logger.info(f"\nLoading {len(seed_files)} seed file(s)...", extra=_CLI_OUTPUT)
 
     # Load seeds using the adapter
     seed_loader = SeedLoader(model_executor.execution_engine.adapter)
@@ -121,20 +139,22 @@ def _load_seeds_for_build(model_executor: ModelExecutor, project_folder: str) ->
 
     # Log results
     if seed_results["loaded_tables"]:
-        print(f"  ✅ Loaded {len(seed_results['loaded_tables'])} seed(s)")
+        logger.info(f"  ✅ Loaded {len(seed_results['loaded_tables'])} seed(s)", extra=_CLI_OUTPUT)
         for table in seed_results["loaded_tables"]:
             # Get table info to show row count
             try:
                 table_info = model_executor.execution_engine.adapter.get_table_info(table)
                 row_count = table_info.get("row_count", 0)
-                print(f"    - {table}: {row_count} rows")
+                logger.info(f"    - {table}: {row_count} rows", extra=_CLI_OUTPUT)
             except Exception as e:
-                print(f"    - {table} (could not get row count: {e})")
+                logger.info(f"    - {table} (could not get row count: {e})", extra=_CLI_OUTPUT)
 
     if seed_results["failed_tables"]:
-        print(f"  ⚠️  Failed to load {len(seed_results['failed_tables'])} seed(s)")
+        logger.warning(
+            f"  ⚠️  Failed to load {len(seed_results['failed_tables'])} seed(s)", extra=_CLI_OUTPUT
+        )
         for failure in seed_results["failed_tables"]:
-            print(f"    - {failure['file']}: {failure['error']}")
+            logger.warning(f"    - {failure['file']}: {failure['error']}", extra=_CLI_OUTPUT)
 
     return seed_results
 
@@ -177,7 +197,7 @@ def execute_single_model(
     model_executor: ModelExecutor,
 ) -> dict[str, Any]:
     """Execute a single model and return results."""
-    print(f"\n📦 Executing: {node_name}")
+    logger.info(f"\n📦 Executing: {node_name}", extra=_CLI_OUTPUT)
 
     model_results = model_executor.execution_engine.execute_models(
         {node_name: parsed_models[node_name]}, [node_name]
@@ -204,14 +224,14 @@ def handle_model_execution_result(
             (f["error"] for f in model_results["failed_tables"] if f["table"] == node_name),
             "Unknown error",
         )
-        print(f"  ❌ Model failed: {error_msg}")
+        logger.warning(f"  ❌ Model failed: {error_msg}", extra=_CLI_OUTPUT)
         mark_dependents_as_skipped(node_name, parser, skipped_models)
         return False
 
     # Model executed successfully
     table_info = model_results.get("table_info", {}).get(node_name, {})
     row_count = table_info.get("row_count", 0)
-    print(f"  ✅ Model executed: {row_count} rows")
+    logger.info(f"  ✅ Model executed: {row_count} rows", extra=_CLI_OUTPUT)
     return True
 
 
@@ -231,7 +251,7 @@ def execute_tests_for_model(
     if not metadata:
         return []
 
-    print(f"  🧪 Running tests for {node_name}...")
+    logger.info(f"  🧪 Running tests for {node_name}...", extra=_CLI_OUTPUT)
     test_results = test_executor.execute_tests_for_model(
         table_name=node_name,
         metadata=metadata,
@@ -257,7 +277,7 @@ def execute_tests_for_function(
     if not metadata:
         return []
 
-    print(f"  🧪 Running tests for {function_name}...")
+    logger.info(f"  🧪 Running tests for {function_name}...", extra=_CLI_OUTPUT)
     test_results = test_executor.execute_tests_for_function(
         function_name=function_name, metadata=metadata
     )
@@ -280,13 +300,15 @@ def handle_test_results(
 
     if error_failures:
         failed_models.add(node_name)
-        print(f"  ❌ Tests failed for {node_name}:")
+        logger.error(f"  ❌ Tests failed for {node_name}:", extra=_CLI_OUTPUT)
         for failure in error_failures:
             location = f"{node_name}.{failure.column_name}" if failure.column_name else node_name
-            print(f"    - {failure.test_name} on {location}: {failure.message}")
+            logger.error(
+                f"    - {failure.test_name} on {location}: {failure.message}", extra=_CLI_OUTPUT
+            )
 
         mark_dependents_as_skipped(node_name, parser, skipped_models)
-        print(f"\n❌ Build stopped: Tests failed for {node_name}")
+        logger.error(f"\n❌ Build stopped: Tests failed for {node_name}", extra=_CLI_OUTPUT)
         raise SystemExit(1)
 
     # Tests passed or only warnings
@@ -295,9 +317,11 @@ def handle_test_results(
         1 for r in test_results if not r.passed and r.severity == TestSeverity.WARNING
     )
     if warning_count > 0:
-        print(f"  ⚠️  Tests: {passed_count} passed, {warning_count} warnings")
+        logger.warning(
+            f"  ⚠️  Tests: {passed_count} passed, {warning_count} warnings", extra=_CLI_OUTPUT
+        )
     else:
-        print(f"  ✅ Tests: {passed_count} passed")
+        logger.info(f"  ✅ Tests: {passed_count} passed", extra=_CLI_OUTPUT)
 
     return True
 
@@ -388,14 +412,20 @@ def execute_functions_in_build(
     try:
         parsed_functions = parser.orchestrator.discover_and_parse_functions()
         if parsed_functions:
-            print(f"\n📦 Executing {len(parsed_functions)} function(s) before models...")
+            logger.info(
+                f"\n📦 Executing {len(parsed_functions)} function(s) before models...",
+                extra=_CLI_OUTPUT,
+            )
             function_results = model_executor.execution_engine.execute_functions(
                 parsed_functions, execution_order
             )
             if function_results.get("executed_functions"):
-                print(f"  ✅ Executed {len(function_results['executed_functions'])} function(s)")
+                logger.info(
+                    f"  ✅ Executed {len(function_results['executed_functions'])} function(s)",
+                    extra=_CLI_OUTPUT,
+                )
                 for func_name in function_results["executed_functions"]:
-                    print(f"    - {func_name}")
+                    logger.info(f"    - {func_name}", extra=_CLI_OUTPUT)
 
                     # Execute tests for this function
                     func_test_results = execute_tests_for_function(
@@ -409,19 +439,19 @@ def execute_functions_in_build(
                         all_test_results.extend(func_test_results)
 
             if function_results.get("failed_functions"):
-                print(
-                    f"  ⚠️  Failed to execute {len(function_results['failed_functions'])} function(s)"
+                logger.warning(
+                    f"  ⚠️  Failed to execute {len(function_results['failed_functions'])} function(s)",
+                    extra=_CLI_OUTPUT,
                 )
                 for failure in function_results["failed_functions"]:
-                    print(f"    - {failure['function']}: {failure['error']}")
+                    logger.warning(
+                        f"    - {failure['function']}: {failure['error']}", extra=_CLI_OUTPUT
+                    )
                 # Continue with models even if some functions failed
                 # Individual function failures are logged but don't stop the build
     except Exception as e:
         # If function discovery/parsing fails, log warning but continue
         # This allows builds to work even if function parsing has issues
-        import logging
-
-        logger = logging.getLogger(__name__)
         from t4t.parser.shared.exceptions import ParserError
 
         if isinstance(e, ParserError):
@@ -492,16 +522,16 @@ def execute_models_with_tests(
         except Exception as e:
             failed_models.add(node_name)
             error_msg = str(e)
-            print(f"  ❌ Model execution failed: {error_msg}")
+            logger.error(f"  ❌ Model execution failed: {error_msg}", extra=_CLI_OUTPUT)
             mark_dependents_as_skipped(node_name, parser, skipped_models)
-            print(f"\n❌ Build stopped: Model {node_name} failed")
+            logger.error(f"\n❌ Build stopped: Model {node_name} failed", extra=_CLI_OUTPUT)
             raise SystemExit(1) from None
 
 
 def print_build_summary(
     results: dict[str, Any], failed_models: set[str], skipped_models: dict[str, str]
 ) -> None:
-    """Print build summary."""
+    """Log the build summary (kept as `print_build_summary` for API compatibility)."""
     executed_tables = results["executed_tables"]
     executed_functions = results.get("executed_functions", [])
     failed_functions = results.get("failed_functions", [])
@@ -510,24 +540,26 @@ def print_build_summary(
         "seed_results", {"loaded_tables": [], "failed_tables": [], "total_seeds": 0}
     )
 
-    print("\n" + "=" * 50)
-    print("BUILD RESULTS")
-    print("=" * 50)
+    logger.info("\n" + "=" * 50, extra=_CLI_OUTPUT)
+    logger.info("BUILD RESULTS", extra=_CLI_OUTPUT)
+    logger.info("=" * 50, extra=_CLI_OUTPUT)
 
     # Seed information
     if seed_results["total_seeds"] > 0:
-        print(f"  Seeds loaded: {len(seed_results['loaded_tables'])}")
+        logger.info(f"  Seeds loaded: {len(seed_results['loaded_tables'])}", extra=_CLI_OUTPUT)
         if seed_results["failed_tables"]:
-            print(f"  Seeds failed: {len(seed_results['failed_tables'])}")
+            logger.warning(
+                f"  Seeds failed: {len(seed_results['failed_tables'])}", extra=_CLI_OUTPUT
+            )
 
-    print(f"  Models executed: {len(executed_tables)}")
-    print(f"  Models failed: {len(failed_models)}")
-    print(f"  Models skipped: {len(skipped_models)}")
+    logger.info(f"  Models executed: {len(executed_tables)}", extra=_CLI_OUTPUT)
+    logger.info(f"  Models failed: {len(failed_models)}", extra=_CLI_OUTPUT)
+    logger.info(f"  Models skipped: {len(skipped_models)}", extra=_CLI_OUTPUT)
     if executed_functions or failed_functions:
-        print(f"  Functions executed: {len(executed_functions)}")
+        logger.info(f"  Functions executed: {len(executed_functions)}", extra=_CLI_OUTPUT)
         if failed_functions:
-            print(f"  Functions failed: {len(failed_functions)}")
-    print(f"  Tests passed: {test_results['passed']}")
-    print(f"  Tests failed: {test_results['failed']}")
+            logger.warning(f"  Functions failed: {len(failed_functions)}", extra=_CLI_OUTPUT)
+    logger.info(f"  Tests passed: {test_results['passed']}", extra=_CLI_OUTPUT)
+    logger.info(f"  Tests failed: {test_results['failed']}", extra=_CLI_OUTPUT)
     if test_results["warnings"] > 0:
-        print(f"  Test warnings: {test_results['warnings']}")
+        logger.warning(f"  Test warnings: {test_results['warnings']}", extra=_CLI_OUTPUT)

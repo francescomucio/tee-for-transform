@@ -34,6 +34,7 @@ def _try_persist_run_manifest(
     cli_args: dict[str, Any] | None = None,
     environment: str | None = None,
     protected: bool = False,
+    run_id: str | None = None,
 ) -> None:
     """Write last_run.json and append to runs.sqlite; failures are logged only."""
     logger = logging.getLogger(__name__)
@@ -53,6 +54,7 @@ def _try_persist_run_manifest(
             function_names=function_names,
             environment=environment,
             protected=protected,
+            run_id=run_id,
         )
         backend = LocalStateBackend(Path(project_folder) / "output", env_name=environment)
         backend.append_run(manifest)
@@ -69,6 +71,7 @@ def execute_models(
     exclude_patterns: list[str] | None = None,
     project_config: dict[str, Any] | None = None,
     env_name: str | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Execute SQL models by compiling to OTS modules and running them in dependency order.
@@ -90,16 +93,41 @@ def execute_models(
         select_patterns: Optional list of patterns to select models
         exclude_patterns: Optional list of patterns to exclude models
         project_config: Optional project configuration
+        run_id: Identity of this run, used to correlate model_started/finished
+            events and the persisted run manifest. Generated here if not
+            provided by the caller (e.g. direct/programmatic use, tests) --
+            the CLI (`run.py`) always supplies one, generated at the very
+            start of the command, so it is available for the first line of
+            output.
 
     Returns:
         Dictionary containing execution results and analysis info
     """
     logger = logging.getLogger(__name__)
+    if run_id is None:
+        import uuid
+
+        run_id = str(uuid.uuid4())
+
+    # Diagnostic only (debug level, silent unless --verbose): the raw,
+    # *unredacted* connection config is passed via extra -- JSONFormatter is
+    # responsible for redacting it before serializing (see
+    # t4t.observability.logging_setup.JSONFormatter / redact_secrets()).
+    # Call sites are not expected to redact for themselves.
+    _config_for_log = (
+        connection_config
+        if isinstance(connection_config, dict)
+        else getattr(connection_config, "__dict__", {})
+    )
+    logger.debug(
+        "Resolved connection configuration",
+        extra={"connection_config": _config_for_log},
+    )
 
     # Step 0: Compile project to OTS modules first
-    print(f"\n{SECTION_SEPARATOR}")
-    print("t4t: COMPILING PROJECT TO OTS MODULES")
-    print(SECTION_SEPARATOR)
+    logger.info(f"\n{SECTION_SEPARATOR}")
+    logger.info("t4t: COMPILING PROJECT TO OTS MODULES")
+    logger.info(SECTION_SEPARATOR)
     try:
         compile_results = compile_project(
             project_folder=project_folder,
@@ -107,7 +135,9 @@ def execute_models(
             variables=variables,
             project_config=project_config,
         )
-        print(f"✅ Compilation complete: {compile_results['ots_modules_count']} OTS module(s)")
+        logger.info(
+            f"✅ Compilation complete: {compile_results['ots_modules_count']} OTS module(s)"
+        )
 
         # Extract and validate graph and execution order from compile results
         graph, execution_order, parsed_models = shared_helpers.validate_compile_results(
@@ -125,11 +155,11 @@ def execute_models(
 
     # Handle case when there are no models
     if not parsed_models and not execution_order:
-        print(f"\n{SECTION_SEPARATOR}")
-        print("EXECUTION RESULTS")
-        print(SECTION_SEPARATOR)
-        print("\n✅ No models to execute")
-        print("   Project compiled successfully with 0 models")
+        logger.info(f"\n{SECTION_SEPARATOR}")
+        logger.info("EXECUTION RESULTS")
+        logger.info(SECTION_SEPARATOR)
+        logger.info("\n✅ No models to execute")
+        logger.info("   Project compiled successfully with 0 models")
         empty = shared_helpers.create_empty_execution_results(graph)
         _try_persist_run_manifest(
             project_folder,
@@ -141,6 +171,7 @@ def execute_models(
             function_names=fnames or None,
             environment=env_name,
             protected=is_env_protected(project_folder, env_name),
+            run_id=run_id,
         )
         return empty
 
@@ -163,11 +194,11 @@ def execute_models(
         )
         filtered_count = len(filtered_parsed_models)
 
-        print(f"\nFiltered to {filtered_count} models (from {original_count} total)")
+        logger.info(f"\nFiltered to {filtered_count} models (from {original_count} total)")
         if filtered_count > 0:
-            print(f"Filtered execution order: {' -> '.join(filtered_execution_order)}")
+            logger.info(f"Filtered execution order: {' -> '.join(filtered_execution_order)}")
         else:
-            print("⚠️  No models matched the selection criteria!")
+            logger.warning("⚠️  No models matched the selection criteria!")
             empty = shared_helpers.create_empty_execution_results(
                 graph, warnings=["No models matched the selection criteria"]
             )
@@ -181,15 +212,18 @@ def execute_models(
                 function_names=fnames or None,
                 environment=env_name,
                 protected=is_env_protected(project_folder, env_name),
+                run_id=run_id,
             )
             return empty
 
     # Step 3: Execute models
-    print(f"\n{SECTION_SEPARATOR}")
-    print("EXECUTING SQL MODELS")
-    print(SECTION_SEPARATOR)
+    logger.info(f"\n{SECTION_SEPARATOR}")
+    logger.info("EXECUTING SQL MODELS")
+    logger.info(SECTION_SEPARATOR)
 
-    model_executor = ModelExecutor(project_folder, connection_config, env_name=env_name)
+    model_executor = ModelExecutor(
+        project_folder, connection_config, env_name=env_name, run_id=run_id
+    )
 
     try:
         # Execute models using the executor (pass filtered models if selection was applied)
@@ -203,42 +237,42 @@ def execute_models(
         # Step 4: Save analysis files if requested (after execution to include qualified SQL)
         if save_analysis:
             parser.save_to_json()
-            print("Analysis files saved to output folder")
+            logger.info("Analysis files saved to output folder")
 
         # Print detailed results
-        print(f"\n{SECTION_SEPARATOR}")
-        print("EXECUTION RESULTS")
-        print(SECTION_SEPARATOR)
+        logger.info(f"\n{SECTION_SEPARATOR}")
+        logger.info("EXECUTION RESULTS")
+        logger.info(SECTION_SEPARATOR)
 
         if results.get("executed_functions"):
-            print("\nSuccessfully executed functions:")
+            logger.info("\nSuccessfully executed functions:")
             for function in results["executed_functions"]:
-                print(f"  - {function}")
+                logger.info(f"  - {function}")
 
         if results.get("failed_functions"):
-            print("\nFailed functions:")
+            logger.warning("\nFailed functions:")
             for failure in results["failed_functions"]:
-                print(f"  - {failure['function']}: {failure['error']}")
+                logger.warning(f"  - {failure['function']}: {failure['error']}")
 
         if results["executed_tables"]:
-            print("\nSuccessfully executed tables:")
+            logger.info("\nSuccessfully executed tables:")
             for table in results["executed_tables"]:
                 table_info = results["table_info"].get(table, {})
                 row_count = table_info.get("row_count", 0)
-                print(f"  - {table}: {row_count} rows")
+                logger.info(f"  - {table}: {row_count} rows")
 
         if results["failed_tables"]:
-            print("\nFailed tables:")
+            logger.warning("\nFailed tables:")
             for failure in results["failed_tables"]:
-                print(f"  - {failure['table']}: {failure['error']}")
+                logger.warning(f"  - {failure['table']}: {failure['error']}")
 
         # Get database info
         try:
             db_info = model_executor.get_database_info()
             if db_info:
-                print("\nDatabase Info:")
-                print(f"  Type: {db_info.get('connection_type', 'Unknown')}")
-                print(f"  Connected: {db_info.get('is_connected', False)}")
+                logger.info("\nDatabase Info:")
+                logger.info(f"  Type: {db_info.get('connection_type', 'Unknown')}")
+                logger.info(f"  Connected: {db_info.get('is_connected', False)}")
         except Exception as e:
             logger.warning(f"Could not get database info: {e}")
             # Don't fail execution if we can't get database info
@@ -263,11 +297,12 @@ def execute_models(
             function_names=fnames or None,
             environment=env_name,
             protected=is_env_protected(project_folder, env_name),
+            run_id=run_id,
         )
         return results
 
     except Exception as e:
-        print(f"Error during execution: {e}")
+        logger.error(f"Error during execution: {e}")
         raise
 
 
@@ -280,6 +315,7 @@ def build_models(
     exclude_patterns: list[str] | None = None,
     project_config: dict[str, Any] | None = None,
     env_name: str | None = None,
+    run_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Build models with interleaved test execution, stopping on test failures.
@@ -300,6 +336,8 @@ def build_models(
         select_patterns: Optional list of patterns to select models
         exclude_patterns: Optional list of patterns to exclude models
         project_config: Optional project configuration
+        run_id: Identity of this run (see `execute_models`'s docstring).
+            Generated here if not provided by the caller.
 
     Returns:
         Dictionary containing execution results and analysis info
@@ -308,15 +346,19 @@ def build_models(
         SystemExit: If tests fail with ERROR severity
     """
     logger = logging.getLogger(__name__)
+    if run_id is None:
+        import uuid
 
-    print(f"\n{SECTION_SEPARATOR}")
-    print("t4t: BUILDING MODELS WITH TESTS")
-    print(SECTION_SEPARATOR)
+        run_id = str(uuid.uuid4())
+
+    logger.info(f"\n{SECTION_SEPARATOR}")
+    logger.info("t4t: BUILDING MODELS WITH TESTS")
+    logger.info(SECTION_SEPARATOR)
 
     # Step 1: Compile project to OTS modules first
-    print(f"\n{SECTION_SEPARATOR}")
-    print("t4t: COMPILING PROJECT TO OTS MODULES")
-    print(SECTION_SEPARATOR)
+    logger.info(f"\n{SECTION_SEPARATOR}")
+    logger.info("t4t: COMPILING PROJECT TO OTS MODULES")
+    logger.info(SECTION_SEPARATOR)
     try:
         compile_results = compile_project(
             project_folder=project_folder,
@@ -324,7 +366,9 @@ def build_models(
             variables=variables,
             project_config=project_config,
         )
-        print(f"✅ Compilation complete: {compile_results['ots_modules_count']} OTS module(s)")
+        logger.info(
+            f"✅ Compilation complete: {compile_results['ots_modules_count']} OTS module(s)"
+        )
 
         # Extract and validate graph and execution order from compile results
         graph, execution_order, parsed_models = shared_helpers.validate_compile_results(
@@ -356,7 +400,9 @@ def build_models(
     from t4t.engine import ModelExecutor
     from t4t.engine.execution_engine import ExecutionEngine
 
-    temp_executor = ModelExecutor(project_folder, connection_config, env_name=env_name)
+    temp_executor = ModelExecutor(
+        project_folder, connection_config, env_name=env_name, run_id=run_id
+    )
     temp_executor.execution_engine = ExecutionEngine(
         temp_executor.config, project_folder=project_folder, variables=variables
     )
@@ -370,15 +416,15 @@ def build_models(
 
     # Handle case when there are no models
     if not parsed_models and not execution_order:
-        print(f"\n{SECTION_SEPARATOR}")
-        print("BUILD RESULTS")
-        print(SECTION_SEPARATOR)
-        print("\n✅ No models to build")
-        print("   Project compiled successfully with 0 models")
+        logger.info(f"\n{SECTION_SEPARATOR}")
+        logger.info("BUILD RESULTS")
+        logger.info(SECTION_SEPARATOR)
+        logger.info("\n✅ No models to build")
+        logger.info("   Project compiled successfully with 0 models")
         if seed_results["total_seeds"] > 0:
-            print(f"  Seeds loaded: {len(seed_results['loaded_tables'])}")
+            logger.info(f"  Seeds loaded: {len(seed_results['loaded_tables'])}")
             if seed_results["failed_tables"]:
-                print(f"  Seeds failed: {len(seed_results['failed_tables'])}")
+                logger.warning(f"  Seeds failed: {len(seed_results['failed_tables'])}")
         empty_results = shared_helpers.create_empty_build_results(graph)
         empty_results["seed_results"] = seed_results
         _try_persist_run_manifest(
@@ -391,13 +437,14 @@ def build_models(
             function_names=None,
             environment=env_name,
             protected=is_env_protected(project_folder, env_name),
+            run_id=run_id,
         )
         return empty_results
 
     # Step 2: Initialize executors
-    print(f"\n{SECTION_SEPARATOR}")
-    print("BUILDING MODELS AND TESTS")
-    print(SECTION_SEPARATOR)
+    logger.info(f"\n{SECTION_SEPARATOR}")
+    logger.info("BUILDING MODELS AND TESTS")
+    logger.info(SECTION_SEPARATOR)
 
     model_executor = None
     failed_models = set()
@@ -406,7 +453,12 @@ def build_models(
 
     try:
         model_executor, test_executor = build_helpers.initialize_build_executors(
-            project_folder, connection_config, variables, load_seeds=False, env_name=env_name
+            project_folder,
+            connection_config,
+            variables,
+            load_seeds=False,
+            env_name=env_name,
+            run_id=run_id,
         )
 
         # Evaluate Python models before execution
@@ -443,7 +495,7 @@ def build_models(
         # Step 4: Save analysis files if requested
         if save_analysis:
             parser.save_to_json()
-            print("\nAnalysis files saved to output folder")
+            logger.info("\nAnalysis files saved to output folder")
 
         # Step 5: Compile and return results
         results = build_helpers.compile_build_results(
@@ -470,13 +522,14 @@ def build_models(
             function_names=fn_build or None,
             environment=env_name,
             protected=is_env_protected(project_folder, env_name),
+            run_id=run_id,
         )
         return results
 
     except SystemExit:
         raise
     except Exception as e:
-        print(f"Error during build: {e}")
+        logger.error(f"Error during build: {e}")
         raise
     finally:
         # Always disconnect

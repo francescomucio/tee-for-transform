@@ -107,6 +107,7 @@ nav:
     - parser-model-flow.md
     - development/contributing.md
     - development/code-review.md
+    - development/logging.md
     - development/migration-guides/index.md
     - Implementation Guides:
       - development/implementation-guides/on_schema_change_implementation.md

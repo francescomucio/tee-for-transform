@@ -175,6 +175,59 @@ from t4t.parser import ProjectParser
 from t4t.engine import ExecutionEngine
 ```
 
+### Logging (not `print()`/`typer.echo()`)
+
+All run/CLI-visible output goes through the standard library `logging`
+module, not raw `print()` or ad hoc `typer.echo()`. This is enforced project
+convention (see the root `CLAUDE.md`), established in
+[GitHub issue #36](https://github.com/francescomucio/tee-for-transform/issues/36):
+before that issue, `t4t/executor.py` and the CLI command files used
+`print()`/`typer.echo()` directly, while most engine/adapter modules already
+used `logging.getLogger(__name__)` -- two parallel mechanisms, with the
+`logging` one silently going nowhere (no handler was wired up for it). The
+fix was to give every module the same one mechanism, with a single format
+decision (`t4t/observability/logging_setup.py`) instead of ~110 scattered
+gated call sites.
+
+**Pattern**: at the top of a module, `logger = logging.getLogger(__name__)`;
+call `logger.info(...)`/`logger.warning(...)`/`logger.error(...)` for
+anything a user should see. Never interpolate secrets (passwords, tokens)
+into the message string itself -- pass structured data via `extra={...}`
+instead, so redaction (`redact_secrets()`, applied centrally by
+`JSONFormatter`) can actually catch it; a value baked into the message text
+bypasses that entirely.
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def execute_models(...):
+    logger.info(f"Running t4t on project: {project_folder}")
+    ...
+    # Good: structured data via extra, not string-interpolated.
+    logger.debug("Resolved connection configuration", extra={"connection_config": config})
+    # Bad: secrets end up in the message text, which redaction never touches.
+    logger.debug(f"Using config: {config}")
+```
+
+**The only exception**: one-off CLI argument-validation errors raised before
+any real work starts (e.g. a `ValueError` from bad `--select`/`--retry`
+combinations in `run.py`/`build.py`) may still use `typer.echo(..., err=True)`
+directly -- these are simple, immediate usage errors, not part of the
+run/build/test output stream.
+
+**Two output modes, one Formatter class each**: `--log-format text` (default,
+human-readable, byte-compatible with the pre-#36 `print()`/`typer.echo()`
+content) and `--log-format json` (one flat JSON object per stdout line,
+suitable for `| jq`). Which format renders a given `logger.*` call is
+decided once, in `TextFormatter`/`JSONFormatter`
+(`t4t/observability/logging_setup.py`) -- call sites never need to know or
+care which mode is active. See `docs/development/logging.md` for the full
+JSON event schema (the six named lifecycle events) and
+`docs/development/code-review.md`'s danger-zones section for what reviewers
+check for on this.
+
 ## Testing Guidelines
 
 ### Test Coverage

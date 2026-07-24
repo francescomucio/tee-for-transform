@@ -6,7 +6,9 @@ from pathlib import Path
 
 import typer
 
-from .utils import load_project_config, parse_vars, setup_logging
+from t4t.observability import configure_logging
+
+from .utils import load_project_config, parse_vars
 
 
 class CommandContext:
@@ -25,6 +27,7 @@ class CommandContext:
         select: list[str] | None = None,
         exclude: list[str] | None = None,
         env: str | None = None,
+        log_format: str = "text",
     ) -> None:
         """
         Initialize command context from parameters.
@@ -38,6 +41,8 @@ class CommandContext:
             env: Environment name (e.g. "dev", "prod") — if provided, the
                  connection config for that environment is loaded into
                  ``config["connection"]``. Defaults to "dev" if not specified.
+            log_format: "text" (default) or "json" — see
+                 ``t4t.observability.logging_setup`` for the format registry.
         """
         # Parse variables if provided
         self.vars = parse_vars(vars)
@@ -63,9 +68,16 @@ class CommandContext:
         # Check if the resolved environment is protected
         self._check_protected_env(project_folder, resolved_env, env)
 
-        # Set up logging
+        # Set up logging: a single call. configure_logging() installs both
+        # the legacy basicConfig-based stderr diagnostic handler (as its own
+        # first step, via _install_legacy_root_handler) and the new stdout
+        # text/json CLI output stream (t4t.observability), in that order,
+        # so the stderr-deduplication filter always has a handler to attach
+        # to -- no cross-function call-order dependency for a caller to get
+        # wrong. See t4t.observability.logging_setup.configure_logging.
         self.verbose = verbose
-        setup_logging(self.verbose)
+        self.log_format = log_format
+        configure_logging(log_format, self.verbose)
 
         # Resolve project folder to absolute path
         self.project_path = Path(project_folder).resolve()

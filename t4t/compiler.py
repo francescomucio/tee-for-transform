@@ -100,7 +100,10 @@ def compile_project(
             imported_ots_modules=imported_ots_modules,
             format=format,
         )
-        print(f"✅ Built and exported {ots_modules_count} OTS module(s)")
+        logger.info(
+            f"✅ Built and exported {ots_modules_count} OTS module(s)",
+            extra={"cli_output": True},
+        )
 
         return {
             "success": True,
@@ -123,9 +126,10 @@ def compile_project(
 
 
 def _print_step(title: str) -> None:
-    print("\n" + "=" * 50)
-    print(title)
-    print("=" * 50)
+    marker = {"cli_output": True}
+    logger.info("\n" + "=" * 50, extra=marker)
+    logger.info(title, extra=marker)
+    logger.info("=" * 50, extra=marker)
 
 
 def _parse_project_models_and_functions(
@@ -137,13 +141,16 @@ def _parse_project_models_and_functions(
     _print_step("STEP 1: Parsing SQL and Python models and functions")
     parser = ProjectParser(project_folder, connection_config, variables, project_config)
     parsed_models = parser.collect_models()
-    print(f"✅ Parsed {len(parsed_models)} models from SQL/Python files")
+    logger.info(
+        f"✅ Parsed {len(parsed_models)} models from SQL/Python files",
+        extra={"cli_output": True},
+    )
 
     parsed_functions = parser.orchestrator.discover_and_parse_functions()
     if parsed_functions:
-        print(f"✅ Parsed {len(parsed_functions)} functions")
+        logger.info(f"✅ Parsed {len(parsed_functions)} functions", extra={"cli_output": True})
     else:
-        print("✅ No functions found")
+        logger.info("✅ No functions found", extra={"cli_output": True})
 
     return parser, parsed_models, parsed_functions
 
@@ -157,10 +164,10 @@ def _load_imported_ots_models(models_folder: Path) -> tuple[list[Path], dict[str
     imported_ots_models: dict[str, Any] = {}
 
     if not ots_files:
-        print("No imported OTS modules found")
+        logger.info("No imported OTS modules found", extra={"cli_output": True})
         return ots_files, imported_ots_models
 
-    print(f"Found {len(ots_files)} imported OTS module(s)")
+    logger.info(f"Found {len(ots_files)} imported OTS module(s)", extra={"cli_output": True})
     reader = OTSModuleReader()
     converter = OTSConverter()
 
@@ -183,11 +190,10 @@ def _load_imported_ots_models(models_folder: Path) -> tuple[list[Path], dict[str
                     f"Loaded {len(module_functions)} functions from OTS module {ots_file.name} (not yet integrated)"
                 )
 
-            print(f"  ✅ Loaded {ots_file.name}: {len(module_models)} transformations", end="")
+            line = f"  ✅ Loaded {ots_file.name}: {len(module_models)} transformations"
             if module_functions:
-                print(f" and {len(module_functions)} functions")
-            else:
-                print()
+                line += f" and {len(module_functions)} functions"
+            logger.info(line, extra={"cli_output": True})
         except (OTSValidationError, OTSModuleReaderError, OTSConverterError) as e:
             raise CompilationError(f"Failed to load imported OTS module {ots_file}: {e}") from e
         except Exception as e:
@@ -215,7 +221,7 @@ def _detect_transformation_conflicts(
             error_msg += f"  - {conflict}\n"
         raise CompilationError(error_msg)
 
-    print("✅ No conflicts detected")
+    logger.info("✅ No conflicts detected", extra={"cli_output": True})
 
 
 def _merge_models(
@@ -225,10 +231,11 @@ def _merge_models(
     all_models = parsed_models.copy()
     all_models.update(imported_ots_models)
 
-    print(
-        f"✅ Merged {len(parsed_models)} SQL/Python models with {len(imported_ots_models)} imported OTS transformations"
+    logger.info(
+        f"✅ Merged {len(parsed_models)} SQL/Python models with {len(imported_ots_models)} imported OTS transformations",
+        extra={"cli_output": True},
     )
-    print(f"   Total: {len(all_models)} transformations")
+    logger.info(f"   Total: {len(all_models)} transformations", extra={"cli_output": True})
     return all_models
 
 

@@ -39,6 +39,7 @@ class ExecutionEngine:
         project_folder: str = ".",
         variables: dict[str, Any] | None = None,
         env_name: str | None = None,
+        run_id: str | None = None,
     ) -> None:
         """
         Initialize the execution engine.
@@ -49,6 +50,9 @@ class ExecutionEngine:
             project_folder: Project folder path for state management
             variables: Optional dictionary of variables for model execution
             env_name: Environment name for scoping state
+            run_id: Identity of the run, threaded into `ModelExecutor`
+                (executors package) so model_started/model_finished events
+                carry it.
         """
         self.config = config or load_database_config(config_name)
         self.adapter = get_adapter(self.config)
@@ -56,6 +60,7 @@ class ExecutionEngine:
         self.project_folder = project_folder
         self.variables = variables or {}
         self.env_name = env_name
+        self.run_id = run_id
 
         # Initialize components
         self.state_checker = StateChecker(project_folder, env_name=env_name)
@@ -71,6 +76,7 @@ class ExecutionEngine:
             self.metadata_extractor,
             self.state_checker,
             self.config,
+            run_id=self.run_id,
         )
         self.function_executor = FunctionExecutor(
             self.adapter, project_folder, self.metadata_extractor

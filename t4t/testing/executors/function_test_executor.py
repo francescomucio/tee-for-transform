@@ -6,6 +6,7 @@ Handles execution of tests for user-defined functions.
 
 import inspect
 import logging
+import time
 from typing import Any
 
 from t4t.adapters.base import DatabaseAdapter
@@ -19,15 +20,19 @@ logger = logging.getLogger(__name__)
 class FunctionTestExecutor:
     """Executes tests for user-defined functions."""
 
-    def __init__(self, adapter: DatabaseAdapter):
+    def __init__(self, adapter: DatabaseAdapter, run_id: str | None = None):
         """
         Initialize function test executor.
 
         Args:
             adapter: Database adapter for executing test queries
+            run_id: Identity of the run this test execution belongs to,
+                stamped on the test_started/test_finished events emitted
+                from `execute_tests_for_function` below.
         """
         self.adapter = adapter
         self.logger = logger
+        self.run_id = run_id
         self._used_test_names: set[str] = set()
 
     def execute_tests_for_function(
@@ -53,17 +58,45 @@ class FunctionTestExecutor:
             return results
 
         severity_overrides = severity_overrides or {}
+        test_defs = metadata.get("tests") or []
+        if not test_defs:
+            return results
 
-        # Execute function-level tests
-        if "tests" in metadata and metadata["tests"]:
-            for test_def in metadata["tests"]:
-                result = self._execute_single_function_test(
-                    function_name=function_name,
-                    test_def=test_def,
-                    severity_overrides=severity_overrides,
-                )
-                if result:
-                    results.append(result)
+        self.logger.info(
+            f"  🧪 {function_name}",
+            extra={
+                "type": "test_started",
+                "run_id": self.run_id,
+                "function": function_name,
+            },
+        )
+        start_time = time.monotonic()
+
+        for test_def in test_defs:
+            result = self._execute_single_function_test(
+                function_name=function_name,
+                test_def=test_def,
+                severity_overrides=severity_overrides,
+            )
+            if result:
+                results.append(result)
+
+        duration_ms = int((time.monotonic() - start_time) * 1000)
+        passed = sum(1 for r in results if r.passed)
+        failed = sum(1 for r in results if not r.passed and r.severity == TestSeverity.ERROR)
+        self.logger.info(
+            f"  🧪 {function_name}: {passed} passed, {failed} failed ({duration_ms / 1000:.1f}s)",
+            extra={
+                "type": "test_finished",
+                "run_id": self.run_id,
+                "function": function_name,
+                "status": "failed" if failed else "success",
+                "duration_ms": duration_ms,
+                "total": len(results),
+                "passed": passed,
+                "failed": failed,
+            },
+        )
 
         return results
 

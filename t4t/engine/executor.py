@@ -25,6 +25,7 @@ class ModelExecutor:
         config: AdapterConfig | dict[str, Any] | None = None,
         config_name: str = "default",
         env_name: str | None = None,
+        run_id: str | None = None,
     ) -> None:
         """
         Initialize the ModelExecutor.
@@ -34,9 +35,13 @@ class ModelExecutor:
             config: Database adapter configuration (AdapterConfig or dict, if None, loads from config files)
             config_name: Configuration name to load (if config is None)
             env_name: Environment name for scoping state
+            run_id: Identity of the run this executor belongs to, threaded
+                down to `ExecutionEngine`/`ModelExecutor` (executors package)
+                so per-model lifecycle events can carry it.
         """
         self.project_folder = project_folder
         self.env_name = env_name
+        self.run_id = run_id
 
         # Handle configuration
         if config is None:
@@ -122,6 +127,7 @@ class ModelExecutor:
             project_folder=self.project_folder,
             variables=variables,
             env_name=self.env_name,
+            run_id=self.run_id,
         )
 
         try:

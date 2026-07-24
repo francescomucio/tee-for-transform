@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from click.exceptions import Exit as ClickExit
 
 from t4t.cli.commands.run import cmd_run
 
@@ -82,17 +83,23 @@ class TestRunCommand:
         assert "Completed!" in output
         assert "All 2 tables executed successfully!" in output
 
-        # Verify execute_models was called correctly
-        mock_execute_models.assert_called_once_with(
-            project_folder=str(mock_ctx.project_path),
-            connection_config=mock_ctx.config["connection"],
-            save_analysis=True,
-            variables={},
-            select_patterns=None,
-            exclude_patterns=None,
-            project_config=mock_ctx.config,
-            env_name="dev",
-        )
+        # Verify execute_models was called correctly. run_id is generated
+        # fresh per invocation (see cmd_run) so only its presence/type is
+        # checked, not an exact value.
+        mock_execute_models.assert_called_once()
+        call_kwargs = mock_execute_models.call_args.kwargs
+        run_id = call_kwargs.pop("run_id", None)
+        assert isinstance(run_id, str) and run_id
+        assert call_kwargs == {
+            "project_folder": str(mock_ctx.project_path),
+            "connection_config": mock_ctx.config["connection"],
+            "save_analysis": True,
+            "variables": {},
+            "select_patterns": None,
+            "exclude_patterns": None,
+            "project_config": mock_ctx.config,
+            "env_name": "dev",
+        }
 
     @patch("t4t.cli.commands.run.execute_models")
     @patch("t4t.cli.commands.run.ConnectionManager")
@@ -306,6 +313,44 @@ class TestRunCommand:
 
         # Verify error was handled
         mock_ctx.handle_error.assert_called_once()
+
+    @patch("t4t.cli.commands.run.execute_models")
+    @patch("t4t.cli.commands.run.ConnectionManager")
+    @patch("t4t.cli.commands.run.CommandContext")
+    def test_cmd_run_handles_keyboard_interrupt(
+        self, mock_context_class, mock_connection_manager_class, mock_execute_models, mock_args
+    ):
+        """Test that KeyboardInterrupt is handled gracefully -- same pattern
+        as t4t/cli/commands/build.py's test_build_handles_keyboard_interrupt,
+        run.py now catches KeyboardInterrupt explicitly to match build.py."""
+        # Setup mocks
+        mock_ctx = Mock()
+        mock_ctx.project_path = Path(mock_args.project_folder)
+        mock_ctx.vars = {}
+        mock_ctx.config = {"connection": {"type": "duckdb", "path": ":memory:"}}
+        mock_ctx.print_variables_info = Mock()
+        mock_ctx.print_selection_info = Mock()
+        mock_context_class.return_value = mock_ctx
+
+        mock_connection_manager = Mock()
+        mock_connection_manager_class.return_value = mock_connection_manager
+
+        # Mock KeyboardInterrupt
+        mock_execute_models.side_effect = KeyboardInterrupt()
+
+        # Capture stdout
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            try:
+                cmd_run(mock_args)
+            except (SystemExit, ClickExit) as e:
+                # Should exit with 130 for KeyboardInterrupt
+                # typer.Exit raises click.exceptions.Exit which is a SystemExit subclass
+                # click.exceptions.Exit uses .exit_code attribute
+                exit_code = getattr(e, "exit_code", getattr(e, "code", 0))
+                assert exit_code == 130, f"Expected exit code 130, got {exit_code}"
+
+        output = fake_out.getvalue()
+        assert "Run interrupted by user" in output
 
     @patch("t4t.cli.commands.run.execute_models")
     @patch("t4t.cli.commands.run.ConnectionManager")

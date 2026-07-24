@@ -5,7 +5,6 @@ Pure, stateless utility functions used across CLI commands.
 """
 
 import json
-import logging
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -126,6 +125,15 @@ def setup_logging(verbose: bool = False) -> None:
 
     Args:
         verbose: If True, set logging level to DEBUG, otherwise INFO
+
+    Note: this is now a thin wrapper kept for backward compatibility with
+    any external caller of this name. `t4t.observability.logging_setup.
+    configure_logging()` installs this same legacy root handler internally,
+    as its own first step -- CommandContext no longer calls this function
+    separately/first, precisely so nothing outside configure_logging() can
+    accidentally violate the ordering the exclusion-filter logic depends on
+    (see `t4t.observability.logging_setup._install_legacy_root_handler`).
     """
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(levelname)s - %(name)s - %(message)s")
+    from t4t.observability.logging_setup import _install_legacy_root_handler
+
+    _install_legacy_root_handler(verbose)
