@@ -14,12 +14,16 @@ from pathlib import Path
 import pytest
 
 from t4t.parser.parsers.python_parser import PythonParser
-from t4t.parser.shared.import_tracking import SharedImportTracker
+from t4t.parser.shared.import_tracking import (
+    SharedImportTracker,
+    reset_process_baseline_for_testing,
+)
 from t4t.parser.shared.registry import ModelRegistry
 
 
 @pytest.fixture(autouse=True)
 def _cleanup_registries_and_sys_modules():
+    reset_process_baseline_for_testing()
     modules_before = set(sys.modules.keys())
     path_before = list(sys.path)
     ModelRegistry.clear()
@@ -28,6 +32,7 @@ def _cleanup_registries_and_sys_modules():
     for name in set(sys.modules.keys()) - modules_before:
         del sys.modules[name]
     sys.path[:] = path_before
+    reset_process_baseline_for_testing()
 
 
 def _write_project(tmp_path: Path) -> tuple[Path, Path, Path, Path]:

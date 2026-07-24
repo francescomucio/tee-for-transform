@@ -21,24 +21,57 @@ import it, over-attributing the later model's fingerprint to that helper.
 This errs toward extra rebuilds rather than missed ones -- the same safe
 direction other v1 fingerprint limitations take (see
 docs/user-guide/fingerprinting.md).
+
+The baseline is captured **once per process**, not once per
+`SharedImportTracker` instance. A single `t4t run`/`build` invocation
+parses the project's models more than once internally (lookup generation,
+compilation, then again when saving analysis JSON -- each builds its own
+`ParserOrchestrator`, each of which constructs its own tracker); if every
+instance re-snapshotted `sys.modules.keys()` at construction time, only the
+*first* pass in the process would see a clean baseline -- every later pass
+would already have the shared helper cached from the first pass and treat
+it as part of *its* baseline too, silently missing the dependency on every
+pass after the first. A process-level baseline (reset only by tests, via
+`reset_process_baseline_for_testing`) makes every pass within one `t4t`
+invocation agree on what "before any model was parsed" means.
 """
 
 import sys
 from pathlib import Path
 
+_process_baseline: frozenset[str] | None = None
+
+
+def reset_process_baseline_for_testing() -> None:
+    """Clear the process-level baseline cache.
+
+    Test-only escape hatch: without this, tests that run multiple projects
+    in the same process (e.g. via in-process CliRunner) would have later
+    tests inherit an earlier test's baseline. Production code never needs to
+    call this -- one real `t4t` invocation is one process.
+    """
+    global _process_baseline
+    _process_baseline = None
+
 
 class SharedImportTracker:
-    """Captures a fixed `sys.modules` baseline and detects newly-visible
-    project-local files after each Python model's exec.
+    """Detects newly-visible project-local files after each Python model's
+    exec, diffed against a **process-level** fixed `sys.modules` baseline
+    (see module docstring for why it's process-level rather than
+    per-instance).
 
-    One instance must be created **once per project-parsing run**, before
-    any Python model file is executed, and reused across all Python models
-    parsed in that run (see `ParserOrchestrator.discover_and_parse_models`).
+    One instance must be created **once per project-parsing pass**, before
+    any Python model file is executed in that pass, and reused across all
+    Python models parsed in it (see
+    `ParserOrchestrator.discover_and_parse_models`).
     """
 
     def __init__(self, project_folder: str | Path) -> None:
+        global _process_baseline
         self.project_folder = Path(project_folder).resolve()
-        self._baseline: frozenset[str] = frozenset(sys.modules.keys())
+        if _process_baseline is None:
+            _process_baseline = frozenset(sys.modules.keys())
+        self._baseline: frozenset[str] = _process_baseline
 
     def new_project_local_files(self, exclude: Path | None = None) -> list[Path]:
         """Project-local files present in `sys.modules` now but not in the

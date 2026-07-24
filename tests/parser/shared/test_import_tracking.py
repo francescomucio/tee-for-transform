@@ -13,20 +13,28 @@ from pathlib import Path
 
 import pytest
 
-from t4t.parser.shared.import_tracking import SharedImportTracker
+from t4t.parser.shared.import_tracking import (
+    SharedImportTracker,
+    reset_process_baseline_for_testing,
+)
 
 
 @pytest.fixture(autouse=True)
 def _cleanup_sys_modules_and_path():
     """Every test here mutates real sys.modules/sys.path via `import` --
     restore both afterward so this test file can't leak state into other
-    tests in the same process."""
+    tests in the same process. Also resets the process-level baseline cache
+    (see import_tracking.py's module docstring for why it's process-level)
+    so each test gets its own clean baseline, matching production's "one
+    process per run" reality."""
+    reset_process_baseline_for_testing()
     modules_before = set(sys.modules.keys())
     path_before = list(sys.path)
     yield
     for name in set(sys.modules.keys()) - modules_before:
         del sys.modules[name]
     sys.path[:] = path_before
+    reset_process_baseline_for_testing()
 
 
 def _write_project(tmp_path: Path) -> tuple[Path, Path, Path]:
