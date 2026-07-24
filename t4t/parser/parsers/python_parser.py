@@ -18,6 +18,7 @@ from t4t.parser.shared.exceptions import (
     PythonParsingError,
     SQLParsingError,
 )
+from t4t.parser.shared.import_tracking import SharedImportTracker
 from t4t.parser.shared.model_utils import standardize_parsed_model
 from t4t.parser.shared.registry import ModelRegistry
 from t4t.parser.shared.types import FilePath, ParsedModel, Variables
@@ -52,7 +53,12 @@ class PythonParser(BaseParser):
         self._evaluation_cache.clear()
         logger.debug("Python parser caches cleared")
 
-    def parse(self, content: str, file_path: FilePath = None) -> ParsedModel:
+    def parse(
+        self,
+        content: str,
+        file_path: FilePath = None,
+        import_tracker: SharedImportTracker | None = None,
+    ) -> ParsedModel:
         """
         Parse Python content and extract SQL models using execution-based discovery.
 
@@ -62,6 +68,14 @@ class PythonParser(BaseParser):
         Args:
             content: The Python content to parse
             file_path: Optional file path for context
+            import_tracker: Optional shared-import tracker (#13 constraint 7).
+                When provided, project-local files newly visible in
+                `sys.modules` after this file's exec (relative to the
+                tracker's fixed baseline) are recorded on each model's
+                `model_metadata["shared_import_files"]`, for later inclusion
+                in that model's fingerprint. One tracker instance must be
+                shared across all Python models in a project-parsing run --
+                see `ParserOrchestrator.discover_and_parse_models`.
 
         Returns:
             Dict mapping table_name to model registration data
@@ -95,12 +109,26 @@ class PythonParser(BaseParser):
             # Filter models by file_path (models registered from this file)
             # Use absolute paths for comparison
             file_path_abs = str(file_path.absolute())
+
+            # #13 constraint 7: detect project-local files imported (directly or
+            # transitively) as a side effect of the exec above, so they can be
+            # folded into this file's model(s)' fingerprints.
+            shared_import_files: list[str] = []
+            if import_tracker is not None:
+                shared_import_files = [
+                    str(p) for p in import_tracker.new_project_local_files(exclude=file_path)
+                ]
+
             for table_name, model_data in all_models.items():
                 model_file_path = model_data.get("model_metadata", {}).get("file_path")
                 # Compare absolute paths
                 if model_file_path:
                     model_file_path_abs = str(Path(model_file_path).absolute())
                     if model_file_path_abs == file_path_abs:
+                        if shared_import_files:
+                            model_data.setdefault("model_metadata", {})["shared_import_files"] = (
+                                shared_import_files
+                            )
                         models[table_name] = model_data
                         logger.debug(f"Found model from {file_path}: {table_name}")
 
