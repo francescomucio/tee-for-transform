@@ -38,6 +38,16 @@ Selection patterns support:
 - Wildcards: `--select my_*` or `--select *users*`
 - Tags: `--select tag:nightly` or `--select tag:production`
 - Multiple patterns: `--select my_model --select tag:analytics`
+- Definition state: `--select definition:changed` — models whose definition changed vs. the stored baseline
+- Run state: `--select run:failed` — models that failed in the last run (`--retry` is sugar for `--select run:failed+`)
+- Graph modifiers: `+my_model` (upstream), `my_model+` (downstream), `+my_model+` (both)
+- Intersection (AND): comma, no spaces — `--select "definition:changed,tag:nightly"`
+
+Repeated `--select` flags OR together (union); a comma within one value ANDs
+together (intersection) — this matches dbt's own selector-combination
+syntax exactly. See the [Model Selection guide](selection.md) for the full
+reference, including `definition:changed`/`run:failed`/`--retry` and how
+graph modifiers interact with comma groups.
 
 ## Commands
 
@@ -239,8 +249,9 @@ t4t run <project_folder> [options]
 **Options:**
 - `-v, --verbose` - Enable verbose output
 - `--vars <JSON>` - Variables to pass to models (JSON format)
-- `-s, --select <pattern>` - Select models by pattern (can be used multiple times)
+- `-s, --select <pattern>` - Select models by pattern (can be used multiple times) — see [Model Selection](selection.md) for the full syntax (`definition:changed`, `run:failed`, graph modifiers, AND/OR combining)
 - `-e, --exclude <pattern>` - Exclude models by pattern (can be used multiple times)
+- `--retry` - Re-run models that failed or were skipped downstream in the last run; sugar for `--select run:failed+`. Cannot be combined with `--select`.
 - `--auto-resolve-level-conflicts` - When generating lookups, resolve duplicate hierarchy level names as `<dimension>_<level>` (default: on)
 
 **Examples:**
@@ -262,6 +273,12 @@ t4t run ./my_project --exclude tag:test
 
 # Combine selection and exclusion
 t4t run ./my_project --select my_model --exclude tag:deprecated
+
+# Run only models whose definition changed, plus their downstream dependents
+t4t run ./my_project --select definition:changed+
+
+# Retry only what failed (or was skipped downstream) last run
+t4t run ./my_project --retry
 ```
 
 **What it does:**
@@ -301,8 +318,9 @@ t4t build <project_folder> [options]
 **Options:**
 - `-v, --verbose` - Enable verbose output
 - `--vars <JSON>` - Variables to pass to models (JSON format)
-- `-s, --select <pattern>` - Select models by pattern (can be used multiple times)
+- `-s, --select <pattern>` - Select models by pattern (can be used multiple times) — see [Model Selection](selection.md) for the full syntax (`definition:changed`, `run:failed`, graph modifiers, AND/OR combining)
 - `-e, --exclude <pattern>` - Exclude models by pattern (can be used multiple times)
+- `--retry` - Re-run models that failed or were skipped downstream in the last run; sugar for `--select run:failed+`. Cannot be combined with `--select`.
 - `--auto-resolve-level-conflicts` - When generating lookups, resolve duplicate hierarchy level names as `<dimension>_<level>` (default: on)
 
 **Examples:**
@@ -315,6 +333,9 @@ t4t build ./my_project --vars '{"env": "prod"}'
 
 # Build specific models
 t4t build ./my_project --select my_model
+
+# Retry only what failed last build
+t4t build ./my_project --retry
 ```
 
 **What it does:**

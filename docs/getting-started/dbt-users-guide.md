@@ -25,6 +25,9 @@ This guide helps dbt users understand t4t by mapping familiar dbt concepts to th
 | **Macros** | **UDFs / Python functions** | SQL macros become SQL UDFs; complex macros become Python functions |
 | **Tests (singular/generic)** | **`@test` decorator / SQL tests** | Python `@test` functions or SQL files in `tests/` |
 | **Tags** | **Tags** | Similar tag-based model selection |
+| **`--select`/`--exclude` combining** (space = union, comma = intersection) | **Same syntax** | t4t implements dbt's selector-combination algebra exactly — `--select a --select b` unions, `--select "a,b"` intersects |
+| **`state:modified`** (dbt State) | **`definition:changed`** | Deliberately not called `state:*` — narrower than dbt State (definition only, no freshness/clone); see [Model Selection](../user-guide/selection.md) |
+| **`+model`/`model+`** (graph operators) | **Same syntax** | Leading `+` = upstream, trailing `+` = downstream |
 | **Hooks** | **N/A (yet)** | Not currently supported |
 | **Snapshots** | **SCD2 materialization** | Set `"materialization": "scd2"` in model metadata — no separate artifact type or command needed |
 | **Exposures** | **N/A (yet)** | Not currently supported |
@@ -294,4 +297,5 @@ SELECT * FROM orders WHERE total < 0
 - [dbt Import Guide](../user-guide/dbt-import.md) — Detailed import instructions
 - [dbt Import Limitations](../user-guide/dbt-import-limitations.md) — Known limitations
 - [Data Quality Tests](../user-guide/data-quality-tests.md) — Testing in t4t
+- [Model Selection](../user-guide/selection.md) — `--select`/`--exclude` syntax, including dbt's own union/intersection algebra and `definition:changed`/`run:failed`
 - [CLI Reference](../user-guide/cli-reference.md) — Complete command reference

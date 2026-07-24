@@ -6,12 +6,13 @@ stable hash of a model's *definition* -- its own source plus, transitively,
 the definitions of everything it depends on -- independent of whether the
 model's last run actually succeeded.
 
-This is a foundational, storage-only feature: t4t does not yet act on
-fingerprints itself (that's `definition:changed` selection, a separate,
-upcoming feature). Today, fingerprinting exists so that feature -- and
-future ones like `t4t plan` and Slim CI -- can be built on a single, shared
-notion of "did this model's definition change" without re-solving change
-detection each time.
+This is a foundational, storage-only feature: fingerprinting itself does
+not decide what to run. That's [`definition:changed` selection](selection.md)
+-- `--select definition:changed`/`definition:changed+` on `t4t run`/`t4t
+build` -- which reads the fingerprints this page describes. Today,
+fingerprinting exists so that feature -- and future ones like `t4t plan`
+and Slim CI -- can be built on a single, shared notion of "did this model's
+definition change" without re-solving change detection each time.
 
 ## What gets hashed
 
