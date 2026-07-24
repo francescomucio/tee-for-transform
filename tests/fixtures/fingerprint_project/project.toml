@@ -1,0 +1,5 @@
+project_folder = "fingerprint_project"
+
+[environments.dev.connection]
+type = "duckdb"
+path = "data/fingerprint_project.duckdb"

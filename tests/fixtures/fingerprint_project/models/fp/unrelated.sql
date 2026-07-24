@@ -1,0 +1,1 @@
+SELECT 99 AS x
