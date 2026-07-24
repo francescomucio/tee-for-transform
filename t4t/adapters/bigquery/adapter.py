@@ -435,6 +435,149 @@ class BigQueryAdapter(DatabaseAdapter):
 
             raise FunctionExecutionError(f"Failed to drop function {function_name}: {e}") from e
 
+    # -- Warehouse state table (#20) --------------------------------------
+    #
+    # BigQuery has no native identity/sequence mechanism at all (confirmed
+    # by #20's research -- no `GENERATED ALWAYS AS IDENTITY`, no
+    # `CREATE SEQUENCE`). V1 falls back to a wall-clock `written_at`
+    # timestamp for ordering, last-write-wins semantics -- a documented
+    # known limitation (see docs/user-guide), not something this issue
+    # attempts to solve further. Not independently tested here against a
+    # live BigQuery connection (none available in this environment).
+    #
+    # `CREATE SCHEMA` is BigQuery's supported alias for creating a dataset
+    # (`CREATE SCHEMA [IF NOT EXISTS] project.dataset`); table/dataset
+    # queries go through `self.client.query(...)` directly (like every
+    # other DDL method in this adapter) rather than `execute_query`, which
+    # runs `convert_sql_dialect`/`qualify_table_references` -- this is
+    # hand-written system SQL, not user SQL that needs dialect conversion.
+
+    def state_table_ref(self, data_schema: str) -> str:
+        return (
+            f"`{self.config.project}.{self.state_schema_name(data_schema)}.{self.STATE_TABLE_NAME}`"
+        )
+
+    def _state_schema_ref(self, data_schema: str) -> str:
+        return f"`{self.config.project}.{self.state_schema_name(data_schema)}`"
+
+    def _state_table_ddl_statements(self, data_schema: str) -> list[str]:
+        schema_ref = self._state_schema_ref(data_schema)
+        table = self.state_table_ref(data_schema)
+        return [
+            f"CREATE SCHEMA IF NOT EXISTS {schema_ref}",
+            f"""
+            CREATE TABLE IF NOT EXISTS {table} (
+                record_type STRING NOT NULL,
+                written_at TIMESTAMP NOT NULL,
+                run_id STRING,
+                manifest_json STRING,
+                model_name STRING,
+                sql_hash STRING,
+                config_hash STRING,
+                fingerprint STRING,
+                fingerprint_spec_version INT64
+            )
+            """.strip(),
+        ]
+
+    def _execute_state_ddl_statement(self, stmt: str) -> None:
+        if not self.client:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        query_job = self.client.query(stmt)
+        query_job.result()
+
+    def insert_run_state(self, data_schema: str, run_id: str, manifest_json: str) -> None:
+        if not self.client:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        from google.cloud import bigquery
+
+        table = self.state_table_ref(data_schema)
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("run_id", "STRING", run_id),
+                bigquery.ScalarQueryParameter("manifest_json", "STRING", manifest_json),
+            ]
+        )
+        query_job = self.client.query(
+            f"INSERT INTO {table} (record_type, written_at, run_id, manifest_json) "
+            "VALUES ('run', CURRENT_TIMESTAMP(), @run_id, @manifest_json)",
+            job_config=job_config,
+        )
+        query_job.result()
+
+    def read_latest_run_state(self, data_schema: str) -> str | None:
+        if not self.client:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        query_job = self.client.query(
+            f"SELECT manifest_json FROM {table} "
+            "WHERE record_type = 'run' ORDER BY written_at DESC LIMIT 1"
+        )
+        rows = list(query_job.result())
+        return rows[0][0] if rows else None
+
+    def insert_fingerprint_state(
+        self,
+        data_schema: str,
+        model_name: str,
+        sql_hash: str,
+        config_hash: str,
+        fingerprint: str,
+        fingerprint_spec_version: int,
+    ) -> None:
+        if not self.client:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        from google.cloud import bigquery
+
+        table = self.state_table_ref(data_schema)
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("model_name", "STRING", model_name),
+                bigquery.ScalarQueryParameter("sql_hash", "STRING", sql_hash),
+                bigquery.ScalarQueryParameter("config_hash", "STRING", config_hash),
+                bigquery.ScalarQueryParameter("fingerprint", "STRING", fingerprint),
+                bigquery.ScalarQueryParameter(
+                    "fingerprint_spec_version", "INT64", fingerprint_spec_version
+                ),
+            ]
+        )
+        query_job = self.client.query(
+            f"INSERT INTO {table} "
+            "(record_type, written_at, model_name, sql_hash, config_hash, fingerprint, "
+            "fingerprint_spec_version) "
+            "VALUES ('fingerprint', CURRENT_TIMESTAMP(), @model_name, @sql_hash, @config_hash, "
+            "@fingerprint, @fingerprint_spec_version)",
+            job_config=job_config,
+        )
+        query_job.result()
+
+    def read_fingerprint_state(self, data_schema: str, model_name: str) -> dict[str, Any] | None:
+        if not self.client:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        from google.cloud import bigquery
+
+        table = self.state_table_ref(data_schema)
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[bigquery.ScalarQueryParameter("model_name", "STRING", model_name)]
+        )
+        query_job = self.client.query(
+            "SELECT sql_hash, config_hash, fingerprint, fingerprint_spec_version, written_at "
+            f"FROM {table} WHERE record_type = 'fingerprint' AND model_name = @model_name "
+            "ORDER BY written_at DESC LIMIT 1",
+            job_config=job_config,
+        )
+        rows = list(query_job.result())
+        if not rows:
+            return None
+        row = rows[0]
+        return {
+            "sql_hash": row[0],
+            "config_hash": row[1],
+            "fingerprint": row[2],
+            "fingerprint_spec_version": row[3],
+            "updated_at": str(row[4]) if row[4] is not None else None,
+        }
+
 
 # Register the adapter
 register_adapter("bigquery", BigQueryAdapter)

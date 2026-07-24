@@ -592,6 +592,102 @@ class SnowflakeAdapter(DatabaseAdapter):
             ) AS duplicate_groups
         """
 
+    # -- Warehouse state table (#20) --------------------------------------
+    #
+    # Snowflake supports the SQL-standard `GENERATED ALWAYS AS IDENTITY`
+    # column, used as the ordering column for `read_latest` (a
+    # database-native sequence, not a wall-clock timestamp -- #20's
+    # concurrency-ordering design decision). Not independently tested here
+    # against a live Snowflake connection (none available in this
+    # environment) -- this is documented Snowflake syntax, but see #20's
+    # implementation report for the exact scope of what was/wasn't verified
+    # against a real connection.
+    #
+    # Table references are DATABASE.SCHEMA.TABLE (three-part), matching
+    # every other qualified reference in this adapter (see
+    # `_qualify_object_name`).
+
+    def state_table_ref(self, data_schema: str) -> str:
+        return (
+            f"{self.config.database}.{self.state_schema_name(data_schema)}.{self.STATE_TABLE_NAME}"
+        )
+
+    def _state_table_ddl_statements(self, data_schema: str) -> list[str]:
+        qualified_schema = f"{self.config.database}.{self.state_schema_name(data_schema)}"
+        table = self.state_table_ref(data_schema)
+        return [
+            f"CREATE SCHEMA IF NOT EXISTS {qualified_schema}",
+            f"""
+            CREATE TABLE IF NOT EXISTS {table} (
+                id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                record_type VARCHAR(20) NOT NULL,
+                written_at TIMESTAMP_NTZ NOT NULL,
+                run_id VARCHAR,
+                manifest_json VARCHAR,
+                model_name VARCHAR,
+                sql_hash VARCHAR,
+                config_hash VARCHAR,
+                fingerprint VARCHAR,
+                fingerprint_spec_version INTEGER
+            )
+            """.strip(),
+        ]
+
+    def _execute_state_ddl_statement(self, stmt: str) -> None:
+        self._execute_with_cursor(stmt)
+
+    def insert_run_state(self, data_schema: str, run_id: str, manifest_json: str) -> None:
+        table = self.state_table_ref(data_schema)
+        self._execute_with_cursor(
+            f"INSERT INTO {table} (record_type, written_at, run_id, manifest_json) "
+            "VALUES ('run', CURRENT_TIMESTAMP(), %s, %s)",
+            (run_id, manifest_json),
+        )
+
+    def read_latest_run_state(self, data_schema: str) -> str | None:
+        table = self.state_table_ref(data_schema)
+        rows = self._execute_with_cursor(
+            f"SELECT manifest_json FROM {table} WHERE record_type = 'run' ORDER BY id DESC LIMIT 1"
+        )
+        return rows[0][0] if rows else None
+
+    def insert_fingerprint_state(
+        self,
+        data_schema: str,
+        model_name: str,
+        sql_hash: str,
+        config_hash: str,
+        fingerprint: str,
+        fingerprint_spec_version: int,
+    ) -> None:
+        table = self.state_table_ref(data_schema)
+        self._execute_with_cursor(
+            f"INSERT INTO {table} "
+            "(record_type, written_at, model_name, sql_hash, config_hash, fingerprint, "
+            "fingerprint_spec_version) "
+            "VALUES ('fingerprint', CURRENT_TIMESTAMP(), %s, %s, %s, %s, %s)",
+            (model_name, sql_hash, config_hash, fingerprint, fingerprint_spec_version),
+        )
+
+    def read_fingerprint_state(self, data_schema: str, model_name: str) -> dict[str, Any] | None:
+        table = self.state_table_ref(data_schema)
+        rows = self._execute_with_cursor(
+            "SELECT sql_hash, config_hash, fingerprint, fingerprint_spec_version, written_at "
+            f"FROM {table} WHERE record_type = 'fingerprint' AND model_name = %s "
+            "ORDER BY id DESC LIMIT 1",
+            (model_name,),
+        )
+        if not rows:
+            return None
+        row = rows[0]
+        return {
+            "sql_hash": row[0],
+            "config_hash": row[1],
+            "fingerprint": row[2],
+            "fingerprint_spec_version": row[3],
+            "updated_at": str(row[4]) if row[4] is not None else None,
+        }
+
 
 # Register the adapter
 register_adapter("snowflake", SnowflakeAdapter)

@@ -8,6 +8,7 @@ All components are re-exported here for backward compatibility.
 # Import core components
 from .config import AdapterConfig, MaterializationType, NamingConfig, SecretProvider
 from .core import DatabaseAdapter
+from .state_table import StateTableDDLError
 
 # Re-export everything for backward compatibility
 # This allows: from ..base import DatabaseAdapter, AdapterConfig, MaterializationType
@@ -17,4 +18,5 @@ __all__ = [
     "MaterializationType",
     "NamingConfig",
     "SecretProvider",
+    "StateTableDDLError",
 ]
