@@ -64,13 +64,21 @@ unchanged model with different `--vars` values produces the same
 
 ## Where fingerprints are stored
 
-Fingerprints are persisted through the same `StateBackend` used for run
-manifests (`t4t/state/backend.py`), scoped per environment the same way:
-`output/<env>/runs.sqlite`, in a `fingerprints` table alongside the existing
-`runs` table. After each run, t4t writes `sql_hash`/`config_hash`/
-`fingerprint` for every model that was *attempted* (selected and execution
-was attempted) that run, regardless of whether that particular model's
-execution succeeded or failed.
+Fingerprints are persisted through the same pluggable `StateBackend` used
+for run manifests (`t4t/state/backend.py`), scoped per environment. Where
+that actually is depends on `environments.<env>.state.backend` (see
+[State backends](state-backends.md)):
+
+- **`"local"`** (default) -- `output/<env>/runs.sqlite`, in a
+  `fingerprints` table alongside the existing `runs` table.
+- **`"warehouse"`** -- the environment's own connection, in a
+  `<model's schema>_STATE.t4t_model_state` table alongside run-manifest
+  rows.
+
+After each run, t4t writes `sql_hash`/`config_hash`/`fingerprint` for every
+model that was *attempted* (selected and execution was attempted) that run,
+regardless of whether that particular model's execution succeeded or
+failed.
 
 Each stored record also carries a `fingerprint_spec_version`. If the
 algorithm or its inputs change in a future t4t release, that version is

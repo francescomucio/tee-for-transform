@@ -3,12 +3,11 @@ Compute which models to re-run from a stored manifest (failed + downstream + ups
 """
 
 import logging
-from pathlib import Path
 from typing import Any
 
 from t4t.compiler import compile_project
 from t4t.executor_helpers.shared_helpers import validate_compile_results
-from t4t.state.backend import LocalStateBackend
+from t4t.state.factory import create_state_backend
 from t4t.state.manifest import SCHEMA_VERSION, RunManifest
 
 logger = logging.getLogger(__name__)
@@ -104,7 +103,7 @@ def prepare_retry_select_patterns(
         project_config=project_config,
     )
     graph, _, _ = validate_compile_results(compile_results)
-    backend = LocalStateBackend(Path(project_folder) / "output", env_name=env_name)
+    backend = create_state_backend(project_folder, connection_config, env_name=env_name)
     manifest = backend.read_latest()
     if manifest is None:
         raise ValueError(

@@ -500,6 +500,137 @@ class PostgreSQLAdapter(DatabaseAdapter):
 
             raise FunctionExecutionError(f"Failed to drop function {function_name}: {e}") from e
 
+    # -- Warehouse state table (#20) --------------------------------------
+    #
+    # PostgreSQL supports the SQL-standard `GENERATED ALWAYS AS IDENTITY`
+    # column, used as the ordering column for `read_latest` (a
+    # database-native sequence, not a wall-clock timestamp -- #20's
+    # concurrency-ordering design decision). Not independently tested here
+    # against a live PostgreSQL connection (none available in this
+    # environment) -- this is well-established, documented PostgreSQL 10+
+    # syntax, but see #20's implementation report for the exact scope of
+    # what was/wasn't verified against a real connection.
+
+    def _state_table_ddl_statements(self, data_schema: str) -> list[str]:
+        schema = self.state_schema_name(data_schema)
+        table = self.state_table_ref(data_schema)
+        return [
+            f"CREATE SCHEMA IF NOT EXISTS {schema}",
+            f"""
+            CREATE TABLE IF NOT EXISTS {table} (
+                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                record_type VARCHAR(20) NOT NULL,
+                written_at TIMESTAMPTZ NOT NULL,
+                run_id VARCHAR,
+                manifest_json TEXT,
+                model_name VARCHAR,
+                sql_hash VARCHAR,
+                config_hash VARCHAR,
+                fingerprint VARCHAR,
+                fingerprint_spec_version INTEGER
+            )
+            """.strip(),
+        ]
+
+    def _execute_state_ddl_statement(self, stmt: str) -> None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute(stmt)
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+        finally:
+            cursor.close()
+
+    def insert_run_state(self, data_schema: str, run_id: str, manifest_json: str) -> None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute(
+                f"INSERT INTO {table} (record_type, written_at, run_id, manifest_json) "
+                "VALUES ('run', CURRENT_TIMESTAMP, %s, %s)",
+                (run_id, manifest_json),
+            )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+        finally:
+            cursor.close()
+
+    def read_latest_run_state(self, data_schema: str) -> str | None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute(
+                f"SELECT manifest_json FROM {table} "
+                "WHERE record_type = 'run' ORDER BY id DESC LIMIT 1"
+            )
+            row = cursor.fetchone()
+        finally:
+            cursor.close()
+        return row[0] if row else None
+
+    def insert_fingerprint_state(
+        self,
+        data_schema: str,
+        model_name: str,
+        sql_hash: str,
+        config_hash: str,
+        fingerprint: str,
+        fingerprint_spec_version: int,
+    ) -> None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute(
+                f"INSERT INTO {table} "
+                "(record_type, written_at, model_name, sql_hash, config_hash, fingerprint, "
+                "fingerprint_spec_version) "
+                "VALUES ('fingerprint', CURRENT_TIMESTAMP, %s, %s, %s, %s, %s)",
+                (model_name, sql_hash, config_hash, fingerprint, fingerprint_spec_version),
+            )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+        finally:
+            cursor.close()
+
+    def read_fingerprint_state(self, data_schema: str, model_name: str) -> dict[str, Any] | None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        cursor = self.connection.cursor()
+        try:
+            cursor.execute(
+                "SELECT sql_hash, config_hash, fingerprint, fingerprint_spec_version, written_at "
+                f"FROM {table} WHERE record_type = 'fingerprint' AND model_name = %s "
+                "ORDER BY id DESC LIMIT 1",
+                (model_name,),
+            )
+            row = cursor.fetchone()
+        finally:
+            cursor.close()
+        if not row:
+            return None
+        return {
+            "sql_hash": row[0],
+            "config_hash": row[1],
+            "fingerprint": row[2],
+            "fingerprint_spec_version": row[3],
+            "updated_at": str(row[4]) if row[4] is not None else None,
+        }
+
 
 # Register the adapter
 register_adapter("postgresql", PostgreSQLAdapter)

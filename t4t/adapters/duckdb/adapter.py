@@ -459,6 +459,100 @@ class DuckDBAdapter(DatabaseAdapter):
             ) AS duplicate_groups
         """
 
+    # -- Warehouse state table (#20) --------------------------------------
+    #
+    # DuckDB does not support `GENERATED ALWAYS AS IDENTITY` (`Constraint not
+    # implemented`, confirmed empirically -- see #20's design decisions), so
+    # the ordering column uses `CREATE SEQUENCE` + a column `DEFAULT
+    # nextval(...)` instead, which DuckDB does support.
+
+    def _state_table_ddl_statements(self, data_schema: str) -> list[str]:
+        schema = self.state_schema_name(data_schema)
+        table = self.state_table_ref(data_schema)
+        seq = f"{schema}.{self.STATE_TABLE_NAME}_id_seq"
+        return [
+            f"CREATE SCHEMA IF NOT EXISTS {schema}",
+            f"CREATE SEQUENCE IF NOT EXISTS {seq}",
+            f"""
+            CREATE TABLE IF NOT EXISTS {table} (
+                id BIGINT PRIMARY KEY DEFAULT nextval('{seq}'),
+                record_type VARCHAR NOT NULL,
+                written_at TIMESTAMP NOT NULL,
+                run_id VARCHAR,
+                manifest_json VARCHAR,
+                model_name VARCHAR,
+                sql_hash VARCHAR,
+                config_hash VARCHAR,
+                fingerprint VARCHAR,
+                fingerprint_spec_version INTEGER
+            )
+            """.strip(),
+        ]
+
+    def _execute_state_ddl_statement(self, stmt: str) -> None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        self.connection.execute(stmt)
+
+    def insert_run_state(self, data_schema: str, run_id: str, manifest_json: str) -> None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        self.connection.execute(
+            f"INSERT INTO {table} (record_type, written_at, run_id, manifest_json) "
+            "VALUES ('run', CURRENT_TIMESTAMP, ?, ?)",
+            [run_id, manifest_json],
+        )
+
+    def read_latest_run_state(self, data_schema: str) -> str | None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        row = self.connection.execute(
+            f"SELECT manifest_json FROM {table} WHERE record_type = 'run' ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        return row[0] if row else None
+
+    def insert_fingerprint_state(
+        self,
+        data_schema: str,
+        model_name: str,
+        sql_hash: str,
+        config_hash: str,
+        fingerprint: str,
+        fingerprint_spec_version: int,
+    ) -> None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        self.connection.execute(
+            f"INSERT INTO {table} "
+            "(record_type, written_at, model_name, sql_hash, config_hash, fingerprint, "
+            "fingerprint_spec_version) "
+            "VALUES ('fingerprint', CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)",
+            [model_name, sql_hash, config_hash, fingerprint, fingerprint_spec_version],
+        )
+
+    def read_fingerprint_state(self, data_schema: str, model_name: str) -> dict[str, Any] | None:
+        if not self.connection:
+            raise RuntimeError("Not connected to database. Call connect() first.")
+        table = self.state_table_ref(data_schema)
+        row = self.connection.execute(
+            "SELECT sql_hash, config_hash, fingerprint, fingerprint_spec_version, written_at "
+            f"FROM {table} WHERE record_type = 'fingerprint' AND model_name = ? "
+            "ORDER BY id DESC LIMIT 1",
+            [model_name],
+        ).fetchone()
+        if not row:
+            return None
+        return {
+            "sql_hash": row[0],
+            "config_hash": row[1],
+            "fingerprint": row[2],
+            "fingerprint_spec_version": row[3],
+            "updated_at": str(row[4]) if row[4] is not None else None,
+        }
+
     def _build_motherduck_connection_string(self, db_path: str) -> str:
         """
         Build MotherDuck connection string with authentication token.

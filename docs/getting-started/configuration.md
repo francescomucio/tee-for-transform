@@ -126,6 +126,28 @@ schema_prefix = "dev_"
 
 This prefixes the schema portion of all object names (e.g. `my_schema.my_table` → `dev_my_schema.my_table`). The primary environment separation mechanism is per-env connections (different `database`/`path` per environment).
 
+### State backend (local vs warehouse)
+
+```toml
+[environments.prod.state]
+backend = "warehouse"   # or "local" (default) -- omit the section entirely for "local"
+```
+
+`backend` controls where t4t persists run manifests and model
+[fingerprints](../user-guide/fingerprinting.md):
+
+- **`"local"`** (default, and what you get if you omit `[environments.<env>.state]`
+  entirely) -- unchanged from before this option existed: `output/<env>/last_run.json`
+  and `output/<env>/runs.sqlite` on local disk.
+- **`"warehouse"`** -- state is stored in the environment's own connection
+  instead, using no separate credentials. A fresh CI container has no local
+  disk history at all, so this is what makes `--retry` and `definition:changed`
+  selection work correctly across ephemeral runners and team members sharing
+  one warehouse, not just on a single developer's machine.
+
+See [State backends](../user-guide/state-backends.md) for the on-disk/in-warehouse
+layout, per-adapter ordering-column mechanism, and the BigQuery caveat.
+
 ## `pyproject.toml` (Python-package projects)
 
 If your t4t project lives inside a Python package that already has a `pyproject.toml`, you can put t4t config under `[tool.t4t]`:

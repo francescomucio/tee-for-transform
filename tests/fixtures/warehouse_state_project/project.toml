@@ -1,0 +1,9 @@
+project_folder = "warehouse_state_project"
+
+[environments.dev.connection]
+type = "duckdb"
+path = "data/warehouse_state_project.duckdb"
+schema = "wst"
+
+[environments.dev.state]
+backend = "warehouse"

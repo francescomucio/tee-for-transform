@@ -9,10 +9,11 @@ from typing import Any
 from .config import AdapterConfig, MaterializationType
 from .metadata import MetadataHandler
 from .sql import SQLProcessor
+from .state_table import StateTableMixin
 from .testing import TestQueryGenerator
 
 
-class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator):
+class DatabaseAdapter(ABC, SQLProcessor, MetadataHandler, TestQueryGenerator, StateTableMixin):
     """
     Abstract base class for database adapters.
 

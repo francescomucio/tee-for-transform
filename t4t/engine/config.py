@@ -106,6 +106,53 @@ def is_env_protected(project_folder: str | Path, env_name: str | None) -> bool:
         return False
 
 
+def get_state_backend_name(project_folder: str | Path, env_name: str | None) -> str:
+    """Read ``environments.<env>.state.backend`` from project.toml (#20).
+
+    Returns ``"local"`` -- today's behavior, fully backward compatible --
+    when: no environment is given, project.toml doesn't exist, the
+    environment has no ``[environments.<env>.state]`` section, or
+    ``backend`` is missing/unrecognized. Only ``"warehouse"`` selects
+    ``WarehouseStateBackend``; any other value (including a typo) is
+    treated as ``"local"`` with a warning, the same fail-safe-default
+    pattern as ``is_env_protected`` above.
+
+    Args:
+        project_folder: Path to the project folder containing project.toml.
+        env_name: The environment name to check. Returns "local" if None.
+
+    Returns:
+        ``"local"`` or ``"warehouse"``.
+    """
+    if not env_name:
+        return "local"
+    toml_path = Path(project_folder) / "project.toml"
+    if not toml_path.exists():
+        return "local"
+    try:
+        with open(toml_path, "rb") as f:
+            config = tomllib.load(f)
+        environments = config.get("environments", {})
+        env_config = environments.get(env_name, {})
+        if not isinstance(env_config, dict):
+            return "local"
+        state_config = env_config.get("state", {})
+        if not isinstance(state_config, dict):
+            return "local"
+        backend = state_config.get("backend", "local")
+        if backend not in ("local", "warehouse"):
+            logger.warning(
+                "Unrecognized state.backend %r for environment %r; using 'local'.",
+                backend,
+                env_name,
+            )
+            return "local"
+        return str(backend)
+    except Exception as e:
+        logger.warning("Could not read state.backend from project.toml: %s", e)
+        return "local"
+
+
 class DatabaseConfigManager:
     """Manages database configurations from multiple sources."""
 

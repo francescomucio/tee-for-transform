@@ -7,6 +7,7 @@ Handles the complete workflow of parsing and executing SQL models based on proje
 import logging
 from typing import TYPE_CHECKING, Any
 
+from t4t.adapters.base.state_table import SchemaEnsureError, StateTableDDLError
 from t4t.compiler import CompilationError, compile_project
 from t4t.engine import ModelExecutor
 from t4t.engine.config import is_env_protected
@@ -14,7 +15,8 @@ from t4t.engine.fingerprint import compute_project_fingerprints, store_project_f
 from t4t.executor_helpers import build_helpers, shared_helpers
 from t4t.parser import ProjectParser
 from t4t.parser.shared.exceptions import ParserError
-from t4t.state import LocalStateBackend, results_to_manifest, utc_now_iso
+from t4t.state import create_state_backend, results_to_manifest, utc_now_iso
+from t4t.state.warehouse_backend import WarehouseStateBackend
 
 if TYPE_CHECKING:
     from t4t.adapters import AdapterConfig
@@ -29,6 +31,7 @@ def _try_persist_run_manifest(
     command: str,
     started_at: str,
     *,
+    connection_config: dict[str, Any] | AdapterConfig | None = None,
     project_config: dict[str, Any] | None = None,
     variables: dict[str, Any] | None = None,
     function_names: set[str] | None = None,
@@ -39,7 +42,9 @@ def _try_persist_run_manifest(
     parsed_models: dict[str, Any] | None = None,
     dependency_graph: dict[str, Any] | None = None,
 ) -> None:
-    """Write last_run.json and append to runs.sqlite; failures are logged only.
+    """Persist the run manifest and fingerprints via the configured
+    StateBackend (#20 step 6: `environments.<env>.state.backend`, default
+    "local" -- `LocalStateBackend`, same as before this option existed).
 
     Also computes and stores each attempted model's fingerprint (#13 step 7):
     after the manifest is persisted, sql_hash/config_hash/fingerprint are
@@ -53,6 +58,20 @@ def _try_persist_run_manifest(
     upstream dependencies outside the selection still need their fingerprint
     computed to feed the hash chain, they're just not persisted here unless
     they were also attempted.
+
+    Failure handling is asymmetric on purpose (#20 acceptance criterion 3):
+    any failure of the multi-schema pre-creation guard
+    (`WarehouseStateBackend.ensure_schemas_for_models`) is deliberately let
+    through -- whether it's a `StateTableDDLError` (missing CREATE SCHEMA/
+    CREATE TABLE permission) or any other exception (e.g. a transient
+    connection failure while opening the adapter, wrapped as
+    `SchemaEnsureError`) -- because either way we don't actually know
+    whether every touched data schema's state table exists, so the whole
+    run must fail rather than proceed with unknown/partial state coverage.
+    Every other failure *after* that guard has passed (e.g. local disk
+    issues, a warehouse connection blip during `append_run`/fingerprint
+    writes) keeps the pre-existing best-effort "log only" behavior, matching
+    `LocalStateBackend`'s own failure-tolerant precedent.
     """
     logger = logging.getLogger(__name__)
     try:
@@ -73,15 +92,39 @@ def _try_persist_run_manifest(
             protected=protected,
             run_id=run_id,
         )
-        backend = LocalStateBackend(Path(project_folder) / "output", env_name=environment)
+        backend = create_state_backend(
+            project_folder, connection_config or {}, env_name=environment
+        )
+        attempted = {n.name for n in manifest.nodes if n.status in ("success", "failed")}
+
+        # Multi-schema partial-failure guard (#20 design decision): pre-create
+        # every touched data schema's state table in one pass, before any
+        # writes happen for this run, so a DDL failure on one schema fails
+        # the whole run rather than leaving some models tracked and others
+        # not.
+        if isinstance(backend, WarehouseStateBackend) and attempted:
+            try:
+                backend.ensure_schemas_for_models(attempted)
+            except StateTableDDLError:
+                raise
+            except Exception as e:
+                # Any non-DDL failure here (e.g. a connection blip while
+                # opening the adapter) still means we don't know whether
+                # every touched schema's state table exists -- per #20's
+                # design decision this must fail the whole run too, not
+                # just permission-shaped failures. Wrap and re-raise so the
+                # outer `except Exception` below (which is best-effort by
+                # design for *other* persistence steps) doesn't swallow it.
+                raise SchemaEnsureError(e) from e
+
         backend.append_run(manifest)
 
-        if parsed_models:
-            attempted = {n.name for n in manifest.nodes if n.status in ("success", "failed")}
-            if attempted:
-                graph = dependency_graph or {}
-                fingerprints = compute_project_fingerprints(parsed_models, graph)
-                store_project_fingerprints(backend, fingerprints, model_names=attempted)
+        if parsed_models and attempted:
+            graph = dependency_graph or {}
+            fingerprints = compute_project_fingerprints(parsed_models, graph)
+            store_project_fingerprints(backend, fingerprints, model_names=attempted)
+    except (StateTableDDLError, SchemaEnsureError):
+        raise
     except Exception as e:
         logger.warning("Could not persist run manifest: %s", e)
 
@@ -190,6 +233,7 @@ def execute_models(
             empty,
             "run",
             run_started_at,
+            connection_config=connection_config,
             project_config=project_config,
             variables=variables,
             function_names=fnames or None,
@@ -233,6 +277,7 @@ def execute_models(
                 empty,
                 "run",
                 run_started_at,
+                connection_config=connection_config,
                 project_config=project_config,
                 variables=variables,
                 function_names=fnames or None,
@@ -320,6 +365,7 @@ def execute_models(
             results,
             "run",
             run_started_at,
+            connection_config=connection_config,
             project_config=project_config,
             variables=variables,
             function_names=fnames or None,
@@ -469,6 +515,7 @@ def build_models(
             empty_results,
             "build",
             build_started_at,
+            connection_config=connection_config,
             project_config=project_config,
             variables=variables,
             function_names=None,
@@ -556,6 +603,7 @@ def build_models(
             results,
             "build",
             build_started_at,
+            connection_config=connection_config,
             project_config=project_config,
             variables=variables,
             function_names=fn_build or None,
