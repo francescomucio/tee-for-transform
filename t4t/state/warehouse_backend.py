@@ -53,11 +53,20 @@ def _model_data_schema(adapter: Any, model_name: str) -> str:
     ``model_name`` -- e.g. ``analytics.orders`` -> ``analytics`` -- with the
     environment's naming strategy applied via ``apply_naming`` (the same
     path model execution itself uses), falling back to the environment's
-    default schema for an unqualified model name."""
+    default schema for an unqualified model name.
+
+    ``apply_naming`` can return either a two-part (``schema.table``, e.g.
+    DuckDB/PostgreSQL) or three-part (``database.schema.table``, e.g.
+    Snowflake/BigQuery) physical name. In both cases the schema is the
+    second-to-last dot-separated part -- the same convention
+    ``apply_naming`` itself uses to decide which part gets the
+    ``naming.schema_prefix`` (see ``t4t/adapters/base/core.py``). Naively
+    taking everything left of the last dot (``rpartition(".")``) would
+    incorrectly return ``database.schema`` for three-part names."""
     physical = adapter.apply_naming(model_name)
-    if "." in physical:
-        schema, _, _ = physical.rpartition(".")
-        return schema
+    parts = physical.split(".")
+    if len(parts) >= 2:
+        return parts[-2]
     return _default_data_schema(adapter)
 
 

@@ -4,13 +4,16 @@ each call opens its own short-lived connection, so an in-memory database
 would not persist data across calls, unlike a real warehouse)."""
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
+from t4t.adapters.base import DatabaseAdapter
+from t4t.adapters.base.config import MaterializationType
 from t4t.state.backend import StateBackend
 from t4t.state.fingerprint import StoredFingerprint
 from t4t.state.manifest import NodeResult, RunManifest
-from t4t.state.warehouse_backend import WarehouseStateBackend
+from t4t.state.warehouse_backend import WarehouseStateBackend, _model_data_schema
 
 
 def _connection_config(db_path: Path, schema: str = "analytics") -> dict:
@@ -188,3 +191,119 @@ class TestEnsureSchemasForModels:
         backend = WarehouseStateBackend(_connection_config(db_path, schema="analytics"))
         with pytest.raises(RuntimeError, match="permission denied"):
             backend.ensure_schemas_for_models({"analytics.a", "staging.raw"})
+
+
+class _FakeNamingAdapter(DatabaseAdapter):
+    """Minimal adapter stub exercising the real, unoverridden
+    ``DatabaseAdapter.apply_naming`` every concrete adapter (DuckDB,
+    PostgreSQL, Snowflake, BigQuery) inherits unchanged -- lets
+    ``_model_data_schema`` be tested against each adapter's characteristic
+    physical-name shape (two-part ``schema.table`` for DuckDB/PostgreSQL,
+    three-part ``database.schema.table`` for Snowflake/BigQuery) without
+    needing each adapter's real driver installed or a live connection."""
+
+    REQUIRED_FIELDS = ["type"]
+
+    def get_default_dialect(self) -> str:
+        return "duckdb"
+
+    def get_supported_materializations(self) -> list[MaterializationType]:
+        return [MaterializationType.TABLE, MaterializationType.VIEW]
+
+    def connect(self) -> None:
+        pass
+
+    def disconnect(self) -> None:
+        pass
+
+    def execute_query(self, query: str) -> Any:
+        return None
+
+    def create_table(self, table_name: str, query: str, metadata: Any = None) -> None:
+        pass
+
+    def create_view(self, view_name: str, query: str, metadata: Any = None) -> None:
+        pass
+
+    def table_exists(self, table_name: str) -> bool:
+        return False
+
+    def drop_table(self, table_name: str) -> None:
+        pass
+
+    def get_table_info(self, table_name: str) -> dict[str, Any]:
+        return {"row_count": 0}
+
+    def describe_query_schema(self, sql_query: str) -> list[dict[str, Any]]:
+        return []
+
+    def add_column(self, table_name: str, column: dict[str, Any]) -> None:
+        pass
+
+    def drop_column(self, table_name: str, column_name: str) -> None:
+        pass
+
+    def create_function(self, function_name: str, function_sql: str, metadata: Any = None) -> None:
+        pass
+
+    def function_exists(self, function_name: str, signature: str | None = None) -> bool:
+        return False
+
+    def drop_function(self, function_name: str) -> None:
+        pass
+
+
+class TestModelDataSchemaExtraction:
+    """Code-review fix (finding #2): ``_model_data_schema`` must correctly
+    extract just the schema component regardless of whether
+    ``apply_naming`` returns a two-part (``schema.table`` -- DuckDB,
+    PostgreSQL) or three-part (``database.schema.table`` -- Snowflake,
+    BigQuery) physical name.
+
+    The old implementation did ``physical.rpartition(".")`` and used
+    everything left of the last dot as the schema. For a three-part name
+    that returns ``database.schema`` (not just ``schema``), producing a
+    wrong/invalid ``<schema>_STATE`` name for Snowflake/BigQuery. The fix
+    takes the second-to-last dot-separated part instead -- the same
+    convention ``apply_naming`` itself already uses to decide which part
+    gets ``naming.schema_prefix`` (see ``t4t/adapters/base/core.py``)."""
+
+    @pytest.mark.parametrize(
+        ("adapter_type", "model_name", "expected_schema"),
+        [
+            # Two-part physical names (DuckDB, PostgreSQL): schema.table.
+            ("duckdb", "analytics.orders", "analytics"),
+            ("postgresql", "analytics.orders", "analytics"),
+            # Three-part physical names (Snowflake, BigQuery):
+            # database.schema.table -- only "schema" must be extracted,
+            # not the old "database.schema" bug.
+            ("snowflake", "my_db.analytics.orders", "analytics"),
+            ("bigquery", "my_project.analytics.orders", "analytics"),
+        ],
+    )
+    def test_extracts_schema_for_two_and_three_part_physical_names(
+        self, adapter_type: str, model_name: str, expected_schema: str
+    ) -> None:
+        adapter = _FakeNamingAdapter({"type": adapter_type})
+        assert _model_data_schema(adapter, model_name) == expected_schema
+
+    @pytest.mark.parametrize(
+        ("adapter_type", "model_name"),
+        [
+            ("duckdb", "analytics.orders"),
+            ("postgresql", "analytics.orders"),
+            ("snowflake", "my_db.analytics.orders"),
+            ("bigquery", "my_project.analytics.orders"),
+        ],
+    )
+    def test_extracts_schema_with_naming_prefix_applied(
+        self, adapter_type: str, model_name: str
+    ) -> None:
+        """The schema_prefix must land on the extracted schema (e.g.
+        ``dev_analytics``), for both two-part and three-part physical
+        names -- confirming the fix reuses `apply_naming`'s own prefixed
+        output rather than re-deriving the schema ad hoc."""
+        adapter = _FakeNamingAdapter(
+            {"type": adapter_type, "_naming_config": {"schema_prefix": "dev_"}}
+        )
+        assert _model_data_schema(adapter, model_name) == "dev_analytics"
