@@ -10,7 +10,7 @@ from t4t.state.manifest import (
     results_to_manifest,
     utc_now_iso,
 )
-from t4t.state.retry import compute_retry_set, prepare_retry_select_patterns
+from t4t.state.retry import compute_retry_set
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -23,5 +23,4 @@ __all__ = [
     "results_to_manifest",
     "utc_now_iso",
     "compute_retry_set",
-    "prepare_retry_select_patterns",
 ]

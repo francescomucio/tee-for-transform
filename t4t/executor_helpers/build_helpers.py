@@ -40,6 +40,7 @@ def setup_build_context_from_compile(
     parsed_models: dict[str, Any],
     graph: dict[str, Any],
     execution_order: list[str],
+    env_name: str | None = None,
 ) -> tuple[ProjectParser, dict[str, Any], dict[str, Any], list[str]]:
     """
     Set up build context using compile results (graph and models).
@@ -54,11 +55,26 @@ def setup_build_context_from_compile(
 
     # Apply selection filters if provided
     if select_patterns or exclude_patterns:
-        from t4t.cli.selection import ModelSelector
+        from pathlib import Path
 
-        selector = ModelSelector(select_patterns=select_patterns, exclude_patterns=exclude_patterns)
+        from t4t.cli.selection import ModelSelector
+        from t4t.state import LocalStateBackend
+
+        # Same env-scoped backend build_models()'s _try_persist_run_manifest
+        # call constructs -- only actually touched (read) if a selector uses
+        # definition:changed/run:failed (see ModelSelector.prepare()).
+        state_backend = LocalStateBackend(Path(project_folder) / "output", env_name=env_name)
+        selector = ModelSelector(
+            select_patterns=select_patterns,
+            exclude_patterns=exclude_patterns,
+            state_backend=state_backend,
+            env_name=env_name,
+        )
+        # `parsed_models`/`graph` here are the project's full, unfiltered set
+        # -- required both for definition:changed's fingerprint chain and for
+        # graph modifiers ('+') to expand from the true dependency graph.
         filtered_parsed_models, filtered_execution_order = selector.filter_models(
-            parsed_models, execution_order
+            parsed_models, execution_order, graph=graph, state_backend=state_backend
         )
         logger.info(
             f"\nAfter filtering: {len(filtered_parsed_models)} models selected", extra=_CLI_OUTPUT

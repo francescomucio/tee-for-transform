@@ -211,12 +211,27 @@ def execute_models(
     filtered_execution_order = None
 
     if select_patterns or exclude_patterns:
-        from .cli.selection import ModelSelector
+        from pathlib import Path
 
-        selector = ModelSelector(select_patterns=select_patterns, exclude_patterns=exclude_patterns)
+        from .cli.selection import ModelSelector
+        from .state import LocalStateBackend
+
+        # Same env-scoped backend _try_persist_run_manifest() constructs
+        # below -- only actually touched (read) if a selector uses
+        # definition:changed/run:failed (see ModelSelector.prepare()).
+        state_backend = LocalStateBackend(Path(project_folder) / "output", env_name=env_name)
+        selector = ModelSelector(
+            select_patterns=select_patterns,
+            exclude_patterns=exclude_patterns,
+            state_backend=state_backend,
+            env_name=env_name,
+        )
         original_count = len(parsed_models)
+        # `parsed_models`/`graph` here are the project's full, unfiltered set
+        # -- required both for definition:changed's fingerprint chain and for
+        # graph modifiers ('+') to expand from the true dependency graph.
         filtered_parsed_models, filtered_execution_order = selector.filter_models(
-            parsed_models, execution_order
+            parsed_models, execution_order, graph=graph, state_backend=state_backend
         )
         filtered_count = len(filtered_parsed_models)
 
@@ -431,6 +446,7 @@ def build_models(
         parsed_models,
         graph,
         execution_order,
+        env_name=env_name,
     )
 
     # Load seeds even if there are no models (seeds should load regardless)

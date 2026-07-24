@@ -14,6 +14,8 @@ Welcome to the Tee for Transform (t4t) documentation. t4t is a powerful Python f
 ### 📖 User Guide
 - [Overview](user-guide/overview.md) - Core concepts and architecture
 - [CLI Reference](user-guide/cli-reference.md) - Complete CLI commands and options reference
+- [Model Selection](user-guide/selection.md) - `--select`/`--exclude` syntax, `definition:changed`, `run:failed`, graph modifiers
+- [Fingerprinting](user-guide/fingerprinting.md) - How t4t detects model definition changes
 - [Execution Engine](user-guide/execution-engine.md) - Running SQL models
 - [Functions](user-guide/functions.md) - User-Defined Functions (UDFs)
 - [Seeds](user-guide/seeds.md) - Loading static data files (CSV, JSON, TSV)
