@@ -1,15 +1,21 @@
 """
 Compute which models to re-run from a stored manifest (failed + downstream + upstream-skipped).
+
+Note (#14): the CLI no longer calls `compute_retry_set` directly -- `--retry`
+is now sugar for `--select run:failed+`, resolved by `t4t.cli.selection`
+using the same `t4t.state.graph_walk.transitive_downstream` this module
+uses below (single implementation of the graph walk, see that module's
+docstring). `compute_retry_set` is kept here as a tested, standalone utility
+(and because its seed set -- failed *and* upstream-skipped nodes -- is a
+useful building block on its own), but production selection goes through
+`ModelSelector` now.
 """
 
 import logging
-from pathlib import Path
 from typing import Any
 
-from t4t.compiler import compile_project
-from t4t.executor_helpers.shared_helpers import validate_compile_results
-from t4t.state.backend import LocalStateBackend
-from t4t.state.manifest import SCHEMA_VERSION, RunManifest
+from t4t.state.graph_walk import transitive_downstream
+from t4t.state.manifest import RunManifest
 
 logger = logging.getLogger(__name__)
 
@@ -26,24 +32,6 @@ def _is_upstream_skip(reason: str | None) -> bool:
     if reason == "depends_on_failed":
         return True
     return any(reason.startswith(p) for p in _UPSTREAM_SKIP_PREFIXES)
-
-
-def _transitive_downstream(graph: dict[str, Any], seeds: set[str]) -> set[str]:
-    dependents: dict[str, list[str]] = graph.get("dependents") or {}
-    out: set[str] = set()
-    visited = set(seeds)
-    stack = list(seeds)
-    while stack:
-        n = stack.pop()
-        for d in dependents.get(n, []):
-            if d.startswith("test:"):
-                continue
-            if d in visited:
-                continue
-            visited.add(d)
-            out.add(d)
-            stack.append(d)
-    return out
 
 
 def compute_retry_set(manifest: RunManifest, graph: dict[str, Any]) -> set[str]:
@@ -67,7 +55,7 @@ def compute_retry_set(manifest: RunManifest, graph: dict[str, Any]) -> set[str]:
             upstream_skipped.add(node.name)
 
     seeds = failed | upstream_skipped
-    downstream = _transitive_downstream(graph, seeds)
+    downstream = transitive_downstream(graph, seeds)
     raw = seeds | downstream
 
     valid: set[str] = set()
@@ -80,44 +68,3 @@ def compute_retry_set(manifest: RunManifest, graph: dict[str, Any]) -> set[str]:
                 name,
             )
     return valid
-
-
-def prepare_retry_select_patterns(
-    project_folder: str,
-    connection_config: dict[str, Any],
-    variables: dict[str, Any] | None,
-    project_config: dict[str, Any] | None,
-    env_name: str | None = None,
-) -> list[str]:
-    """
-    Compile the project, load the latest manifest, return model names to pass as --select patterns.
-
-    Only considers runs from the same environment (env-scoped state).
-
-    Raises:
-        ValueError: with a user-facing message when retry cannot proceed
-    """
-    compile_results = compile_project(
-        project_folder=project_folder,
-        connection_config=connection_config,
-        variables=variables,
-        project_config=project_config,
-    )
-    graph, _, _ = validate_compile_results(compile_results)
-    backend = LocalStateBackend(Path(project_folder) / "output", env_name=env_name)
-    manifest = backend.read_latest()
-    if manifest is None:
-        raise ValueError(
-            "No previous run manifest found under output/. Run `t4t run` or `t4t build` first."
-        )
-    if manifest.schema_version != SCHEMA_VERSION:
-        raise ValueError(
-            f"Stored run manifest uses schema version {manifest.schema_version}; "
-            f"this t4t expects {SCHEMA_VERSION}. Delete output/last_run.json or upgrade t4t."
-        )
-    retry_set = compute_retry_set(manifest, graph)
-    if not retry_set:
-        raise ValueError(
-            "Nothing to retry: the last run had no failed models or downstream-skipped models."
-        )
-    return sorted(retry_set)

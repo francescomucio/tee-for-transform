@@ -80,6 +80,15 @@ GATED_LOGGER_NAMES: frozenset[str] = frozenset(
         "t4t.engine.executors.model_executor",
         "t4t.testing.executors.model_test_executor",
         "t4t.testing.executors.function_test_executor",
+        # #14: definition:changed's "no baseline" warning and run:failed's
+        # "no previous run" warning are curated, user-facing output (see the
+        # issue's usage example) -- tagged extra={"cli_output": True} at
+        # their call sites in t4t/cli/selection.py. That module also has no
+        # other logging today, but it's gated (not added to
+        # CLI_OUTPUT_LOGGER_NAMES) on the same principle as the modules
+        # above: only explicitly-tagged records should ever reach stdout
+        # from here, not anything logged in the future without a marker.
+        "t4t.cli.selection",
     }
 )
 
