@@ -124,6 +124,15 @@ def compute_config_hash(config: dict[str, Any] | None) -> str:
     Same algorithm as `StateManager.compute_config_hash` (JSON-serialize
     with sorted keys, then sha256) but reimplemented as a pure function here
     so fingerprinting never needs a `StateManager`/DB connection.
+
+    Known v1 limitation, flagged not fixed (PR #82 review): `None` and `{}`
+    both take the `not config` branch below and collapse to the same
+    empty-string hash. That means a model that starts with no config
+    metadata at all and later gains an explicit-but-empty `{}` config block
+    keeps the same `config_hash` -- a technically missed "config changed"
+    signal. Left as-is deliberately: changing this now would shift
+    `config_hash` for every model that currently has no config, a much
+    bigger behavioral change than this narrow edge case justifies.
     """
     if not config:
         return hashlib.sha256(b"").hexdigest()
