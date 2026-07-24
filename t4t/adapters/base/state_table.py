@@ -47,6 +47,33 @@ class StateTableDDLError(Exception):
         )
 
 
+class SchemaEnsureError(Exception):
+    """Raised when the multi-schema pre-creation guard
+    (``WarehouseStateBackend.ensure_schemas_for_models``) fails for a reason
+    that is *not* a DDL/permission problem -- e.g. a transient connection
+    failure while opening the adapter, before any DDL was even attempted.
+
+    Per #20's design decision, "a run touching multiple data schemas fails
+    as a whole if any schema's DDL fails" is not narrowed to permission
+    failures only: any failure of the guard means we don't actually know
+    whether every touched schema's state table exists, so the run must
+    abort rather than continue with unknown/partial state coverage. This is
+    the sibling of ``StateTableDDLError`` for that non-DDL case -- callers
+    (see ``t4t/executor.py``'s ``_try_persist_run_manifest``) re-raise both
+    rather than swallowing either into a best-effort warning.
+    """
+
+    def __init__(self, original: Exception) -> None:
+        self.original = original
+        super().__init__(
+            "Could not pre-create the warehouse state schema(s) for this run "
+            f"({original.__class__.__name__}: {original}). This was not a "
+            "DDL/permission failure -- most likely a transient connection "
+            "problem. The run has been aborted rather than proceeding with "
+            "unknown/partial state coverage; please retry."
+        )
+
+
 class StateTableMixin:
     """Mixin providing the ``<schema>_STATE.t4t_model_state`` naming
     convention and DDL orchestration shared across adapters.

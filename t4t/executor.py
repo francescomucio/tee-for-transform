@@ -7,7 +7,7 @@ Handles the complete workflow of parsing and executing SQL models based on proje
 import logging
 from typing import TYPE_CHECKING, Any
 
-from t4t.adapters.base.state_table import StateTableDDLError
+from t4t.adapters.base.state_table import SchemaEnsureError, StateTableDDLError
 from t4t.compiler import CompilationError, compile_project
 from t4t.engine import ModelExecutor
 from t4t.engine.config import is_env_protected
@@ -60,12 +60,18 @@ def _try_persist_run_manifest(
     they were also attempted.
 
     Failure handling is asymmetric on purpose (#20 acceptance criterion 3):
-    a `StateTableDDLError` (missing CREATE SCHEMA/CREATE TABLE permission
-    under the warehouse backend) is deliberately let through -- the whole
-    run must fail with that error, DDL text and all, not be swallowed into
-    a warning. Every other failure (e.g. local disk issues, a warehouse
-    connection blip) keeps the pre-existing best-effort "log only" behavior,
-    matching `LocalStateBackend`'s own failure-tolerant precedent.
+    any failure of the multi-schema pre-creation guard
+    (`WarehouseStateBackend.ensure_schemas_for_models`) is deliberately let
+    through -- whether it's a `StateTableDDLError` (missing CREATE SCHEMA/
+    CREATE TABLE permission) or any other exception (e.g. a transient
+    connection failure while opening the adapter, wrapped as
+    `SchemaEnsureError`) -- because either way we don't actually know
+    whether every touched data schema's state table exists, so the whole
+    run must fail rather than proceed with unknown/partial state coverage.
+    Every other failure *after* that guard has passed (e.g. local disk
+    issues, a warehouse connection blip during `append_run`/fingerprint
+    writes) keeps the pre-existing best-effort "log only" behavior, matching
+    `LocalStateBackend`'s own failure-tolerant precedent.
     """
     logger = logging.getLogger(__name__)
     try:
@@ -97,7 +103,19 @@ def _try_persist_run_manifest(
         # the whole run rather than leaving some models tracked and others
         # not.
         if isinstance(backend, WarehouseStateBackend) and attempted:
-            backend.ensure_schemas_for_models(attempted)
+            try:
+                backend.ensure_schemas_for_models(attempted)
+            except StateTableDDLError:
+                raise
+            except Exception as e:
+                # Any non-DDL failure here (e.g. a connection blip while
+                # opening the adapter) still means we don't know whether
+                # every touched schema's state table exists -- per #20's
+                # design decision this must fail the whole run too, not
+                # just permission-shaped failures. Wrap and re-raise so the
+                # outer `except Exception` below (which is best-effort by
+                # design for *other* persistence steps) doesn't swallow it.
+                raise SchemaEnsureError(e) from e
 
         backend.append_run(manifest)
 
@@ -105,7 +123,7 @@ def _try_persist_run_manifest(
             graph = dependency_graph or {}
             fingerprints = compute_project_fingerprints(parsed_models, graph)
             store_project_fingerprints(backend, fingerprints, model_names=attempted)
-    except StateTableDDLError:
+    except (StateTableDDLError, SchemaEnsureError):
         raise
     except Exception as e:
         logger.warning("Could not persist run manifest: %s", e)

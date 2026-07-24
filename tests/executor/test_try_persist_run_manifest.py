@@ -2,14 +2,24 @@
 CREATE SCHEMA permission under the warehouse backend) must fail the whole
 `t4t run`/`t4t build` -- not be swallowed into `_try_persist_run_manifest`'s
 usual best-effort "log a warning and continue" handling, which every other
-persistence failure still gets (regression safety)."""
+persistence failure still gets (regression safety).
+
+This also covers the code-review fix for non-DDL failures of the
+multi-schema pre-creation guard itself (`ensure_schemas_for_models`): per
+#20's design decision ("a run touching multiple data schemas fails as a
+whole if any schema's DDL fails"), that guard must abort the whole run on
+*any* failure -- a transient connection blip included -- not just DDL/
+permission errors, since either way we don't know if every touched schema's
+state table exists. Only failures *after* the guard has already succeeded
+(e.g. during `append_run`/fingerprint writes) keep the pre-existing
+best-effort "log only" behavior."""
 
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-from t4t.adapters.base.state_table import StateTableDDLError
+from t4t.adapters.base.state_table import SchemaEnsureError, StateTableDDLError
 from t4t.executor import _try_persist_run_manifest
 from t4t.state.warehouse_backend import WarehouseStateBackend
 
@@ -58,12 +68,44 @@ class TestStateTableDDLErrorPropagates:
                 run_id="run-1",
             )
 
-    def test_other_exceptions_still_logged_and_swallowed(
+    def test_non_ddl_error_from_ensure_schemas_also_fails_whole_run(self, tmp_path: Path) -> None:
+        """A non-DDL failure of the pre-creation guard itself (e.g. a
+        transient connection error, not a permission problem) must still
+        fail the whole run -- code-review fix for finding #3: this
+        previously fell through to the generic `except Exception` handler
+        and was silently logged-and-swallowed, letting the run continue
+        with unknown/partial state coverage."""
+        connection_config = {"type": "duckdb", "path": str(tmp_path / "state.duckdb")}
+
+        with (
+            patch(
+                "t4t.executor.create_state_backend",
+                return_value=WarehouseStateBackend(connection_config, env_name="prod"),
+            ),
+            patch.object(
+                WarehouseStateBackend,
+                "ensure_schemas_for_models",
+                side_effect=RuntimeError("transient connection blip"),
+            ),
+            pytest.raises(SchemaEnsureError, match="transient connection blip"),
+        ):
+            _try_persist_run_manifest(
+                str(tmp_path),
+                _minimal_run_results(),
+                "run",
+                "2026-01-01T00:00:00+00:00",
+                connection_config=connection_config,
+                environment="prod",
+                run_id="run-1",
+            )
+
+    def test_other_exceptions_after_guard_still_logged_and_swallowed(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """Regression safety: a non-DDL failure (e.g. a transient warehouse
-        connection error) must keep today's best-effort behavior -- log a
-        warning, don't raise, don't fail the run. Asserted via captured
+        """Regression safety: a failure *after* the pre-creation guard has
+        already succeeded (e.g. a transient warehouse connection error
+        during `append_run`) must keep today's best-effort behavior -- log
+        a warning, don't raise, don't fail the run. Asserted via captured
         stdout (t4t's own text-format log handler, installed by the autouse
         `_configure_t4t_logging` fixture) rather than `caplog`, since t4t's
         logging setup routes through its own handler rather than the
@@ -78,6 +120,11 @@ class TestStateTableDDLErrorPropagates:
             patch.object(
                 WarehouseStateBackend,
                 "ensure_schemas_for_models",
+                return_value=None,
+            ),
+            patch.object(
+                WarehouseStateBackend,
+                "append_run",
                 side_effect=RuntimeError("transient connection blip"),
             ),
         ):
